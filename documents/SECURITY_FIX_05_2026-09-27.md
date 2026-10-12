@@ -1,0 +1,15 @@
+# Audit finding 5 - atomic refund reconciliation
+
+Full refunds now have a separate form in /admin/payments/requests. The generic payment status selector no longer offers refunded. The form requires an outgoing bank/chain reference, a client-readable reason and confirmation that the full amount was returned externally. This records an external repayment; it sends no money and makes no external banking/crypto API call. Partial refunds are not supported. Available wallet balance must cover a linked credit refund; already spent funds require reconciliation first.
+
+New credits store an explicit payment_requests.credit_transaction_id, uniquely referencing the original immutable ledger credit. The migration deliberately refuses ambiguous historical wallet credits; the live preflight had zero wallet-credit payments and zero credit transactions, so no guessed backfill was used. Old credit migration is now a no-op after the refund schema exists, avoiding a downgrade.
+
+refund_payment_atomic verifies the signed admin role, locks the payment and wallet, loads the amount/customer from the recorded payment and validates the linked credit. It creates one immutable debit reversal, reduces available balance, records an immutable payment_refunds row, changes payment/deposit status, and writes the admin audit event in the same transaction. Duplicate attempts return the existing refund, while changed references or duplicate outgoing receipts fail. External payments that never funded a wallet produce a refund record without a wallet debit. Refunded payments cannot be reopened or relabelled directly. Deposit transaction/settlement references remain reserved after refunds.
+
+Migration: SUPABASE_WALLET_REFUNDS.sql, scripts/migrate-wallet-refunds.mjs check/apply. Recorded as version 005_wallet_refunds with SQL checksum. scripts/secure-wallet-migrations.mjs verify now verifies its three historical versions while allowing newer versions. Backups/check reports: project-backups/security-fix-05.
+
+Validation: 44 financial tests, 20 localization tests, 11 security tests, build and lint passed. Rollback-only database fixtures tested refund plus retry, original link, client denial, naked status update denial, immutable refund/history, changed and duplicate references, insufficient balance after a real fixture purchase, external payment refunds, deposit status integration, and complete rollback if audit insertion fails. Applied migration preserved existing financial row fingerprints and user IDs. PostgREST payment/refund relationship returned HTTP 200. No real refund or customer credit was performed.
+
+Deployment dpl_HN9NcvnLYxd61ZyeCvPYYcYLxrm6 is READY at https://www.brickwise-immo.de. Home HTTP 200; admin payment requests and funding redirect anonymous users to sign-in. Live read-only verification confirms the status guard, denied anonymous RPC/direct client inserts and zero refund records after rollback-only testing.
+
+Remaining scope: audit finding 6 (administrative-note privacy) is next; atomic logging here does not close finding 14 for other admin operations. No authenticated browser payout test or actual bank transfer was performed.

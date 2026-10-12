@@ -1,0 +1,40 @@
+{
+  "version": "cooperation-2026-10-02-v2",
+  "documents": [
+    {
+      "locale": "en",
+      "path": "/documents/agreements/cooperation-2026-10-02-v2/en.pdf",
+      "sha256": "1df7b8b26ba6a8be9f9770e630336a8c7b0a71ed78d7c1fbb88b6a6f6ca19c72",
+      "consentText": "By clicking “Sign automatically”, I confirm that I have read and accept this draft document and sign with the first and last name shown in my profile.",
+      "isDraft": true
+    },
+    {
+      "locale": "de",
+      "path": "/documents/agreements/cooperation-2026-10-02-v2/de.pdf",
+      "sha256": "c38c4a8757911916bd0f683959e2bf417de2ac6c08fdeb3c3ebcea00919bbb2b",
+      "consentText": "Mit einem Klick auf „Automatisch unterschreiben“ bestätige ich, dass ich dieses Entwurfsdokument gelesen habe und akzeptiere, und unterschreibe mit dem Vor- und Nachnamen aus meinem Profil.",
+      "isDraft": true
+    },
+    {
+      "locale": "fr",
+      "path": "/documents/agreements/cooperation-2026-10-02-v2/fr.pdf",
+      "sha256": "ad3a8e283c7b2cac6ac7b698901fcde4067a88da47dea39a2ca57538b76650ae",
+      "consentText": "En cliquant sur « Signer automatiquement », je confirme avoir lu et accepté ce document provisoire et je signe avec le prénom et le nom indiqués dans mon profil.",
+      "isDraft": true
+    },
+    {
+      "locale": "es",
+      "path": "/documents/agreements/cooperation-2026-10-02-v2/es.pdf",
+      "sha256": "3ee61a275749117454b9c37247a2abdd3f77ab51a78af24c2589100919253a00",
+      "consentText": "Al pulsar « Firmar automáticamente », confirmo que he leído y acepto este documento en borrador y firmo con el nombre y los apellidos de mi perfil.",
+      "isDraft": true
+    },
+    {
+      "locale": "it",
+      "path": "/documents/agreements/cooperation-2026-10-02-v2/it.pdf",
+      "sha256": "d9a009c5861249fdedacd82aa70a10b7a152754919846c37a7494da9fcc1cd4c",
+      "consentText": "Cliccando su « Firma automaticamente », confermo di aver letto e accettato questo documento in bozza e firmo con il nome e il cognome indicati nel mio profilo.",
+      "isDraft": true
+    }
+  ]
+}

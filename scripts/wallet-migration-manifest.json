@@ -1,0 +1,17 @@
+[
+  {
+    "file": "SUPABASE_WALLET_LEDGER.sql",
+    "version": "001_wallet_ledger",
+    "checksum": "053575fa266558aac7e11ed50cb35eb8007b741f8e1702a3e7e8d6169828d079"
+  },
+  {
+    "file": "SUPABASE_EUR_ONLY.sql",
+    "version": "002_eur_only",
+    "checksum": "d55e2f92e66d40362c2427726ac9d70dce7ab4d6ccaa80c35e783124828b98b0"
+  },
+  {
+    "file": "SUPABASE_PAYMENT_METHODS.sql",
+    "version": "003_payment_methods",
+    "checksum": "3b3e447bb32c3605eec9b8219c0f98a79959fde8d25bd9ad26adf51dc0b0d453"
+  }
+]

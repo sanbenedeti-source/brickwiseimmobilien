@@ -1,0 +1,9 @@
+import type { Locale } from "../lib/i18n";
+import type { Deposit } from "./deposit-store";
+import { depositText } from "./deposit-copy";
+export default function DepositHistory({deposits,locale,error}:{deposits:Deposit[];locale:Locale;error:boolean}) {
+ const d=depositText(locale);
+ return <section className="mt-10"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-bold">{d("history")}</h2><a href="/funding" className="text-sm font-semibold text-sky-700 underline">{d("refresh")}</a></div>
+ {error?<p role="alert">{d("loadError")}</p>:!deposits.length?<p className="rounded-xl border border-dashed border-slate-300 p-6 text-slate-600">{d("empty")}</p>:<div className="space-y-4">{deposits.map(row=><article key={row.id} className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex flex-wrap justify-between gap-3"><h3 className="font-bold">{row.destination.label} · {Number(row.requested_eur).toLocaleString(locale,{style:"currency",currency:"EUR"})}</h3><span className={`rounded-full px-3 py-1 text-xs font-bold ${row.status==="verified"?"bg-emerald-50 text-emerald-800":row.status==="rejected"?"bg-red-50 text-red-700":"bg-amber-50 text-amber-800"}`}>{d(row.status)}</span></div><p className="mt-2 text-xs text-slate-500">{new Date(row.created_at).toLocaleString(locale)} · {row.id}</p><p className="mt-3 break-all text-sm">{d("reference")}: {row.transfer_reference}</p>{(row.status==="verified" || row.status==="refunded") && <p className="mt-3 font-semibold text-emerald-700">{d(row.status==="refunded"?"refunded":"credited")}: {Number(row.credited_eur).toLocaleString(locale,{style:"currency",currency:"EUR"})}</p>}{row.review_note && <p className="mt-3 whitespace-pre-line break-words text-sm text-slate-600">{row.review_note}</p>}</article>)}</div>}
+ </section>;
+}

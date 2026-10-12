@@ -1,0 +1,2924 @@
+{
+  "Explore payment, affordability, and refinancing estimates to prepare your mortgage decisions.": [
+    "Vergleichen Sie Schätzungen zu Raten, Finanzierbarkeit und Anschlussfinanzierung, um Ihre Immobilienfinanzierung vorzubereiten.",
+    "Explorez les estimations de mensualités, de capacité d'emprunt et de refinancement pour préparer vos décisions de financement immobilier.",
+    "Consulta estimaciones de cuotas, capacidad de financiación y refinanciación para preparar tus decisiones hipotecarias.",
+    "Esplora le stime di rata, sostenibilità e rifinanziamento per preparare le tue decisioni sul mutuo."
+  ],
+  "Illustrative rate: {product}": [
+    "Beispielzinssatz: {product}",
+    "Taux illustratif : {product}",
+    "Tipo de ejemplo: {product}",
+    "Tasso illustrativo: {product}"
+  ],
+  "Compare illustrative Canadian mortgage scenarios. These sample rates are planning assumptions, not current lender offers.": [
+    "Vergleichen Sie beispielhafte kanadische Finanzierungsszenarien. Diese Zinssätze sind Planungsannahmen und keine aktuellen Angebote von Kreditgebern.",
+    "Comparez des scénarios illustratifs de prêts immobiliers canadiens. Ces taux sont des hypothèses de planification, et non des offres actuelles de prêteurs.",
+    "Compara escenarios ilustrativos de hipotecas canadienses. Estos tipos son hipótesis de planificación, no ofertas actuales de entidades financieras.",
+    "Confronta scenari illustrativi di mutui canadesi. Questi tassi sono ipotesi di pianificazione, non offerte attuali degli istituti di credito."
+  ],
+  "A compact comparison table for common mortgage scenarios in Canada.": [
+    "Kompakter Vergleich gängiger Finanzierungsszenarien in Kanada.",
+    "Un tableau comparatif des scénarios courants de crédit au Canada.",
+    "Tabla comparativa de escenarios hipotecarios habituales en Canadá.",
+    "Tabella comparativa degli scenari comuni di mutuo in Canada."
+  ],
+  "T4 / tax documents or business income records": [
+    "T4-Bescheinigungen, Steuerunterlagen oder Nachweise über Geschäftseinkünfte",
+    "Formulaires T4, documents fiscaux ou justificatifs de revenus professionnels",
+    "Formularios T4, documentos fiscales o justificantes de ingresos empresariales",
+    "Moduli T4, documenti fiscali o attestazioni dei redditi d'impresa"
+  ],
+  "1-year fixed": [
+    "1 Jahr fest",
+    "Taux fixe sur 1 an",
+    "Tipo fijo a 1 año",
+    "Tasso fisso a 1 anno"
+  ],
+  "Rates and payments on this page are illustrative planning estimates. They are not lender quotes, mortgage offers, pre-approvals, or financial advice. Confirm available rates and conditions directly with a qualified lender.": [
+    "Zinssätze und Raten auf dieser Seite sind beispielhafte Planungsschätzungen. Sie sind keine Kreditgeberangebote, Finanzierungsangebote, Vorabzusagen oder Finanzberatung. Bestätigen Sie verfügbare Zinssätze und Bedingungen direkt bei einem qualifizierten Kreditgeber.",
+    "Les taux et mensualités de cette page sont des estimations illustratives pour la planification. Ils ne constituent ni devis de prêteur, ni offres de prêt, ni préaccords, ni conseils financiers. Confirmez les taux et conditions disponibles directement auprès d'un prêteur qualifié.",
+    "Los tipos y las cuotas de esta página son estimaciones ilustrativas para planificar. No son cotizaciones de entidades financieras, ofertas hipotecarias, aprobaciones previas ni asesoramiento financiero. Confirma los tipos y las condiciones disponibles directamente con una entidad cualificada.",
+    "I tassi e le rate di questa pagina sono stime illustrative per la pianificazione. Non costituiscono preventivi, offerte di mutuo, pre-approvazioni o consulenza finanziaria. Conferma i tassi e le condizioni disponibili direttamente con un istituto di credito qualificato."
+  ],
+  "Brickwise selection": [
+    "Brickwise-Auswahl",
+    "Sélection Brickwise",
+    "Selección Brickwise",
+    "Selezione Brickwise"
+  ],
+  "5 markets": [
+    "5 Märkte",
+    "5 marchés",
+    "5 mercados",
+    "5 mercati"
+  ],
+  "USA + Canada + Germany + Austria + Switzerland": [
+    "USA + Kanada + Deutschland + Österreich + Schweiz",
+    "États-Unis + Canada + Allemagne + Autriche + Suisse",
+    "Estados Unidos + Canadá + Alemania + Austria + Suiza",
+    "Stati Uniti + Canada + Germania + Austria + Svizzera"
+  ],
+  "Create client account": [
+    "Kundenkonto erstellen",
+    "Créer un compte client",
+    "Crear cuenta de cliente",
+    "Crea account cliente"
+  ],
+  "Amenities": [
+    "Ausstattung",
+    "Équipements",
+    "Servicios",
+    "Servizi"
+  ],
+  "Swimming pool": [
+    "Schwimmbad",
+    "Piscine",
+    "Piscina",
+    "Piscina"
+  ],
+  "Gym": [
+    "Fitnessraum",
+    "Salle de sport",
+    "Gimnasio",
+    "Palestra"
+  ],
+  "Air conditioning": [
+    "Klimaanlage",
+    "Climatisation",
+    "Aire acondicionado",
+    "Aria condizionata"
+  ],
+  "Laundry": [
+    "Waschraum",
+    "Buanderie",
+    "Lavandería",
+    "Lavanderia"
+  ],
+  "Free Wi-Fi": [
+    "Kostenloses WLAN",
+    "Wi-Fi gratuit",
+    "Wi-Fi gratuito",
+    "Wi-Fi gratuito"
+  ],
+  "Details": [
+    "Details",
+    "Détails",
+    "Detalles",
+    "Dettagli"
+  ],
+  "Financial": [
+    "Finanzen",
+    "Finances",
+    "Finanzas",
+    "Finanze"
+  ],
+  "Order book": [
+    "Orderbuch",
+    "Carnet d'ordres",
+    "Libro de órdenes",
+    "Registro ordini"
+  ],
+  "Updates": [
+    "Neuigkeiten",
+    "Actualités",
+    "Novedades",
+    "Aggiornamenti"
+  ],
+  "Documents": [
+    "Dokumente",
+    "Documents",
+    "Documentos",
+    "Documenti"
+  ],
+  "Transfers": [
+    "Übertragungen",
+    "Transferts",
+    "Transferencias",
+    "Trasferimenti"
+  ],
+  "Balance": [
+    "Saldo",
+    "Solde",
+    "Saldo",
+    "Saldo"
+  ],
+  "Reserve details": [
+    "Reservierungsdetails",
+    "Détails de réservation",
+    "Detalles de reserva",
+    "Dettagli prenotazione"
+  ],
+  "Orders": [
+    "Aufträge",
+    "Ordres",
+    "Órdenes",
+    "Ordini"
+  ],
+  "Occupancy Status": [
+    "Belegungsstatus",
+    "État d'occupation",
+    "Estado de ocupación",
+    "Stato di occupazione"
+  ],
+  "Status:": [
+    "Status:",
+    "Statut :",
+    "Estado:",
+    "Stato:"
+  ],
+  "Available shares": [
+    "Verfügbare Anteile",
+    "Parts disponibles",
+    "Participaciones disponibles",
+    "Quote disponibili"
+  ],
+  "Sold / blocked": [
+    "Verkauft / gesperrt",
+    "Vendues / bloquées",
+    "Vendidas / bloqueadas",
+    "Vendute / bloccate"
+  ],
+  "Total shares": [
+    "Anteile insgesamt",
+    "Total des parts",
+    "Participaciones totales",
+    "Quote totali"
+  ],
+  "Rental income": [
+    "Mieteinnahmen",
+    "Revenus locatifs",
+    "Ingresos por alquiler",
+    "Reddito da locazione"
+  ],
+  "Modelled appreciation": [
+    "Modellierte Wertsteigerung",
+    "Valorisation modélisée",
+    "Revalorización modelada",
+    "Rivalutazione modellata"
+  ],
+  "Payout": [
+    "Ausschüttung",
+    "Versement",
+    "Distribución",
+    "Distribuzione"
+  ],
+  "Income overview": [
+    "Ertragsübersicht",
+    "Aperçu des revenus",
+    "Resumen de ingresos",
+    "Panoramica dei redditi"
+  ],
+  "Beds": [
+    "Schlafzimmer",
+    "Chambres",
+    "Dormitorios",
+    "Camere"
+  ],
+  "Baths": [
+    "Bäder",
+    "Salles de bain",
+    "Baños",
+    "Bagni"
+  ],
+  "Size": [
+    "Fläche",
+    "Surface",
+    "Superficie",
+    "Superficie"
+  ],
+  "Mortgage center": [
+    "Finanzierungszentrum",
+    "Centre de crédit immobilier",
+    "Centro hipotecario",
+    "Centro mutui"
+  ],
+  "Get mortgage-ready before you choose a property": [
+    "Bereiten Sie Ihre Finanzierung vor der Immobilienwahl vor",
+    "Préparez votre crédit avant de choisir un bien",
+    "Prepara tu hipoteca antes de elegir una propiedad",
+    "Prepara il mutuo prima di scegliere un immobile"
+  ],
+  "Explore payment estimates, Canadian rate scenarios, refinance savings, affordability, and document readiness in one focused mortgage hub.": [
+    "Prüfen Sie Zahlungsmodelle, kanadische Zinsszenarien, Einsparungen bei Umschuldung, Tragbarkeit und Unterlagen an einem Ort.",
+    "Explorez estimations de paiement, scénarios de taux canadiens, économies de refinancement, budget et préparation des documents dans un même espace.",
+    "Explora estimaciones de pago, tipos canadienses, ahorro de refinanciación, capacidad de compra y documentación en un mismo centro.",
+    "Esplora stime di pagamento, scenari di tassi canadesi, risparmi da rifinanziamento, sostenibilità e documentazione in un unico spazio."
+  ],
+  "Calculate payment": [
+    "Zahlung berechnen",
+    "Calculer le paiement",
+    "Calcular pago",
+    "Calcola pagamento"
+  ],
+  "Prepare pre-approval": [
+    "Vorabprüfung vorbereiten",
+    "Préparer la préapprobation",
+    "Preparar aprobación previa",
+    "Prepara preapprovazione"
+  ],
+  "Featured estimate": [
+    "Beispielrechnung",
+    "Estimation présentée",
+    "Estimación destacada",
+    "Stima in evidenza"
+  ],
+  "per month": [
+    "pro Monat",
+    "par mois",
+    "al mes",
+    "al mese"
+  ],
+  "Purchase price": [
+    "Kaufpreis",
+    "Prix d'achat",
+    "Precio de compra",
+    "Prezzo d'acquisto"
+  ],
+  "Down payment": [
+    "Eigenkapital",
+    "Apport",
+    "Entrada",
+    "Anticipo"
+  ],
+  "Estimate excludes tax, insurance, and lender-specific conditions.": [
+    "Die Schätzung schließt Steuern, Versicherungen und bankspezifische Bedingungen aus.",
+    "L'estimation exclut impôts, assurances et conditions propres au prêteur.",
+    "La estimación excluye impuestos, seguros y condiciones del prestamista.",
+    "La stima esclude imposte, assicurazioni e condizioni del finanziatore."
+  ],
+  "Mortgage tools": [
+    "Finanzierungsrechner",
+    "Outils de crédit immobilier",
+    "Herramientas hipotecarias",
+    "Strumenti per mutui"
+  ],
+  "Rate / APR": [
+    "Zins / Effektivzins",
+    "Taux / TAEG",
+    "Tipo / TAE",
+    "Tasso / TAEG"
+  ],
+  "APR": [
+    "Effektivzins",
+    "TAEG",
+    "TAE",
+    "TAEG"
+  ],
+  "Rate": [
+    "Zinssatz",
+    "Taux",
+    "Tipo",
+    "Tasso"
+  ],
+  "Fees": [
+    "Gebühren",
+    "Frais",
+    "Comisiones",
+    "Commissioni"
+  ],
+  "Prepare quote": [
+    "Angebot vorbereiten",
+    "Préparer un devis",
+    "Preparar oferta",
+    "Prepara preventivo"
+  ],
+  "How much could fit?": [
+    "Welcher Betrag könnte passen?",
+    "Quel budget envisager ?",
+    "¿Qué presupuesto podría encajar?",
+    "Quale budget può essere adatto?"
+  ],
+  "Annual income": [
+    "Jahreseinkommen",
+    "Revenu annuel",
+    "Ingresos anuales",
+    "Reddito annuo"
+  ],
+  "Monthly debt": [
+    "Monatliche Schuldenzahlungen",
+    "Dettes mensuelles",
+    "Deuda mensual",
+    "Debiti mensili"
+  ],
+  "Estimated budget": [
+    "Geschätztes Budget",
+    "Budget estimé",
+    "Presupuesto estimado",
+    "Budget stimato"
+  ],
+  "Could a lower rate help?": [
+    "Könnte ein niedrigerer Zins helfen?",
+    "Un taux plus bas serait-il utile ?",
+    "¿Ayudaría un tipo más bajo?",
+    "Un tasso inferiore può aiutare?"
+  ],
+  "Current rate": [
+    "Aktueller Zinssatz",
+    "Taux actuel",
+    "Tipo actual",
+    "Tasso attuale"
+  ],
+  "New rate": [
+    "Neuer Zinssatz",
+    "Nouveau taux",
+    "Nuevo tipo",
+    "Nuovo tasso"
+  ],
+  "Current": [
+    "Aktuell",
+    "Actuel",
+    "Actual",
+    "Attuale"
+  ],
+  "New": [
+    "Neu",
+    "Nouveau",
+    "Nuevo",
+    "Nuovo"
+  ],
+  "Savings": [
+    "Ersparnis",
+    "Économies",
+    "Ahorro",
+    "Risparmio"
+  ],
+  "Home loan options": [
+    "Immobilienkreditoptionen",
+    "Options de crédit immobilier",
+    "Opciones hipotecarias",
+    "Opzioni mutuo"
+  ],
+  "Loan type": [
+    "Kreditart",
+    "Type de prêt",
+    "Tipo de préstamo",
+    "Tipo di prestito"
+  ],
+  "Best for": [
+    "Geeignet für",
+    "Adapté à",
+    "Adecuado para",
+    "Adatto a"
+  ],
+  "Credit guide": [
+    "Bonitätsorientierung",
+    "Repère de crédit",
+    "Guía crediticia",
+    "Guida al credito"
+  ],
+  "Notes": [
+    "Hinweise",
+    "Notes",
+    "Notas",
+    "Note"
+  ],
+  "Lender readiness checklist": [
+    "Checkliste für die Kreditprüfung",
+    "Liste de préparation au prêteur",
+    "Lista de preparación para el prestamista",
+    "Lista di preparazione al finanziatore"
+  ],
+  "Mortgage glossary": [
+    "Finanzierungsglossar",
+    "Glossaire du crédit immobilier",
+    "Glosario hipotecario",
+    "Glossario mutui"
+  ],
+  "Canadian mortgage markets": [
+    "Kanadische Finanzierungsmärkte",
+    "Marchés canadiens du crédit immobilier",
+    "Mercados hipotecarios canadienses",
+    "Mercati dei mutui canadesi"
+  ],
+  "mortgage rates": [
+    "Hypothekenzinsen",
+    "taux immobiliers",
+    "tipos hipotecarios",
+    "tassi dei mutui"
+  ],
+  "Mortgage products": [
+    "Finanzierungsprodukte",
+    "Produits de crédit immobilier",
+    "Productos hipotecarios",
+    "Prodotti mutuo"
+  ],
+  "Rates and payments on this page are sample estimates for planning. They are not lender quotes, mortgage offers, pre-approvals, or financial advice. Replace sample rate data with a licensed Canadian rate provider before using this for live lender comparisons.": [
+    "Zinsen und Zahlungen auf dieser Seite sind Planungsbeispiele, keine Bankangebote, Kreditzusagen, Vorabgenehmigungen oder Finanzberatung. Vor echten Anbietervergleichen sind die Beispieldaten durch Daten eines lizenzierten kanadischen Anbieters zu ersetzen.",
+    "Les taux et paiements sont des exemples de planification, ni devis, ni offres de crédit, ni préapprobations, ni conseils financiers. Les données d'exemple doivent être remplacées par celles d'un fournisseur canadien agréé avant toute comparaison réelle de prêteurs.",
+    "Los tipos y pagos son ejemplos de planificación, no ofertas de prestamistas, hipotecas, aprobaciones previas ni asesoramiento financiero. Sustituye los ejemplos por datos de un proveedor canadiense autorizado antes de comparar prestamistas reales.",
+    "Tassi e pagamenti sono esempi di pianificazione, non preventivi, offerte di mutuo, preapprovazioni o consulenza finanziaria. Sostituire i dati di esempio con quelli di un fornitore canadese autorizzato prima di confrontare finanziatori reali."
+  ],
+  "Mortgage calculator": [
+    "Hypothekenrechner",
+    "Calculateur de crédit immobilier",
+    "Calculadora hipotecaria",
+    "Calcolatore mutuo"
+  ],
+  "Estimate a monthly Canadian home payment, closing cash, and amortization using your own price, down payment, rate, and cost assumptions.": [
+    "Schätzen Sie monatliche Zahlungen für eine kanadische Immobilie, Abschlusskosten und Tilgung anhand Ihrer Preis-, Eigenkapital-, Zins- und Kostenannahmen.",
+    "Estimez mensualités, trésorerie à la signature et amortissement d'un logement canadien avec vos propres hypothèses de prix, apport, taux et coûts.",
+    "Estima pagos mensuales, efectivo al cierre y amortización de una vivienda canadiense con tus hipótesis de precio, entrada, tipo y costes.",
+    "Stima rata mensile, liquidità al rogito e ammortamento di un'abitazione canadese con le tue ipotesi di prezzo, anticipo, tasso e costi."
+  ],
+  "Estimated monthly payment": [
+    "Geschätzte Monatsrate",
+    "Mensualité estimée",
+    "Pago mensual estimado",
+    "Rata mensile stimata"
+  ],
+  "Loan amount": [
+    "Kreditbetrag",
+    "Montant du prêt",
+    "Importe del préstamo",
+    "Importo del prestito"
+  ],
+  "Monthly": [
+    "Monatlich",
+    "Mensuel",
+    "Mensual",
+    "Mensile"
+  ],
+  "Due at close": [
+    "Bei Abschluss fällig",
+    "À payer à la signature",
+    "A pagar al cierre",
+    "Dovuto al rogito"
+  ],
+  "Total interest": [
+    "Gesamtzinsen",
+    "Intérêts totaux",
+    "Intereses totales",
+    "Interessi totali"
+  ],
+  "Payment inputs": [
+    "Berechnungsgrundlagen",
+    "Paramètres du paiement",
+    "Datos del pago",
+    "Dati del pagamento"
+  ],
+  "Home price": [
+    "Immobilienpreis",
+    "Prix du logement",
+    "Precio de vivienda",
+    "Prezzo dell'abitazione"
+  ],
+  "Loan term": [
+    "Kreditlaufzeit",
+    "Durée du prêt",
+    "Plazo del préstamo",
+    "Durata del prestito"
+  ],
+  "15 years fixed": [
+    "15 Jahre fest",
+    "15 ans fixe",
+    "15 años fijo",
+    "15 anni fisso"
+  ],
+  "20 years fixed": [
+    "20 Jahre fest",
+    "20 ans fixe",
+    "20 años fijo",
+    "20 anni fisso"
+  ],
+  "25 years fixed": [
+    "25 Jahre fest",
+    "25 ans fixe",
+    "25 años fijo",
+    "25 anni fisso"
+  ],
+  "30 years fixed": [
+    "30 Jahre fest",
+    "30 ans fixe",
+    "30 años fijo",
+    "30 anni fisso"
+  ],
+  "Interest rate": [
+    "Zinssatz",
+    "Taux d'intérêt",
+    "Tipo de interés",
+    "Tasso d'interesse"
+  ],
+  "Property tax rate": [
+    "Grundsteuersatz",
+    "Taux de taxe foncière",
+    "Tipo de impuesto inmobiliario",
+    "Aliquota immobiliare"
+  ],
+  "Monthly home insurance": [
+    "Monatliche Gebäudeversicherung",
+    "Assurance habitation mensuelle",
+    "Seguro mensual de vivienda",
+    "Assicurazione mensile casa"
+  ],
+  "Monthly HOA / condo fees": [
+    "Monatliches Hausgeld",
+    "Charges mensuelles de copropriété",
+    "Cuotas mensuales de comunidad",
+    "Spese condominiali mensili"
+  ],
+  "Closing cost estimate": [
+    "Geschätzte Abschlusskosten",
+    "Estimation des frais de clôture",
+    "Costes estimados de cierre",
+    "Stima costi di chiusura"
+  ],
+  "Amortization snapshot": [
+    "Tilgungsübersicht",
+    "Aperçu de l'amortissement",
+    "Resumen de amortización",
+    "Panoramica ammortamento"
+  ],
+  "First five years of principal, interest, and remaining balance.": [
+    "Tilgung, Zinsen und Restschuld der ersten fünf Jahre.",
+    "Capital, intérêts et solde restant des cinq premières années.",
+    "Capital, intereses y saldo de los primeros cinco años.",
+    "Capitale, interessi e saldo residuo dei primi cinque anni."
+  ],
+  "year term": [
+    "Jahre Laufzeit",
+    "ans de durée",
+    "años de plazo",
+    "anni di durata"
+  ],
+  "Year": [
+    "Jahr",
+    "Année",
+    "Año",
+    "Anno"
+  ],
+  "Principal paid": [
+    "Getilgtes Kapital",
+    "Capital remboursé",
+    "Capital amortizado",
+    "Capitale rimborsato"
+  ],
+  "Interest paid": [
+    "Gezahlte Zinsen",
+    "Intérêts payés",
+    "Intereses pagados",
+    "Interessi pagati"
+  ],
+  "Remaining balance": [
+    "Restschuld",
+    "Solde restant",
+    "Saldo pendiente",
+    "Saldo residuo"
+  ],
+  "Payments": [
+    "Zahlungen",
+    "Paiements",
+    "Pagos",
+    "Pagamenti"
+  ],
+  "This calculator is for educational estimates only. It does not include every fee, lender rule, land transfer tax, qualification test, or insurance condition that may apply to a real Canadian mortgage.": [
+    "Dieser Rechner dient nur Lern- und Schätzzwecken. Er erfasst nicht sämtliche Gebühren, Bankregeln, Grunderwerbsteuern, Eignungsprüfungen oder Versicherungsbedingungen einer tatsächlichen kanadischen Hypothek.",
+    "Ce calculateur fournit uniquement des estimations pédagogiques. Il n'inclut pas tous les frais, règles des prêteurs, droits de mutation, tests d'éligibilité ou conditions d'assurance d'un crédit canadien réel.",
+    "Esta calculadora solo ofrece estimaciones educativas. No incluye todas las comisiones, normas, impuestos de transmisión, pruebas de elegibilidad o condiciones de seguro de una hipoteca canadiense real.",
+    "Il calcolatore offre solo stime didattiche. Non include tutte le commissioni, regole dei finanziatori, imposte di trasferimento, verifiche di idoneità o condizioni assicurative di un vero mutuo canadese."
+  ],
+  "Principal & interest": [
+    "Tilgung und Zinsen",
+    "Capital et intérêts",
+    "Capital e intereses",
+    "Capitale e interessi"
+  ],
+  "Property tax": [
+    "Grundsteuer",
+    "Taxe foncière",
+    "Impuesto inmobiliario",
+    "Imposta immobiliare"
+  ],
+  "Home insurance": [
+    "Gebäudeversicherung",
+    "Assurance habitation",
+    "Seguro de vivienda",
+    "Assicurazione casa"
+  ],
+  "Mortgage insurance": [
+    "Hypothekenversicherung",
+    "Assurance hypothécaire",
+    "Seguro hipotecario",
+    "Assicurazione mutuo"
+  ],
+  "HOA / condo fees": [
+    "Hausgeld",
+    "Charges de copropriété",
+    "Cuotas de comunidad",
+    "Spese condominiali"
+  ],
+  "5-year fixed": [
+    "5 Jahre fest",
+    "Fixe sur 5 ans",
+    "Fijo a 5 años",
+    "Fisso a 5 anni"
+  ],
+  "3-year fixed": [
+    "3 Jahre fest",
+    "Fixe sur 3 ans",
+    "Fijo a 3 años",
+    "Fisso a 3 anni"
+  ],
+  "Most searched": [
+    "Am häufigsten gesucht",
+    "Le plus recherché",
+    "Más buscado",
+    "Più cercato"
+  ],
+  "Full documentation review": [
+    "Vollständige Unterlagenprüfung",
+    "Vérification complète des documents",
+    "Revisión completa de documentos",
+    "Verifica completa dei documenti"
+  ],
+  "Owner-occupied scenarios": [
+    "Szenarien für Eigennutzung",
+    "Scénarios de résidence principale",
+    "Escenarios de vivienda habitual",
+    "Scenari per abitazione principale"
+  ],
+  "No lender fee estimate": [
+    "Schätzung ohne Bankgebühr",
+    "Estimation sans frais de prêteur",
+    "Estimación sin comisión del prestamista",
+    "Stima senza commissione del finanziatore"
+  ],
+  "Shorter commitment": [
+    "Kürzere Bindung",
+    "Engagement plus court",
+    "Compromiso más corto",
+    "Impegno più breve"
+  ],
+  "Rate hold available": [
+    "Zinsreservierung verfügbar",
+    "Garantie de taux disponible",
+    "Reserva de tipo disponible",
+    "Blocco del tasso disponibile"
+  ],
+  "Good renewal option": [
+    "Option für Verlängerung",
+    "Option de renouvellement",
+    "Opción de renovación",
+    "Opzione di rinnovo"
+  ],
+  "Flexible prepayment terms": [
+    "Flexible Sondertilgung",
+    "Remboursement anticipé flexible",
+    "Amortización anticipada flexible",
+    "Rimborso anticipato flessibile"
+  ],
+  "Variable": [
+    "Variabel",
+    "Variable",
+    "Variable",
+    "Variabile"
+  ],
+  "Adjusts with prime": [
+    "Anpassung an den Leitzins",
+    "Suit le taux préférentiel",
+    "Se ajusta al tipo preferente",
+    "Si adegua al tasso primario"
+  ],
+  "Prime-linked rate": [
+    "An Leitzins gebunden",
+    "Lié au taux préférentiel",
+    "Ligado al tipo preferente",
+    "Legato al tasso primario"
+  ],
+  "Convertible option": [
+    "Umwandelbare Option",
+    "Option convertible",
+    "Opción convertible",
+    "Opzione convertibile"
+  ],
+  "Lower setup estimate": [
+    "Geringere geschätzte Einrichtungskosten",
+    "Frais initiaux estimés réduits",
+    "Menor coste inicial estimado",
+    "Minori costi iniziali stimati"
+  ],
+  "Estimate monthly payment, taxes, insurance, closing cash, and amortization.": [
+    "Schätzen Sie Monatsrate, Steuern, Versicherung, Abschlusskosten und Tilgung.",
+    "Estimez mensualité, impôts, assurance, fonds à la signature et amortissement.",
+    "Estima pago mensual, impuestos, seguro, efectivo al cierre y amortización.",
+    "Stima rata, imposte, assicurazione, liquidità al rogito e ammortamento."
+  ],
+  "Affordability calculator": [
+    "Budgetrechner",
+    "Calculateur de capacité d'achat",
+    "Calculadora de capacidad de compra",
+    "Calcolatore di sostenibilità"
+  ],
+  "Model the home budget that may fit income, debt, rate, and down payment.": [
+    "Modellieren Sie ein Immobilienbudget passend zu Einkommen, Schulden, Zins und Eigenkapital.",
+    "Modélisez un budget selon les revenus, dettes, taux et apport.",
+    "Modela un presupuesto según ingresos, deuda, tipo y entrada.",
+    "Modella un budget in base a reddito, debiti, tasso e anticipo."
+  ],
+  "Refinance calculator": [
+    "Umschuldungsrechner",
+    "Calculateur de refinancement",
+    "Calculadora de refinanciación",
+    "Calcolatore di rifinanziamento"
+  ],
+  "Compare current and new payment estimates for a mortgage renewal or refinance.": [
+    "Vergleichen Sie aktuelle und neue Zahlungen bei Verlängerung oder Umschuldung.",
+    "Comparez les paiements actuels et nouveaux pour un renouvellement ou refinancement.",
+    "Compara pagos actuales y nuevos para renovar o refinanciar una hipoteca.",
+    "Confronta pagamenti attuali e nuovi per rinnovare o rifinanziare il mutuo."
+  ],
+  "Pre-approval checklist": [
+    "Checkliste für Vorabprüfung",
+    "Liste de préapprobation",
+    "Lista de aprobación previa",
+    "Lista di preapprovazione"
+  ],
+  "Prepare the documents lenders commonly ask for before reviewing a file.": [
+    "Bereiten Sie die Unterlagen vor, die Banken üblicherweise vor der Prüfung benötigen.",
+    "Préparez les documents habituellement demandés par les prêteurs avant examen.",
+    "Prepara los documentos que suelen pedir los prestamistas antes de revisar un expediente.",
+    "Prepara i documenti normalmente richiesti dai finanziatori prima dell'esame."
+  ],
+  "Stable payment": [
+    "Stabile Rate",
+    "Paiement stable",
+    "Pago estable",
+    "Rata stabile"
+  ],
+  "Popular Canadian fixed-rate benchmark": [
+    "Verbreiteter kanadischer Festzinsvergleich",
+    "Référence canadienne courante à taux fixe",
+    "Referencia canadiense habitual a tipo fijo",
+    "Riferimento canadese comune a tasso fisso"
+  ],
+  "Shorter rate lock": [
+    "Kürzere Zinsbindung",
+    "Blocage de taux plus court",
+    "Fijación de tipo más corta",
+    "Blocco del tasso più breve"
+  ],
+  "Useful when rates may move before renewal": [
+    "Geeignet bei möglichen Zinsänderungen vor Verlängerung",
+    "Utile si les taux évoluent avant renouvellement",
+    "Útil si cambian los tipos antes de renovar",
+    "Utile se i tassi cambiano prima del rinnovo"
+  ],
+  "Rate can adjust": [
+    "Zins kann sich ändern",
+    "Taux ajustable",
+    "Tipo ajustable",
+    "Tasso modificabile"
+  ],
+  "Payment or interest cost may change with prime": [
+    "Rate oder Zinskosten können sich mit dem Leitzins ändern",
+    "Paiement ou coût d'intérêt peut suivre le taux préférentiel",
+    "El pago o interés puede cambiar con el tipo preferente",
+    "Pagamento o interessi possono cambiare con il tasso primario"
+  ],
+  "Insured mortgage": [
+    "Versicherte Hypothek",
+    "Prêt hypothécaire assuré",
+    "Hipoteca asegurada",
+    "Mutuo assicurato"
+  ],
+  "Lower down payment": [
+    "Geringeres Eigenkapital",
+    "Apport réduit",
+    "Menor entrada",
+    "Anticipo ridotto"
+  ],
+  "Varies": [
+    "Unterschiedlich",
+    "Variable",
+    "Variable",
+    "Variabile"
+  ],
+  "Mortgage default insurance usually applies": [
+    "Üblicherweise mit Kreditausfallversicherung",
+    "Assurance contre le défaut généralement applicable",
+    "Suele aplicarse seguro de impago",
+    "Di norma si applica assicurazione contro l'insolvenza"
+  ],
+  "Refinance": [
+    "Umschuldung",
+    "Refinancement",
+    "Refinanciación",
+    "Rifinanziamento"
+  ],
+  "Equity review": [
+    "Eigenkapitalprüfung",
+    "Examen des fonds propres",
+    "Revisión de capital propio",
+    "Verifica del capitale proprio"
+  ],
+  "Often 20%+ equity": [
+    "Oft mindestens 20 % Eigenkapital",
+    "Souvent au moins 20 % de fonds propres",
+    "A menudo 20 % o más de capital propio",
+    "Spesso almeno 20% di capitale proprio"
+  ],
+  "Qualification depends on lender and property": [
+    "Eignung hängt von Bank und Immobilie ab",
+    "Éligibilité selon le prêteur et le bien",
+    "Elegibilidad según prestamista y propiedad",
+    "Idoneità secondo finanziatore e immobile"
+  ],
+  "Amortization": [
+    "Tilgung",
+    "Amortissement",
+    "Amortización",
+    "Ammortamento"
+  ],
+  "The full schedule used to repay principal and interest over time, often 25 or 30 years.": [
+    "Der vollständige Plan zur Rückzahlung von Kapital und Zinsen, oft über 25 oder 30 Jahre.",
+    "L'échéancier complet de remboursement du capital et des intérêts, souvent sur 25 ou 30 ans.",
+    "El calendario completo de devolución de capital e intereses, a menudo durante 25 o 30 años.",
+    "Il piano completo di rimborso di capitale e interessi, spesso in 25 o 30 anni."
+  ],
+  "A cost measure that combines interest rate and some borrowing costs into one annual percentage.": [
+    "Eine Kostenkennzahl, die Zins und bestimmte Kreditkosten in einem Jahresprozentsatz zusammenfasst.",
+    "Une mesure combinant taux et certains coûts d'emprunt en un pourcentage annuel.",
+    "Una medida que combina interés y ciertos costes del préstamo en un porcentaje anual.",
+    "Una misura che combina tasso e alcuni costi del prestito in una percentuale annua."
+  ],
+  "Debt service ratio": [
+    "Schuldendienstquote",
+    "Ratio de service de la dette",
+    "Ratio de servicio de deuda",
+    "Rapporto di servizio del debito"
+  ],
+  "A lender measure comparing housing payments and other debts against gross income.": [
+    "Eine Bankkennzahl zum Vergleich von Wohnkosten und anderen Schulden mit dem Bruttoeinkommen.",
+    "Une mesure comparant paiements du logement et autres dettes au revenu brut.",
+    "Una medida que compara pagos de vivienda y otras deudas con ingresos brutos.",
+    "Una misura che confronta spese abitative e altri debiti con il reddito lordo."
+  ],
+  "Loan-to-value": [
+    "Beleihungsauslauf",
+    "Ratio prêt-valeur",
+    "Relación préstamo-valor",
+    "Rapporto prestito-valore"
+  ],
+  "The loan amount compared with the property value. A lower LTV usually means more equity.": [
+    "Kreditbetrag im Verhältnis zum Immobilienwert. Ein niedrigerer Wert bedeutet meist mehr Eigenkapital.",
+    "Montant du prêt rapporté à la valeur du bien. Un ratio inférieur signifie généralement plus de fonds propres.",
+    "Préstamo frente al valor del inmueble. Un ratio menor suele significar más capital propio.",
+    "Prestito rispetto al valore dell'immobile. Un rapporto inferiore indica generalmente più capitale proprio."
+  ],
+  "Default insurance may apply when the down payment is below 20% in Canada.": [
+    "Bei weniger als 20 % Eigenkapital kann in Kanada eine Ausfallversicherung anfallen.",
+    "Une assurance défaut peut s'appliquer au Canada si l'apport est inférieur à 20 %.",
+    "En Canadá puede aplicarse seguro de impago si la entrada es inferior al 20 %.",
+    "In Canada può applicarsi assicurazione insolvenza se l'anticipo è inferiore al 20%."
+  ],
+  "Pre-approval": [
+    "Vorabprüfung",
+    "Préapprobation",
+    "Aprobación previa",
+    "Preapprovazione"
+  ],
+  "A lender review of income, debt, credit, and down payment before final property approval.": [
+    "Prüfung von Einkommen, Schulden, Bonität und Eigenkapital vor endgültiger Immobilienfreigabe.",
+    "Examen des revenus, dettes, crédit et apport avant l'approbation finale du bien.",
+    "Revisión de ingresos, deudas, crédito y entrada antes de aprobar la propiedad.",
+    "Verifica di reddito, debiti, credito e anticipo prima dell'approvazione finale dell'immobile."
+  ],
+  "Tools": [
+    "Werkzeuge",
+    "Outils",
+    "Herramientas",
+    "Strumenti"
+  ],
+  "Fast planning tools for the mortgage side of the decision, without adding buy or sell listing flows.": [
+    "Schnelle Planungswerkzeuge für die Immobilienfinanzierung ohne zusätzliche Kauf- oder Verkaufsprozesse.",
+    "Des outils rapides pour planifier le financement, sans ajouter de parcours d'achat ou de vente.",
+    "Herramientas rápidas para planificar la hipoteca sin añadir procesos de compra o venta.",
+    "Strumenti rapidi per pianificare il mutuo senza aggiungere percorsi di acquisto o vendita."
+  ],
+  "Rates": [
+    "Zinsen",
+    "Taux",
+    "Tipos",
+    "Tassi"
+  ],
+  "Sample Canadian rate scenarios for product comparison. Replace these with a licensed rate API or manual admin feed when ready.": [
+    "Kanadische Beispielzinsszenarien zum Produktvergleich. Bei Einsatz durch lizenzierte Zinsdaten oder einen gepflegten Datenbestand ersetzen.",
+    "Exemples de taux canadiens pour comparer les produits. À remplacer par des données agréées ou administrées avant utilisation réelle.",
+    "Ejemplos de tipos canadienses para comparar productos. Sustituir por datos autorizados o gestionados antes del uso real.",
+    "Esempi di tassi canadesi per confrontare prodotti. Sostituire con dati autorizzati o amministrati prima dell'uso effettivo."
+  ],
+  "Affordability": [
+    "Tragbarkeit",
+    "Capacité d'achat",
+    "Capacidad de compra",
+    "Sostenibilità"
+  ],
+  "Loan options": [
+    "Kreditoptionen",
+    "Options de prêt",
+    "Opciones de préstamo",
+    "Opzioni di prestito"
+  ],
+  "Government ID and contact details": [
+    "Amtlicher Ausweis und Kontaktdaten",
+    "Pièce d'identité et coordonnées",
+    "Identificación oficial y datos de contacto",
+    "Documento ufficiale e contatti"
+  ],
+  "Employment letter or recent pay stubs": [
+    "Arbeitsbescheinigung oder aktuelle Gehaltsnachweise",
+    "Attestation d'emploi ou fiches de paie récentes",
+    "Certificado laboral o nóminas recientes",
+    "Attestazione di lavoro o buste paga recenti"
+  ],
+  "Down payment proof and source of funds": [
+    "Eigenkapitalnachweis und Mittelherkunft",
+    "Justificatif d'apport et origine des fonds",
+    "Prueba de entrada y origen de fondos",
+    "Prova dell'anticipo e origine dei fondi"
+  ],
+  "Credit obligations and monthly debt list": [
+    "Kreditverpflichtungen und monatliche Schulden",
+    "Engagements de crédit et dettes mensuelles",
+    "Obligaciones crediticias y deudas mensuales",
+    "Obblighi creditizi e debiti mensili"
+  ],
+  "Property tax, condo fee, and insurance assumptions": [
+    "Annahmen zu Grundsteuer, Hausgeld und Versicherung",
+    "Hypothèses de taxe foncière, charges et assurance",
+    "Hipótesis de impuestos, comunidad y seguros",
+    "Ipotesi di imposte, condominio e assicurazione"
+  ],
+  "Common terms": [
+    "Gängige Begriffe",
+    "Termes courants",
+    "Términos comunes",
+    "Termini comuni"
+  ],
+  "Rates by city": [
+    "Zinsen nach Stadt",
+    "Taux par ville",
+    "Tipos por ciudad",
+    "Tassi per città"
+  ],
+  "Rates by type": [
+    "Zinsen nach Art",
+    "Taux par type",
+    "Tipos por categoría",
+    "Tassi per tipo"
+  ],
+  "Price": [
+    "Preis",
+    "Prix",
+    "Precio",
+    "Prezzo"
+  ],
+  "Total living": [
+    "Gesamtwohnfläche",
+    "Surface habitable totale",
+    "Superficie habitable total",
+    "Superficie abitabile totale"
+  ],
+  "Approx. 4,200 sqft": [
+    "Ca. 4.200 Quadratfuß",
+    "Environ 4 200 pieds carrés",
+    "Aprox. 4.200 pies cuadrados",
+    "Circa 4.200 piedi quadrati"
+  ],
+  "Parking": [
+    "Parkplätze",
+    "Stationnement",
+    "Aparcamiento",
+    "Parcheggio"
+  ],
+  "Neighbourhood": [
+    "Stadtteil",
+    "Quartier",
+    "Barrio",
+    "Quartiere"
+  ],
+  "Rare urban infill in Windsor Park": [
+    "Seltene moderne Stadtbebauung in Windsor Park",
+    "Rare construction urbaine à Windsor Park",
+    "Exclusiva construcción urbana en Windsor Park",
+    "Rara costruzione urbana a Windsor Park"
+  ],
+  "Steps to River Valley, school, park, UofA campus and hospital": [
+    "Nahe River Valley, Schule, Park, Universität und Krankenhaus",
+    "À proximité de River Valley, école, parc, université et hôpital",
+    "Cerca de River Valley, escuela, parque, universidad y hospital",
+    "Vicino a River Valley, scuola, parco, università e ospedale"
+  ],
+  "Approx. 1,000 sqft rooftop patio": [
+    "Dachterrasse mit ca. 1.000 Quadratfuß",
+    "Terrasse de toit d'environ 1 000 pieds carrés",
+    "Azotea de unos 1.000 pies cuadrados",
+    "Terrazza sul tetto di circa 1.000 piedi quadrati"
+  ],
+  "Fully finished basement plus garage suite": [
+    "Voll ausgebautes Untergeschoss und Garagensuite",
+    "Sous-sol aménagé et logement au-dessus du garage",
+    "Sótano terminado y suite sobre garaje",
+    "Seminterrato rifinito e suite sopra il garage"
+  ],
+  "NanaWall folding glass doors to heated patio and backyard sports court": [
+    "NanaWall-Glasfalttüren zu beheizter Terrasse und Sportplatz im Garten",
+    "Portes vitrées pliantes NanaWall vers terrasse chauffée et terrain de sport",
+    "Puertas plegables NanaWall hacia patio climatizado y pista deportiva",
+    "Porte pieghevoli NanaWall verso patio riscaldato e campo sportivo"
+  ],
+  "Oversized primary suite with 5 piece ensuite, dressing room and balcony": [
+    "Große Hauptsuite mit fünfteiliger Badausstattung, Ankleide und Balkon",
+    "Grande suite principale avec salle de bain cinq éléments, dressing et balcon",
+    "Amplia suite principal con baño de cinco piezas, vestidor y balcón",
+    "Ampia suite principale con bagno a cinque elementi, cabina armadio e balcone"
+  ],
+  "Kitchen": [
+    "Küche",
+    "Cuisine",
+    "Cocina",
+    "Cucina"
+  ],
+  "Chef's kitchen with upgraded appliances and fixtures": [
+    "Hochwertige Küche mit gehobenen Geräten und Armaturen",
+    "Cuisine de chef avec équipements et finitions améliorés",
+    "Cocina de chef con equipos y acabados mejorados",
+    "Cucina da chef con elettrodomestici e finiture di pregio"
+  ],
+  "Living areas": [
+    "Wohnbereiche",
+    "Espaces de vie",
+    "Zonas de estar",
+    "Zone giorno"
+  ],
+  "Primary suite": [
+    "Hauptsuite",
+    "Suite principale",
+    "Suite principal",
+    "Suite principale"
+  ],
+  "Lower level": [
+    "Untergeschoss",
+    "Niveau inférieur",
+    "Planta inferior",
+    "Piano inferiore"
+  ],
+  "Dual rec spaces, bedroom with murphy bed and hobby station": [
+    "Zwei Freizeitbereiche, Schlafzimmer mit Klappbett und Hobbyplatz",
+    "Deux espaces de loisirs, chambre avec lit escamotable et atelier",
+    "Dos zonas recreativas, dormitorio con cama abatible y zona de aficiones",
+    "Due spazi ricreativi, camera con letto a scomparsa e postazione hobby"
+  ],
+  "Basement": [
+    "Untergeschoss",
+    "Sous-sol",
+    "Sótano",
+    "Seminterrato"
+  ],
+  "Fully finished": [
+    "Vollständig ausgebaut",
+    "Entièrement aménagé",
+    "Totalmente terminado",
+    "Completamente rifinito"
+  ],
+  "Natural light": [
+    "Tageslicht",
+    "Lumière naturelle",
+    "Luz natural",
+    "Luce naturale"
+  ],
+  "Open concept layout with abundant light": [
+    "Offener Grundriss mit viel Licht",
+    "Plan ouvert et lumineux",
+    "Distribución abierta con mucha luz",
+    "Pianta aperta con abbondante luce"
+  ],
+  "Bedrooms / rooms": [
+    "Schlafzimmer / Zimmer",
+    "Chambres / pièces",
+    "Dormitorios / habitaciones",
+    "Camere / locali"
+  ],
+  "Bathrooms": [
+    "Badezimmer",
+    "Salles de bain",
+    "Baños",
+    "Bagni"
+  ],
+  "Layout": [
+    "Grundriss",
+    "Agencement",
+    "Distribución",
+    "Disposizione"
+  ],
+  "See property description": [
+    "Siehe Immobilienbeschreibung",
+    "Voir la description du bien",
+    "Ver descripción de la propiedad",
+    "Vedi descrizione immobile"
+  ],
+  "Property style": [
+    "Immobilienstil",
+    "Style du bien",
+    "Estilo de propiedad",
+    "Stile immobile"
+  ],
+  "Detached modern infill": [
+    "Freistehender moderner Neubau",
+    "Maison individuelle moderne",
+    "Casa independiente moderna",
+    "Casa indipendente moderna"
+  ],
+  "Outdoor space": [
+    "Außenbereich",
+    "Espace extérieur",
+    "Espacio exterior",
+    "Spazio esterno"
+  ],
+  "Heated patio, backyard and sports court": [
+    "Beheizte Terrasse, Garten und Sportplatz",
+    "Terrasse chauffée, jardin et terrain de sport",
+    "Patio climatizado, jardín y pista deportiva",
+    "Patio riscaldato, giardino e campo sportivo"
+  ],
+  "Rooftop": [
+    "Dachterrasse",
+    "Toit-terrasse",
+    "Azotea",
+    "Terrazza sul tetto"
+  ],
+  "Suite": [
+    "Suite",
+    "Suite",
+    "Suite",
+    "Suite"
+  ],
+  "Garage suite": [
+    "Garagensuite",
+    "Logement au-dessus du garage",
+    "Suite sobre garaje",
+    "Suite sopra il garage"
+  ],
+  "Address": [
+    "Adresse",
+    "Adresse",
+    "Dirección",
+    "Indirizzo"
+  ],
+  "Available": [
+    "Verfügbar",
+    "Disponible",
+    "Disponible",
+    "Disponibile"
+  ],
+  "Property information is available from the Brickwise agent.": [
+    "Immobilieninformationen erhalten Sie vom Brickwise-Team.",
+    "Les informations sur le bien sont disponibles auprès de l'équipe Brickwise.",
+    "La información está disponible a través del equipo Brickwise.",
+    "Le informazioni sono disponibili presso il team Brickwise."
+  ],
+  "No description available.": [
+    "Keine Beschreibung verfügbar.",
+    "Aucune description disponible.",
+    "Sin descripción disponible.",
+    "Nessuna descrizione disponibile."
+  ],
+  "Windsor Park places the home near River Valley access, schools, parks, University of Alberta campus, hospital services, Royal Glenora, Victoria Park and downtown Edmonton amenities.": [
+    "Windsor Park bietet Nähe zu River Valley, Schulen, Parks, University of Alberta, Krankenhaus, Royal Glenora, Victoria Park und den Angeboten der Innenstadt von Edmonton.",
+    "Windsor Park se trouve près de River Valley, des écoles, parcs, de l'Université de l'Alberta, de l'hôpital, Royal Glenora, Victoria Park et du centre d'Edmonton.",
+    "Windsor Park está cerca de River Valley, escuelas, parques, Universidad de Alberta, hospital, Royal Glenora, Victoria Park y el centro de Edmonton.",
+    "Windsor Park è vicino a River Valley, scuole, parchi, Università dell'Alberta, ospedale, Royal Glenora, Victoria Park e centro di Edmonton."
+  ],
+  "This market": [
+    "Dieser Markt",
+    "Ce marché",
+    "Este mercado",
+    "Questo mercato"
+  ],
+  "Canada": [
+    "Kanada",
+    "Canada",
+    "Canadá",
+    "Canada"
+  ],
+  "Close": [
+    "Schließen",
+    "Fermer",
+    "Cerrar",
+    "Chiudi"
+  ],
+  "Crypto Currency": [
+    "Kryptowährung",
+    "Cryptomonnaie",
+    "Criptomoneda",
+    "Criptovaluta"
+  ],
+  "Wire transfer": [
+    "Banküberweisung",
+    "Virement bancaire",
+    "Transferencia bancaria",
+    "Bonifico bancario"
+  ],
+  "Select Payment Method": [
+    "Zahlungsmethode auswählen",
+    "Choisir le mode de paiement",
+    "Elegir método de pago",
+    "Scegli metodo di pagamento"
+  ],
+  "Choose how you would like to prepare your deposit.": [
+    "Wählen Sie, wie Sie Ihre Einzahlung vorbereiten möchten.",
+    "Choisissez comment préparer votre dépôt.",
+    "Elige cómo preparar tu depósito.",
+    "Scegli come preparare il deposito."
+  ],
+  "Any transfer fees are charged by the selected provider, not by Brickwise.": [
+    "Überweisungsgebühren erhebt der gewählte Anbieter, nicht Brickwise.",
+    "Les frais de transfert sont facturés par le prestataire choisi, pas par Brickwise.",
+    "Las comisiones de transferencia las cobra el proveedor elegido, no Brickwise.",
+    "Le commissioni di trasferimento sono addebitate dal fornitore scelto, non da Brickwise."
+  ],
+  "Continue": [
+    "Weiter",
+    "Continuer",
+    "Continuar",
+    "Continua"
+  ],
+  "Selection Required": [
+    "Auswahl erforderlich",
+    "Sélection requise",
+    "Selección obligatoria",
+    "Selezione richiesta"
+  ],
+  "Complete your profile": [
+    "Profil vervollständigen",
+    "Compléter votre profil",
+    "Completa tu perfil",
+    "Completa il profilo"
+  ],
+  "Verify your account information before requesting a share purchase.": [
+    "Prüfen Sie Ihre Kontodaten vor der Anfrage zum Anteilskauf.",
+    "Vérifiez vos informations avant de demander un achat de parts.",
+    "Verifica tus datos antes de solicitar una compra de participaciones.",
+    "Verifica i dati prima di richiedere l'acquisto di quote."
+  ],
+  "Close profile": [
+    "Profil schließen",
+    "Fermer le profil",
+    "Cerrar perfil",
+    "Chiudi profilo"
+  ],
+  "Fill your information": [
+    "Daten eingeben",
+    "Renseigner vos informations",
+    "Introduce tus datos",
+    "Inserisci i dati"
+  ],
+  "Account details": [
+    "Kontodaten",
+    "Détails du compte",
+    "Datos de la cuenta",
+    "Dati dell'account"
+  ],
+  "First name": [
+    "Vorname",
+    "Prénom",
+    "Nombre",
+    "Nome"
+  ],
+  "Last name": [
+    "Nachname",
+    "Nom",
+    "Apellidos",
+    "Cognome"
+  ],
+  "Email": [
+    "E-Mail",
+    "E-mail",
+    "Correo",
+    "E-mail"
+  ],
+  "Date of birth": [
+    "Geburtsdatum",
+    "Date de naissance",
+    "Fecha de nacimiento",
+    "Data di nascita"
+  ],
+  "Gender": [
+    "Geschlecht",
+    "Genre",
+    "Género",
+    "Genere"
+  ],
+  "Select gender": [
+    "Geschlecht auswählen",
+    "Choisir le genre",
+    "Seleccionar género",
+    "Seleziona genere"
+  ],
+  "Female": [
+    "Weiblich",
+    "Féminin",
+    "Femenino",
+    "Femminile"
+  ],
+  "Male": [
+    "Männlich",
+    "Masculin",
+    "Masculino",
+    "Maschile"
+  ],
+  "Other": [
+    "Andere",
+    "Autre",
+    "Otro",
+    "Altro"
+  ],
+  "Phone number": [
+    "Telefonnummer",
+    "Numéro de téléphone",
+    "Número de teléfono",
+    "Numero di telefono"
+  ],
+  "Country": [
+    "Land",
+    "Pays",
+    "País",
+    "Paese"
+  ],
+  "Select a country": [
+    "Land auswählen",
+    "Choisir un pays",
+    "Seleccionar país",
+    "Seleziona paese"
+  ],
+  "Saving...": [
+    "Wird gespeichert…",
+    "Enregistrement…",
+    "Guardando…",
+    "Salvataggio…"
+  ],
+  "Save profile": [
+    "Profil speichern",
+    "Enregistrer le profil",
+    "Guardar perfil",
+    "Salva profilo"
+  ],
+  "Profile saved successfully.": [
+    "Profil erfolgreich gespeichert.",
+    "Profil enregistré.",
+    "Perfil guardado.",
+    "Profilo salvato."
+  ],
+  "Notarial cooperation agreement": [
+    "Notarielle Kooperationsvereinbarung",
+    "Accord notarié de coopération",
+    "Acuerdo notarial de cooperación",
+    "Accordo notarile di cooperazione"
+  ],
+  "Download the agreement when it becomes available, sign it, and upload the signed PDF here.": [
+    "Laden Sie die verfügbare Vereinbarung herunter, unterschreiben Sie sie und laden Sie das unterschriebene PDF hier hoch.",
+    "Téléchargez l'accord lorsqu'il est disponible, signez-le et déposez le PDF signé ici.",
+    "Descarga el acuerdo cuando esté disponible, fírmalo y sube aquí el PDF firmado.",
+    "Scarica l'accordo quando disponibile, firmalo e carica qui il PDF firmato."
+  ],
+  "Download agreement": [
+    "Vereinbarung herunterladen",
+    "Télécharger l'accord",
+    "Descargar acuerdo",
+    "Scarica accordo"
+  ],
+  "Document coming soon": [
+    "Dokument folgt in Kürze",
+    "Document bientôt disponible",
+    "Documento próximamente",
+    "Documento in arrivo"
+  ],
+  "Select signed PDF": [
+    "Unterschriebenes PDF auswählen",
+    "Choisir le PDF signé",
+    "Seleccionar PDF firmado",
+    "Seleziona PDF firmato"
+  ],
+  "Uploading...": [
+    "Wird hochgeladen…",
+    "Envoi…",
+    "Subiendo…",
+    "Caricamento…"
+  ],
+  "Upload signed document": [
+    "Unterschriebenes Dokument hochladen",
+    "Envoyer le document signé",
+    "Subir documento firmado",
+    "Carica documento firmato"
+  ],
+  "The signed document could not be uploaded.": [
+    "Das unterschriebene Dokument konnte nicht hochgeladen werden.",
+    "Le document signé n'a pas pu être envoyé.",
+    "No se pudo subir el documento firmado.",
+    "Impossibile caricare il documento firmato."
+  ],
+  "Signed cooperation agreement uploaded successfully.": [
+    "Unterschriebene Kooperationsvereinbarung erfolgreich hochgeladen.",
+    "Accord de coopération signé envoyé avec succès.",
+    "Acuerdo de cooperación firmado subido correctamente.",
+    "Accordo di cooperazione firmato caricato con successo."
+  ],
+  "PDF only, maximum 10 MB. The signed document is stored privately and linked to your client account.": [
+    "Nur PDF, maximal 10 MB. Das unterschriebene Dokument wird privat gespeichert und Ihrem Kundenkonto zugeordnet.",
+    "PDF uniquement, 10 Mo maximum. Le document signé est stocké de manière privée et lié à votre compte client.",
+    "Solo PDF, máximo 10 MB. El documento firmado se guarda de forma privada y se vincula a tu cuenta.",
+    "Solo PDF, massimo 10 MB. Il documento firmato è archiviato privatamente e collegato al tuo account."
+  ],
+  "Enter your email address and password.": [
+    "Geben Sie E-Mail-Adresse und Passwort ein.",
+    "Saisissez votre e-mail et votre mot de passe.",
+    "Introduce tu correo y contraseña.",
+    "Inserisci e-mail e password."
+  ],
+  "The sign-in could not be completed.": [
+    "Die Anmeldung konnte nicht abgeschlossen werden.",
+    "La connexion n'a pas pu être effectuée.",
+    "No se pudo completar el acceso.",
+    "Impossibile completare l'accesso."
+  ],
+  "Invalid email or password.": [
+    "E-Mail oder Passwort ungültig.",
+    "E-mail ou mot de passe incorrect.",
+    "Correo o contraseña incorrectos.",
+    "E-mail o password errati."
+  ],
+  "Please confirm your email before signing in.": [
+    "Bestätigen Sie vor der Anmeldung Ihre E-Mail-Adresse.",
+    "Confirmez votre e-mail avant de vous connecter.",
+    "Confirma tu correo antes de acceder.",
+    "Conferma l'e-mail prima di accedere."
+  ],
+  "Please wait before trying again.": [
+    "Bitte warten Sie vor dem nächsten Versuch.",
+    "Veuillez patienter avant de réessayer.",
+    "Espera antes de volver a intentarlo.",
+    "Attendi prima di riprovare."
+  ],
+  "Please check your input.": [
+    "Bitte prüfen Sie Ihre Eingaben.",
+    "Vérifiez vos informations.",
+    "Revisa tus datos.",
+    "Controlla i dati inseriti."
+  ],
+  "Your request could not be saved. Please try again.": [
+    "Ihre Anfrage konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "Votre demande n'a pas pu être enregistrée. Réessayez.",
+    "No se pudo guardar tu solicitud. Inténtalo de nuevo.",
+    "Impossibile salvare la richiesta. Riprova."
+  ],
+  "Property values, rental assumptions, projected yields, and participation models are provided for informational purposes only. Past performance and projections do not guarantee future results. Investors should review the project documents and obtain independent legal, tax, and financial advice before making a decision.": [
+    "Immobilienwerte, Mietannahmen, prognostizierte Renditen und Beteiligungsmodelle dienen ausschließlich Informationszwecken. Vergangene Wertentwicklungen und Prognosen garantieren keine zukünftigen Ergebnisse. Anleger sollten die Projektunterlagen prüfen und vor einer Entscheidung unabhängige rechtliche, steuerliche und finanzielle Beratung einholen.",
+    "Les valeurs immobilières, hypothèses locatives, rendements prévisionnels et modèles de participation sont fournis à titre informatif uniquement. Les performances passées et les projections ne garantissent pas les résultats futurs. Les investisseurs devraient examiner les documents du projet et obtenir des conseils juridiques, fiscaux et financiers indépendants avant toute décision.",
+    "Los valores de los inmuebles, las hipótesis de alquiler, los rendimientos previstos y los modelos de participación se proporcionan únicamente con fines informativos. Los resultados pasados y las proyecciones no garantizan resultados futuros. Antes de decidir, los inversores deben revisar la documentación del proyecto y obtener asesoramiento jurídico, fiscal y financiero independiente.",
+    "I valori immobiliari, le ipotesi di locazione, i rendimenti previsti e i modelli di partecipazione sono forniti esclusivamente a scopo informativo. I risultati passati e le proiezioni non garantiscono risultati futuri. Prima di decidere, gli investitori dovrebbero esaminare i documenti del progetto e ottenere consulenza legale, fiscale e finanziaria indipendente."
+  ],
+  "By using this website, you agree to the": [
+    "Durch die Nutzung dieser Website akzeptieren Sie die",
+    "En utilisant ce site, vous acceptez les",
+    "Al utilizar este sitio web, aceptas los",
+    "Utilizzando questo sito web, accetti i"
+  ],
+  "and the": [
+    "und die",
+    "et la",
+    "y la",
+    "e l'"
+  ],
+  "Real estate investments may be illiquid and may result in partial or total loss of capital.": [
+    "Immobilieninvestitionen können illiquide sein und zu einem teilweisen oder vollständigen Kapitalverlust führen.",
+    "Les investissements immobiliers peuvent être illiquides et entraîner une perte partielle ou totale du capital.",
+    "Las inversiones inmobiliarias pueden ser ilíquidas y causar la pérdida parcial o total del capital.",
+    "Gli investimenti immobiliari possono essere illiquidi e comportare la perdita parziale o totale del capitale."
+  ],
+  "Fractional Real Estate": [
+    "Anteiliges Immobilieneigentum",
+    "Immobilier fractionné",
+    "Inmuebles fraccionados",
+    "Immobili frazionati"
+  ],
+  "Co-founder": [
+    "Mitgründer",
+    "Cofondateur",
+    "Cofundador",
+    "Cofondatore"
+  ],
+  "CTO": [
+    "Technischer Leiter",
+    "Directeur technique",
+    "Director de tecnología",
+    "Direttore tecnologico"
+  ],
+  "CFO": [
+    "Finanzleiter",
+    "Directeur financier",
+    "Director financiero",
+    "Direttore finanziario"
+  ],
+  "Creative Director": [
+    "Kreativdirektor",
+    "Directeur de la création",
+    "Director creativo",
+    "Direttore creativo"
+  ],
+  "VP of Customer Relations": [
+    "Leitung Kundenbeziehungen",
+    "Vice-présidence des relations clients",
+    "Vicepresidencia de relaciones con clientes",
+    "Vicepresidenza delle relazioni con i clienti"
+  ],
+  "Front-End Developer": [
+    "Frontend-Entwickler",
+    "Développeur front-end",
+    "Desarrollador front-end",
+    "Sviluppatore front-end"
+  ],
+  "Legal": [
+    "Recht",
+    "Affaires juridiques",
+    "Asuntos jurídicos",
+    "Affari legali"
+  ],
+  "DevOps": [
+    "Entwicklung und IT-Betrieb",
+    "Développement et exploitation informatique",
+    "Desarrollo y operaciones informáticas",
+    "Sviluppo e operazioni informatiche"
+  ],
+  "Back-End / Blockchain Developer": [
+    "Backend- / Blockchain-Entwickler",
+    "Développeur back-end / blockchain",
+    "Desarrollador back-end / blockchain",
+    "Sviluppatore back-end / blockchain"
+  ],
+  "Designer": [
+    "Designer",
+    "Concepteur",
+    "Diseñador",
+    "Progettista"
+  ],
+  "Brickwise security": [
+    "Brickwise-Sicherheit",
+    "Sécurité Brickwise",
+    "Seguridad de Brickwise",
+    "Sicurezza Brickwise"
+  ],
+  "The password reset email could not be sent. Please try again.": [
+    "Die E-Mail zum Zurücksetzen des Passworts konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "L'e-mail de réinitialisation du mot de passe n'a pas pu être envoyé. Veuillez réessayer.",
+    "No se pudo enviar el correo para restablecer la contraseña. Inténtalo de nuevo.",
+    "Impossibile inviare l'e-mail per reimpostare la password. Riprova."
+  ],
+  "Choose a password different from your current password.": [
+    "Wählen Sie ein anderes Passwort als Ihr aktuelles Passwort.",
+    "Choisissez un mot de passe différent de votre mot de passe actuel.",
+    "Elige una contraseña diferente de la actual.",
+    "Scegli una password diversa da quella attuale."
+  ],
+  "Choose a stronger password with at least 8 characters.": [
+    "Wählen Sie ein stärkeres Passwort mit mindestens 8 Zeichen.",
+    "Choisissez un mot de passe plus robuste d'au moins 8 caractères.",
+    "Elige una contraseña más segura de al menos 8 caracteres.",
+    "Scegli una password più sicura di almeno 8 caratteri."
+  ],
+  "Your password could not be updated. Request a new reset link and try again.": [
+    "Ihr Passwort konnte nicht aktualisiert werden. Fordern Sie einen neuen Link zum Zurücksetzen an und versuchen Sie es erneut.",
+    "Votre mot de passe n'a pas pu être modifié. Demandez un nouveau lien de réinitialisation et réessayez.",
+    "No se pudo actualizar tu contraseña. Solicita un nuevo enlace de restablecimiento e inténtalo de nuevo.",
+    "Impossibile aggiornare la password. Richiedi un nuovo link di reimpostazione e riprova."
+  ],
+  "The security code could not be sent. Please try again.": [
+    "Der Sicherheitscode konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "Le code de sécurité n'a pas pu être envoyé. Veuillez réessayer.",
+    "No se pudo enviar el código de seguridad. Inténtalo de nuevo.",
+    "Impossibile inviare il codice di sicurezza. Riprova."
+  ],
+  "Loading": [
+    "Wird geladen",
+    "Chargement",
+    "Cargando",
+    "Caricamento"
+  ],
+  "Toggle password visibility": [
+    "Passwort ein- oder ausblenden",
+    "Afficher ou masquer le mot de passe",
+    "Mostrar u ocultar contraseña",
+    "Mostra o nascondi la password"
+  ],
+  "Open client menu": [
+    "Kundenmenü öffnen",
+    "Ouvrir le menu client",
+    "Abrir menú de cliente",
+    "Apri il menu cliente"
+  ],
+  "Close client menu": [
+    "Kundenmenü schließen",
+    "Fermer le menu client",
+    "Cerrar menú de cliente",
+    "Chiudi il menu cliente"
+  ],
+  "Close menu": [
+    "Menü schließen",
+    "Fermer le menu",
+    "Cerrar menú",
+    "Chiudi il menu"
+  ],
+  "Back to dashboard": [
+    "Zurück zur Übersicht",
+    "Retour au tableau de bord",
+    "Volver al panel",
+    "Torna al pannello"
+  ],
+  "Your profile could not be saved. Please try again.": [
+    "Ihr Profil konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "Votre profil n'a pas pu être enregistré. Veuillez réessayer.",
+    "No se pudo guardar tu perfil. Inténtalo de nuevo.",
+    "Impossibile salvare il profilo. Riprova."
+  ],
+  "Enter a valid phone number and 6-digit code.": [
+    "Geben Sie eine gültige Telefonnummer und einen sechsstelligen Code ein.",
+    "Saisissez un numéro de téléphone valide et le code à six chiffres.",
+    "Introduce un número de teléfono válido y el código de seis dígitos.",
+    "Inserisci un numero di telefono valido e il codice a sei cifre."
+  ],
+  "Enter your email address and the 6-digit security code.": [
+    "Geben Sie Ihre E-Mail-Adresse und den sechsstelligen Sicherheitscode ein.",
+    "Saisissez votre adresse e-mail et le code de sécurité à six chiffres.",
+    "Introduce tu correo electrónico y el código de seguridad de seis dígitos.",
+    "Inserisci l'indirizzo e-mail e il codice di sicurezza a sei cifre."
+  ],
+  "The security code is invalid or has expired. Request a new code and try again.": [
+    "Der Sicherheitscode ist ungültig oder abgelaufen. Fordern Sie einen neuen Code an und versuchen Sie es erneut.",
+    "Le code de sécurité est invalide ou a expiré. Demandez un nouveau code et réessayez.",
+    "El código de seguridad no es válido o ha caducado. Solicita uno nuevo e inténtalo de nuevo.",
+    "Il codice di sicurezza non è valido o è scaduto. Richiedi un nuovo codice e riprova."
+  ],
+  "Invalid JSON request.": [
+    "Ungültige JSON-Anfrage.",
+    "Requête JSON non valide.",
+    "Solicitud JSON no válida.",
+    "Richiesta JSON non valida."
+  ],
+  "Please enter a valid email address.": [
+    "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "Veuillez saisir une adresse e-mail valide.",
+    "Introduce un correo electrónico válido.",
+    "Inserisci un indirizzo e-mail valido."
+  ],
+  "The confirmation email could not be sent. Please try again later.": [
+    "Die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.",
+    "L'e-mail de confirmation n'a pas pu être envoyé. Veuillez réessayer plus tard.",
+    "No se pudo enviar el correo de confirmación. Inténtalo de nuevo más tarde.",
+    "Impossibile inviare l'e-mail di conferma. Riprova più tardi."
+  ],
+  "Name, email, and message are required.": [
+    "Name, E-Mail-Adresse und Nachricht sind erforderlich.",
+    "Le nom, l'e-mail et le message sont obligatoires.",
+    "El nombre, el correo y el mensaje son obligatorios.",
+    "Nome, e-mail e messaggio sono obbligatori."
+  ],
+  "The request is too long.": [
+    "Die Anfrage ist zu lang.",
+    "La demande est trop longue.",
+    "La solicitud es demasiado larga.",
+    "La richiesta è troppo lunga."
+  ],
+  "Topic": [
+    "Thema",
+    "Sujet",
+    "Asunto",
+    "Argomento"
+  ],
+  "Cryptocurrency": [
+    "Kryptowährung",
+    "Cryptomonnaie",
+    "Criptomoneda",
+    "Criptovaluta"
+  ],
+  "Afghanistan": [
+    "Afghanistan",
+    "Afghanistan",
+    "Afganistán",
+    "Afghanistan"
+  ],
+  "Albania": [
+    "Albanien",
+    "Albanie",
+    "Albania",
+    "Albania"
+  ],
+  "Algeria": [
+    "Algerien",
+    "Algérie",
+    "Argelia",
+    "Algeria"
+  ],
+  "Andorra": [
+    "Andorra",
+    "Andorre",
+    "Andorra",
+    "Andorra"
+  ],
+  "Angola": [
+    "Angola",
+    "Angola",
+    "Angola",
+    "Angola"
+  ],
+  "Antigua and Barbuda": [
+    "Antigua und Barbuda",
+    "Antigua-et-Barbuda",
+    "Antigua y Barbuda",
+    "Antigua e Barbuda"
+  ],
+  "Argentina": [
+    "Argentinien",
+    "Argentine",
+    "Argentina",
+    "Argentina"
+  ],
+  "Armenia": [
+    "Armenien",
+    "Arménie",
+    "Armenia",
+    "Armenia"
+  ],
+  "Australia": [
+    "Australien",
+    "Australie",
+    "Australia",
+    "Australia"
+  ],
+  "Austria": [
+    "Österreich",
+    "Autriche",
+    "Austria",
+    "Austria"
+  ],
+  "Azerbaijan": [
+    "Aserbaidschan",
+    "Azerbaïdjan",
+    "Azerbaiyán",
+    "Azerbaigian"
+  ],
+  "Bahamas": [
+    "Bahamas",
+    "Bahamas",
+    "Bahamas",
+    "Bahamas"
+  ],
+  "Bahrain": [
+    "Bahrain",
+    "Bahreïn",
+    "Baréin",
+    "Bahrein"
+  ],
+  "Bangladesh": [
+    "Bangladesch",
+    "Bangladesh",
+    "Bangladés",
+    "Bangladesh"
+  ],
+  "Barbados": [
+    "Barbados",
+    "Barbade",
+    "Barbados",
+    "Barbados"
+  ],
+  "Belarus": [
+    "Belarus",
+    "Biélorussie",
+    "Bielorrusia",
+    "Bielorussia"
+  ],
+  "Belgium": [
+    "Belgien",
+    "Belgique",
+    "Bélgica",
+    "Belgio"
+  ],
+  "Belize": [
+    "Belize",
+    "Belize",
+    "Belice",
+    "Belize"
+  ],
+  "Benin": [
+    "Benin",
+    "Bénin",
+    "Benín",
+    "Benin"
+  ],
+  "Bhutan": [
+    "Bhutan",
+    "Bhoutan",
+    "Bután",
+    "Bhutan"
+  ],
+  "Bolivia": [
+    "Bolivien",
+    "Bolivie",
+    "Bolivia",
+    "Bolivia"
+  ],
+  "Bosnia and Herzegovina": [
+    "Bosnien und Herzegowina",
+    "Bosnie-Herzégovine",
+    "Bosnia y Herzegovina",
+    "Bosnia ed Erzegovina"
+  ],
+  "Botswana": [
+    "Botsuana",
+    "Botswana",
+    "Botsuana",
+    "Botswana"
+  ],
+  "Brazil": [
+    "Brasilien",
+    "Brésil",
+    "Brasil",
+    "Brasile"
+  ],
+  "Brunei": [
+    "Brunei Darussalam",
+    "Brunei",
+    "Brunéi",
+    "Brunei"
+  ],
+  "Bulgaria": [
+    "Bulgarien",
+    "Bulgarie",
+    "Bulgaria",
+    "Bulgaria"
+  ],
+  "Burkina Faso": [
+    "Burkina Faso",
+    "Burkina Faso",
+    "Burkina Faso",
+    "Burkina Faso"
+  ],
+  "Burundi": [
+    "Burundi",
+    "Burundi",
+    "Burundi",
+    "Burundi"
+  ],
+  "Cabo Verde": [
+    "Cabo Verde",
+    "Cap-Vert",
+    "Cabo Verde",
+    "Capo Verde"
+  ],
+  "Cambodia": [
+    "Kambodscha",
+    "Cambodge",
+    "Camboya",
+    "Cambogia"
+  ],
+  "Cameroon": [
+    "Kamerun",
+    "Cameroun",
+    "Camerún",
+    "Camerun"
+  ],
+  "Central African Republic": [
+    "Zentralafrikanische Republik",
+    "République centrafricaine",
+    "República Centroafricana",
+    "Repubblica Centrafricana"
+  ],
+  "Chad": [
+    "Tschad",
+    "Tchad",
+    "Chad",
+    "Ciad"
+  ],
+  "Chile": [
+    "Chile",
+    "Chili",
+    "Chile",
+    "Cile"
+  ],
+  "China": [
+    "China",
+    "Chine",
+    "China",
+    "Cina"
+  ],
+  "Colombia": [
+    "Kolumbien",
+    "Colombie",
+    "Colombia",
+    "Colombia"
+  ],
+  "Comoros": [
+    "Komoren",
+    "Comores",
+    "Comoras",
+    "Comore"
+  ],
+  "Congo": [
+    "Kongo-Brazzaville",
+    "Congo-Brazzaville",
+    "Congo",
+    "Congo-Brazzaville"
+  ],
+  "Costa Rica": [
+    "Costa Rica",
+    "Costa Rica",
+    "Costa Rica",
+    "Costa Rica"
+  ],
+  "Cote d'Ivoire": [
+    "Côte d’Ivoire",
+    "Côte d’Ivoire",
+    "Côte d’Ivoire",
+    "Costa d’Avorio"
+  ],
+  "Croatia": [
+    "Kroatien",
+    "Croatie",
+    "Croacia",
+    "Croazia"
+  ],
+  "Cuba": [
+    "Kuba",
+    "Cuba",
+    "Cuba",
+    "Cuba"
+  ],
+  "Cyprus": [
+    "Zypern",
+    "Chypre",
+    "Chipre",
+    "Cipro"
+  ],
+  "Czechia": [
+    "Tschechien",
+    "Tchéquie",
+    "Chequia",
+    "Cechia"
+  ],
+  "Democratic Republic of the Congo": [
+    "Kongo-Kinshasa",
+    "Congo-Kinshasa",
+    "República Democrática del Congo",
+    "Congo - Kinshasa"
+  ],
+  "Denmark": [
+    "Dänemark",
+    "Danemark",
+    "Dinamarca",
+    "Danimarca"
+  ],
+  "Djibouti": [
+    "Dschibuti",
+    "Djibouti",
+    "Yibuti",
+    "Gibuti"
+  ],
+  "Dominica": [
+    "Dominica",
+    "Dominique",
+    "Dominica",
+    "Dominica"
+  ],
+  "Dominican Republic": [
+    "Dominikanische Republik",
+    "République dominicaine",
+    "República Dominicana",
+    "Repubblica Dominicana"
+  ],
+  "Ecuador": [
+    "Ecuador",
+    "Équateur",
+    "Ecuador",
+    "Ecuador"
+  ],
+  "Egypt": [
+    "Ägypten",
+    "Égypte",
+    "Egipto",
+    "Egitto"
+  ],
+  "El Salvador": [
+    "El Salvador",
+    "Salvador",
+    "El Salvador",
+    "El Salvador"
+  ],
+  "Equatorial Guinea": [
+    "Äquatorialguinea",
+    "Guinée équatoriale",
+    "Guinea Ecuatorial",
+    "Guinea Equatoriale"
+  ],
+  "Eritrea": [
+    "Eritrea",
+    "Érythrée",
+    "Eritrea",
+    "Eritrea"
+  ],
+  "Estonia": [
+    "Estland",
+    "Estonie",
+    "Estonia",
+    "Estonia"
+  ],
+  "Eswatini": [
+    "Eswatini",
+    "Eswatini",
+    "Esuatini",
+    "Eswatini"
+  ],
+  "Ethiopia": [
+    "Äthiopien",
+    "Éthiopie",
+    "Etiopía",
+    "Etiopia"
+  ],
+  "Fiji": [
+    "Fidschi",
+    "Fidji",
+    "Fiyi",
+    "Figi"
+  ],
+  "Finland": [
+    "Finnland",
+    "Finlande",
+    "Finlandia",
+    "Finlandia"
+  ],
+  "France": [
+    "Frankreich",
+    "France",
+    "Francia",
+    "Francia"
+  ],
+  "Gabon": [
+    "Gabun",
+    "Gabon",
+    "Gabón",
+    "Gabon"
+  ],
+  "Gambia": [
+    "Gambia",
+    "Gambie",
+    "Gambia",
+    "Gambia"
+  ],
+  "Georgia": [
+    "Georgien",
+    "Géorgie",
+    "Georgia",
+    "Georgia"
+  ],
+  "Germany": [
+    "Deutschland",
+    "Allemagne",
+    "Alemania",
+    "Germania"
+  ],
+  "Ghana": [
+    "Ghana",
+    "Ghana",
+    "Ghana",
+    "Ghana"
+  ],
+  "Greece": [
+    "Griechenland",
+    "Grèce",
+    "Grecia",
+    "Grecia"
+  ],
+  "Grenada": [
+    "Grenada",
+    "Grenade",
+    "Granada",
+    "Grenada"
+  ],
+  "Guatemala": [
+    "Guatemala",
+    "Guatemala",
+    "Guatemala",
+    "Guatemala"
+  ],
+  "Guinea": [
+    "Guinea",
+    "Guinée",
+    "Guinea",
+    "Guinea"
+  ],
+  "Guinea-Bissau": [
+    "Guinea-Bissau",
+    "Guinée-Bissau",
+    "Guinea-Bisáu",
+    "Guinea-Bissau"
+  ],
+  "Guyana": [
+    "Guyana",
+    "Guyana",
+    "Guyana",
+    "Guyana"
+  ],
+  "Haiti": [
+    "Haiti",
+    "Haïti",
+    "Haití",
+    "Haiti"
+  ],
+  "Honduras": [
+    "Honduras",
+    "Honduras",
+    "Honduras",
+    "Honduras"
+  ],
+  "Hungary": [
+    "Ungarn",
+    "Hongrie",
+    "Hungría",
+    "Ungheria"
+  ],
+  "Iceland": [
+    "Island",
+    "Islande",
+    "Islandia",
+    "Islanda"
+  ],
+  "India": [
+    "Indien",
+    "Inde",
+    "India",
+    "India"
+  ],
+  "Indonesia": [
+    "Indonesien",
+    "Indonésie",
+    "Indonesia",
+    "Indonesia"
+  ],
+  "Iran": [
+    "Iran",
+    "Iran",
+    "Irán",
+    "Iran"
+  ],
+  "Iraq": [
+    "Irak",
+    "Irak",
+    "Irak",
+    "Iraq"
+  ],
+  "Ireland": [
+    "Irland",
+    "Irlande",
+    "Irlanda",
+    "Irlanda"
+  ],
+  "Israel": [
+    "Israel",
+    "Israël",
+    "Israel",
+    "Israele"
+  ],
+  "Italy": [
+    "Italien",
+    "Italie",
+    "Italia",
+    "Italia"
+  ],
+  "Jamaica": [
+    "Jamaika",
+    "Jamaïque",
+    "Jamaica",
+    "Giamaica"
+  ],
+  "Japan": [
+    "Japan",
+    "Japon",
+    "Japón",
+    "Giappone"
+  ],
+  "Jordan": [
+    "Jordanien",
+    "Jordanie",
+    "Jordania",
+    "Giordania"
+  ],
+  "Kazakhstan": [
+    "Kasachstan",
+    "Kazakhstan",
+    "Kazajistán",
+    "Kazakistan"
+  ],
+  "Kenya": [
+    "Kenia",
+    "Kenya",
+    "Kenia",
+    "Kenya"
+  ],
+  "Kiribati": [
+    "Kiribati",
+    "Kiribati",
+    "Kiribati",
+    "Kiribati"
+  ],
+  "Kosovo": [
+    "Kosovo",
+    "Kosovo",
+    "Kosovo",
+    "Kosovo"
+  ],
+  "Kuwait": [
+    "Kuwait",
+    "Koweït",
+    "Kuwait",
+    "Kuwait"
+  ],
+  "Kyrgyzstan": [
+    "Kirgisistan",
+    "Kirghizstan",
+    "Kirguistán",
+    "Kirghizistan"
+  ],
+  "Laos": [
+    "Laos",
+    "Laos",
+    "Laos",
+    "Laos"
+  ],
+  "Latvia": [
+    "Lettland",
+    "Lettonie",
+    "Letonia",
+    "Lettonia"
+  ],
+  "Lebanon": [
+    "Libanon",
+    "Liban",
+    "Líbano",
+    "Libano"
+  ],
+  "Lesotho": [
+    "Lesotho",
+    "Lesotho",
+    "Lesoto",
+    "Lesotho"
+  ],
+  "Liberia": [
+    "Liberia",
+    "Liberia",
+    "Liberia",
+    "Liberia"
+  ],
+  "Libya": [
+    "Libyen",
+    "Libye",
+    "Libia",
+    "Libia"
+  ],
+  "Liechtenstein": [
+    "Liechtenstein",
+    "Liechtenstein",
+    "Liechtenstein",
+    "Liechtenstein"
+  ],
+  "Lithuania": [
+    "Litauen",
+    "Lituanie",
+    "Lituania",
+    "Lituania"
+  ],
+  "Luxembourg": [
+    "Luxemburg",
+    "Luxembourg",
+    "Luxemburgo",
+    "Lussemburgo"
+  ],
+  "Madagascar": [
+    "Madagaskar",
+    "Madagascar",
+    "Madagascar",
+    "Madagascar"
+  ],
+  "Malawi": [
+    "Malawi",
+    "Malawi",
+    "Malaui",
+    "Malawi"
+  ],
+  "Malaysia": [
+    "Malaysia",
+    "Malaisie",
+    "Malasia",
+    "Malaysia"
+  ],
+  "Maldives": [
+    "Malediven",
+    "Maldives",
+    "Maldivas",
+    "Maldive"
+  ],
+  "Mali": [
+    "Mali",
+    "Mali",
+    "Mali",
+    "Mali"
+  ],
+  "Malta": [
+    "Malta",
+    "Malte",
+    "Malta",
+    "Malta"
+  ],
+  "Marshall Islands": [
+    "Marshallinseln",
+    "Îles Marshall",
+    "Islas Marshall",
+    "Isole Marshall"
+  ],
+  "Mauritania": [
+    "Mauretanien",
+    "Mauritanie",
+    "Mauritania",
+    "Mauritania"
+  ],
+  "Mauritius": [
+    "Mauritius",
+    "Maurice",
+    "Mauricio",
+    "Mauritius"
+  ],
+  "Mexico": [
+    "Mexiko",
+    "Mexique",
+    "México",
+    "Messico"
+  ],
+  "Micronesia": [
+    "Mikronesien",
+    "Micronésie",
+    "Micronesia",
+    "Micronesia"
+  ],
+  "Moldova": [
+    "Republik Moldau",
+    "Moldavie",
+    "Moldavia",
+    "Moldavia"
+  ],
+  "Monaco": [
+    "Monaco",
+    "Monaco",
+    "Mónaco",
+    "Monaco"
+  ],
+  "Mongolia": [
+    "Mongolei",
+    "Mongolie",
+    "Mongolia",
+    "Mongolia"
+  ],
+  "Montenegro": [
+    "Montenegro",
+    "Monténégro",
+    "Montenegro",
+    "Montenegro"
+  ],
+  "Morocco": [
+    "Marokko",
+    "Maroc",
+    "Marruecos",
+    "Marocco"
+  ],
+  "Mozambique": [
+    "Mosambik",
+    "Mozambique",
+    "Mozambique",
+    "Mozambico"
+  ],
+  "Namibia": [
+    "Namibia",
+    "Namibie",
+    "Namibia",
+    "Namibia"
+  ],
+  "Nauru": [
+    "Nauru",
+    "Nauru",
+    "Nauru",
+    "Nauru"
+  ],
+  "Nepal": [
+    "Nepal",
+    "Népal",
+    "Nepal",
+    "Nepal"
+  ],
+  "Netherlands": [
+    "Niederlande",
+    "Pays-Bas",
+    "Países Bajos",
+    "Paesi Bassi"
+  ],
+  "New Zealand": [
+    "Neuseeland",
+    "Nouvelle-Zélande",
+    "Nueva Zelanda",
+    "Nuova Zelanda"
+  ],
+  "Nicaragua": [
+    "Nicaragua",
+    "Nicaragua",
+    "Nicaragua",
+    "Nicaragua"
+  ],
+  "Niger": [
+    "Niger",
+    "Niger",
+    "Níger",
+    "Niger"
+  ],
+  "Nigeria": [
+    "Nigeria",
+    "Nigeria",
+    "Nigeria",
+    "Nigeria"
+  ],
+  "North Korea": [
+    "Nordkorea",
+    "Corée du Nord",
+    "Corea del Norte",
+    "Corea del Nord"
+  ],
+  "North Macedonia": [
+    "Nordmazedonien",
+    "Macédoine du Nord",
+    "Macedonia del Norte",
+    "Macedonia del Nord"
+  ],
+  "Norway": [
+    "Norwegen",
+    "Norvège",
+    "Noruega",
+    "Norvegia"
+  ],
+  "Oman": [
+    "Oman",
+    "Oman",
+    "Omán",
+    "Oman"
+  ],
+  "Pakistan": [
+    "Pakistan",
+    "Pakistan",
+    "Pakistán",
+    "Pakistan"
+  ],
+  "Palau": [
+    "Palau",
+    "Palaos",
+    "Palaos",
+    "Palau"
+  ],
+  "Palestine": [
+    "Palästinensische Autonomiegebiete",
+    "Territoires palestiniens",
+    "Territorios Palestinos",
+    "Territori Palestinesi"
+  ],
+  "Panama": [
+    "Panama",
+    "Panama",
+    "Panamá",
+    "Panama"
+  ],
+  "Papua New Guinea": [
+    "Papua-Neuguinea",
+    "Papouasie-Nouvelle-Guinée",
+    "Papúa Nueva Guinea",
+    "Papua Nuova Guinea"
+  ],
+  "Paraguay": [
+    "Paraguay",
+    "Paraguay",
+    "Paraguay",
+    "Paraguay"
+  ],
+  "Peru": [
+    "Peru",
+    "Pérou",
+    "Perú",
+    "Perù"
+  ],
+  "Philippines": [
+    "Philippinen",
+    "Philippines",
+    "Filipinas",
+    "Filippine"
+  ],
+  "Poland": [
+    "Polen",
+    "Pologne",
+    "Polonia",
+    "Polonia"
+  ],
+  "Portugal": [
+    "Portugal",
+    "Portugal",
+    "Portugal",
+    "Portogallo"
+  ],
+  "Qatar": [
+    "Katar",
+    "Qatar",
+    "Catar",
+    "Qatar"
+  ],
+  "Romania": [
+    "Rumänien",
+    "Roumanie",
+    "Rumanía",
+    "Romania"
+  ],
+  "Russia": [
+    "Russland",
+    "Russie",
+    "Rusia",
+    "Russia"
+  ],
+  "Rwanda": [
+    "Ruanda",
+    "Rwanda",
+    "Ruanda",
+    "Ruanda"
+  ],
+  "Saint Kitts and Nevis": [
+    "St. Kitts und Nevis",
+    "Saint-Christophe-et-Niévès",
+    "San Cristóbal y Nieves",
+    "Saint Kitts e Nevis"
+  ],
+  "Saint Lucia": [
+    "St. Lucia",
+    "Sainte-Lucie",
+    "Santa Lucía",
+    "Saint Lucia"
+  ],
+  "Saint Vincent and the Grenadines": [
+    "St. Vincent und die Grenadinen",
+    "Saint-Vincent-et-les Grenadines",
+    "San Vicente y las Granadinas",
+    "Saint Vincent e Grenadine"
+  ],
+  "Samoa": [
+    "Samoa",
+    "Samoa",
+    "Samoa",
+    "Samoa"
+  ],
+  "San Marino": [
+    "San Marino",
+    "Saint-Marin",
+    "San Marino",
+    "San Marino"
+  ],
+  "Sao Tome and Principe": [
+    "São Tomé und Príncipe",
+    "Sao Tomé-et-Principe",
+    "Santo Tomé y Príncipe",
+    "São Tomé e Príncipe"
+  ],
+  "Saudi Arabia": [
+    "Saudi-Arabien",
+    "Arabie saoudite",
+    "Arabia Saudí",
+    "Arabia Saudita"
+  ],
+  "Senegal": [
+    "Senegal",
+    "Sénégal",
+    "Senegal",
+    "Senegal"
+  ],
+  "Serbia": [
+    "Serbien",
+    "Serbie",
+    "Serbia",
+    "Serbia"
+  ],
+  "Seychelles": [
+    "Seychellen",
+    "Seychelles",
+    "Seychelles",
+    "Seychelles"
+  ],
+  "Sierra Leone": [
+    "Sierra Leone",
+    "Sierra Leone",
+    "Sierra Leona",
+    "Sierra Leone"
+  ],
+  "Singapore": [
+    "Singapur",
+    "Singapour",
+    "Singapur",
+    "Singapore"
+  ],
+  "Slovakia": [
+    "Slowakei",
+    "Slovaquie",
+    "Eslovaquia",
+    "Slovacchia"
+  ],
+  "Slovenia": [
+    "Slowenien",
+    "Slovénie",
+    "Eslovenia",
+    "Slovenia"
+  ],
+  "Solomon Islands": [
+    "Salomonen",
+    "Îles Salomon",
+    "Islas Salomón",
+    "Isole Salomone"
+  ],
+  "Somalia": [
+    "Somalia",
+    "Somalie",
+    "Somalia",
+    "Somalia"
+  ],
+  "South Africa": [
+    "Südafrika",
+    "Afrique du Sud",
+    "Sudáfrica",
+    "Sudafrica"
+  ],
+  "South Korea": [
+    "Südkorea",
+    "Corée du Sud",
+    "Corea del Sur",
+    "Corea del Sud"
+  ],
+  "South Sudan": [
+    "Südsudan",
+    "Soudan du Sud",
+    "Sudán del Sur",
+    "Sud Sudan"
+  ],
+  "Spain": [
+    "Spanien",
+    "Espagne",
+    "España",
+    "Spagna"
+  ],
+  "Sri Lanka": [
+    "Sri Lanka",
+    "Sri Lanka",
+    "Sri Lanka",
+    "Sri Lanka"
+  ],
+  "Sudan": [
+    "Sudan",
+    "Soudan",
+    "Sudán",
+    "Sudan"
+  ],
+  "Suriname": [
+    "Suriname",
+    "Suriname",
+    "Surinam",
+    "Suriname"
+  ],
+  "Sweden": [
+    "Schweden",
+    "Suède",
+    "Suecia",
+    "Svezia"
+  ],
+  "Switzerland": [
+    "Schweiz",
+    "Suisse",
+    "Suiza",
+    "Svizzera"
+  ],
+  "Syria": [
+    "Syrien",
+    "Syrie",
+    "Siria",
+    "Siria"
+  ],
+  "Taiwan": [
+    "Taiwan",
+    "Taïwan",
+    "Taiwán",
+    "Taiwan"
+  ],
+  "Tajikistan": [
+    "Tadschikistan",
+    "Tadjikistan",
+    "Tayikistán",
+    "Tagikistan"
+  ],
+  "Tanzania": [
+    "Tansania",
+    "Tanzanie",
+    "Tanzania",
+    "Tanzania"
+  ],
+  "Thailand": [
+    "Thailand",
+    "Thaïlande",
+    "Tailandia",
+    "Thailandia"
+  ],
+  "Timor-Leste": [
+    "Timor-Leste",
+    "Timor oriental",
+    "Timor-Leste",
+    "Timor Est"
+  ],
+  "Togo": [
+    "Togo",
+    "Togo",
+    "Togo",
+    "Togo"
+  ],
+  "Tonga": [
+    "Tonga",
+    "Tonga",
+    "Tonga",
+    "Tonga"
+  ],
+  "Trinidad and Tobago": [
+    "Trinidad und Tobago",
+    "Trinité-et-Tobago",
+    "Trinidad y Tobago",
+    "Trinidad e Tobago"
+  ],
+  "Tunisia": [
+    "Tunesien",
+    "Tunisie",
+    "Túnez",
+    "Tunisia"
+  ],
+  "Turkey": [
+    "Türkei",
+    "Turquie",
+    "Turquía",
+    "Turchia"
+  ],
+  "Turkmenistan": [
+    "Turkmenistan",
+    "Turkménistan",
+    "Turkmenistán",
+    "Turkmenistan"
+  ],
+  "Tuvalu": [
+    "Tuvalu",
+    "Tuvalu",
+    "Tuvalu",
+    "Tuvalu"
+  ],
+  "Uganda": [
+    "Uganda",
+    "Ouganda",
+    "Uganda",
+    "Uganda"
+  ],
+  "Ukraine": [
+    "Ukraine",
+    "Ukraine",
+    "Ucrania",
+    "Ucraina"
+  ],
+  "United Arab Emirates": [
+    "Vereinigte Arabische Emirate",
+    "Émirats arabes unis",
+    "Emiratos Árabes Unidos",
+    "Emirati Arabi Uniti"
+  ],
+  "United Kingdom": [
+    "Vereinigtes Königreich",
+    "Royaume-Uni",
+    "Reino Unido",
+    "Regno Unito"
+  ],
+  "United States": [
+    "Vereinigte Staaten",
+    "États-Unis",
+    "Estados Unidos",
+    "Stati Uniti"
+  ],
+  "Uruguay": [
+    "Uruguay",
+    "Uruguay",
+    "Uruguay",
+    "Uruguay"
+  ],
+  "Uzbekistan": [
+    "Usbekistan",
+    "Ouzbékistan",
+    "Uzbekistán",
+    "Uzbekistan"
+  ],
+  "Vanuatu": [
+    "Vanuatu",
+    "Vanuatu",
+    "Vanuatu",
+    "Vanuatu"
+  ],
+  "Vatican City": [
+    "Vatikanstadt",
+    "État de la Cité du Vatican",
+    "Ciudad del Vaticano",
+    "Città del Vaticano"
+  ],
+  "Venezuela": [
+    "Venezuela",
+    "Venezuela",
+    "Venezuela",
+    "Venezuela"
+  ],
+  "Vietnam": [
+    "Vietnam",
+    "Viêt Nam",
+    "Vietnam",
+    "Vietnam"
+  ],
+  "Yemen": [
+    "Jemen",
+    "Yémen",
+    "Yemen",
+    "Yemen"
+  ],
+  "Zambia": [
+    "Sambia",
+    "Zambie",
+    "Zambia",
+    "Zambia"
+  ],
+  "Zimbabwe": [
+    "Simbabwe",
+    "Zimbabwe",
+    "Zimbabue",
+    "Zimbabwe"
+  ],
+  "Myanmar": [
+    "Myanmar",
+    "Myanmar (Birmanie)",
+    "Myanmar (Birmania)",
+    "Myanmar (Birmania)"
+  ],
+  "Your profile could not be loaded. Please close and reopen this window.": [
+    "Ihr Profil konnte nicht geladen werden. Bitte schließen Sie dieses Fenster und öffnen Sie es erneut.",
+    "Impossible de charger votre profil. Fermez et rouvrez cette fenêtre.",
+    "No se pudo cargar tu perfil. Cierra y vuelve a abrir esta ventana.",
+    "Impossibile caricare il profilo. Chiudi e riapri questa finestra."
+  ]
+}

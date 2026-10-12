@@ -1,0 +1,45 @@
+BRICKWISE — HOW IT WORKS
+Production brief — 2026-10-09
+Status: User approved separate composition. All five direct HeyGen presenter jobs have been submitted; see jobs.json. No final composite has been rendered. Video Agent was unavailable for this presenter, so compose.py prepares explicitly labeled illustrative demo screens and an independent corner-presenter composition.
+
+DELIVERY
+English master first, followed by German, French, Spanish and Italian.
+Each version: 60–90 seconds; target 80–85 seconds; 16:9, 1080p.
+Presenter: Kacper Modern Corporate 2, verified current look 04ff76da360f40809782a3e00a132720, group 49add24d66c94fd4b36c1b5afcec3bb8.
+Requested English voice: Camden, 06468055edd4458aa131a1dfd813c1e9; availability not yet validated.
+Realistic presenter in bottom-right corner, approximately 22% of frame width. Keep all controls and captions unobstructed.
+Website reference: https://www.brickwise-immo.de
+Use actual site visuals with isolated demo data. Any recreated interface must be explicitly labeled as illustrative.
+
+STORYBOARD
+00–07: Brickwise introduction. Persistent DEMO / Illustrative data label.
+07–18: Registration with Alex Demo, alex@example.com, masked password. Complete required registration steps.
+18–31: Wallet payment instructions, fictional reference DEMO-001. Show funding pending, then an explicit time transition to confirmed demo balance EUR 1,000. No real bank details or crypto addresses.
+31–43: Properties. Fictional Demo Apartment; review information and risks; select two demo shares at EUR 250 each.
+43–55: Select Wallet balance, review EUR 500 total and confirm. Demo success; remaining wallet EUR 500.
+55–64: Assets, two shares, EUR 500 purchase amount.
+64–80/85: Income, rental projection timeline. Label estimates clearly. Never animate a projection into the wallet balance. End on the six-step journey.
+These numbers are invented demonstration values, not terms of an actual Brickwise offering. The Income implementation uses completed 24-hour periods per purchase, a fixed 365-day year, current rental target and no compounding. No numeric return promise is needed.
+
+ENGLISH NARRATION
+Here’s how Brickwise works, using a demo account and illustrative figures. First, create your account and complete the required registration steps. Next, open your wallet. Follow the payment instructions and use the correct reference. Continue once your funding is confirmed and your available balance is updated. In this example, the wallet contains one thousand euros. Now open Properties. Explore a property, review its details, share price, and risks, then choose the number of shares. Here, two demo shares cost five hundred euros. Select Wallet balance, review the purchase, and confirm. After a successful purchase, the wallet shows five hundred euros remaining. Open Assets to review your holdings and purchase amount. Finally, visit Income to explore the rental projection over time. These figures are estimates based on the model’s assumptions. They are not guaranteed earnings or automatic wallet credits, and actual results may differ. That’s the journey: register, fund, explore, buy, and track with Brickwise.
+Overlay: DEMO • Illustrative data / Projected rental return • Not guaranteed • Not a wallet credit
+
+GERMAN NARRATION
+So funktioniert Brickwise – mit einem Demokonto und beispielhaften Zahlen. Erstellen Sie zuerst Ihr Konto und schließen Sie die erforderlichen Registrierungsschritte ab. Öffnen Sie anschließend Ihr Wallet. Befolgen Sie die Zahlungsanweisungen und geben Sie den richtigen Verwendungszweck an. Fahren Sie fort, sobald Ihre Einzahlung bestätigt und Ihr verfügbares Guthaben aktualisiert wurde. In unserem Beispiel enthält das Wallet tausend Euro. Öffnen Sie nun Properties, die Immobilienübersicht. Prüfen Sie eine Immobilie, ihre Details, den Anteilspreis und die Risiken. Wählen Sie dann die Anzahl der Anteile. Zwei Demoanteile kosten hier insgesamt fünfhundert Euro. Wählen Sie Wallet-Guthaben, prüfen und bestätigen Sie den Kauf. Danach verbleiben fünfhundert Euro im Wallet. Unter Assets sehen Sie Ihre Anteile und den Kaufbetrag. Unter Income verfolgen Sie schließlich die Mietprognose im Zeitverlauf. Diese Werte sind Schätzungen auf Grundlage der Modellannahmen. Sie sind weder garantierte Erträge noch automatische Wallet-Gutschriften. Tatsächliche Ergebnisse können abweichen. Registrieren, einzahlen, entdecken, kaufen und mit Brickwise den Überblick behalten.
+Overlay: DEMO • Beispielhafte Daten / Prognostizierter Mietertrag • Nicht garantiert • Keine Wallet-Gutschrift
+
+FRENCH NARRATION
+Voici comment fonctionne Brickwise, avec un compte de démonstration et des chiffres illustratifs. Créez votre compte et terminez les étapes d’inscription requises. Ouvrez ensuite votre portefeuille. Suivez les instructions de paiement et indiquez la bonne référence. Poursuivez une fois le versement confirmé et le solde disponible mis à jour. Dans cet exemple, le portefeuille contient mille euros. Ouvrez Properties pour découvrir les biens. Consultez les détails d’un bien, le prix des parts et les risques, puis choisissez le nombre de parts. Ici, deux parts de démonstration coûtent cinq cents euros au total. Choisissez le solde du portefeuille, vérifiez l’achat et confirmez. Après l’achat, il reste cinq cents euros dans le portefeuille. Ouvrez Assets pour consulter vos parts et le montant investi. Enfin, dans Income, découvrez la projection des revenus locatifs au fil du temps. Ces chiffres sont des estimations fondées sur les hypothèses du modèle. Ce ne sont ni des gains garantis ni des crédits automatiques sur votre portefeuille. Les résultats réels peuvent différer. Inscrivez-vous, alimentez votre portefeuille, explorez, achetez et suivez vos participations avec Brickwise.
+Overlay: DÉMO • Données illustratives / Revenus locatifs prévisionnels • Non garantis • Aucun crédit au portefeuille
+
+SPANISH NARRATION
+Así funciona Brickwise, con una cuenta de demostración y cifras ilustrativas. Primero, crea tu cuenta y completa los pasos de registro necesarios. Después, abre tu wallet. Sigue las instrucciones de pago e indica la referencia correcta. Continúa cuando se confirme el ingreso y se actualice tu saldo disponible. En este ejemplo, el wallet contiene mil euros. Abre Properties para explorar los inmuebles. Revisa los detalles de un inmueble, el precio de cada participación y los riesgos. Después, elige cuántas participaciones quieres. Aquí, dos participaciones de demostración cuestan quinientos euros en total. Selecciona el saldo del wallet, revisa la compra y confirma. Tras la compra, quedan quinientos euros en el wallet. Abre Assets para consultar tus participaciones y el importe de compra. Por último, visita Income para explorar la proyección de ingresos por alquiler a lo largo del tiempo. Estas cifras son estimaciones basadas en los supuestos del modelo. No son ganancias garantizadas ni abonos automáticos al wallet. Los resultados reales pueden variar. Regístrate, añade fondos, explora, compra y sigue tus participaciones con Brickwise.
+Overlay: DEMO • Datos ilustrativos / Ingresos por alquiler previstos • No garantizados • Sin abono al wallet
+
+ITALIAN NARRATION
+Ecco come funziona Brickwise, con un conto demo e cifre illustrative. Per prima cosa, crea il tuo account e completa i passaggi di registrazione richiesti. Poi apri il wallet. Segui le istruzioni di pagamento e inserisci il riferimento corretto. Prosegui quando il versamento è confermato e il saldo disponibile è aggiornato. In questo esempio, il wallet contiene mille euro. Apri Properties per esplorare gli immobili. Esamina i dettagli di un immobile, il prezzo delle quote e i rischi, poi scegli il numero di quote. Qui, due quote dimostrative costano complessivamente cinquecento euro. Seleziona il saldo del wallet, controlla l’acquisto e conferma. Dopo l’acquisto, nel wallet restano cinquecento euro. Apri Assets per consultare le tue quote e l’importo dell’acquisto. Infine, visita Income per esplorare la proiezione dei redditi da locazione nel tempo. Queste cifre sono stime basate sulle ipotesi del modello. Non sono guadagni garantiti né accrediti automatici sul wallet. I risultati effettivi possono variare. Registrati, aggiungi fondi, esplora, acquista e segui le tue partecipazioni con Brickwise.
+Overlay: DEMO • Dati illustrativi / Reddito da locazione previsto • Non garantito • Nessun accredito sul wallet
+
+VALIDATION BEFORE DELIVERY
+Measure rendered duration for every language; adjust pacing within 60–90 seconds without removing the projection qualification. Review caption synchronization, localized overlays, readable UI, exact six-step order, consistent arithmetic, presenter position and final video playback. Deliver downloadable files or verified HeyGen video links. No application code or production deployment changed by this brief.

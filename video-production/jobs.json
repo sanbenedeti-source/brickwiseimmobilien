@@ -1,0 +1,12 @@
+{
+  "status": "Presenter renders submitted; final composites not rendered",
+  "avatar_id": "04ff76da360f40809782a3e00a132720",
+  "voice_id": "06468055edd4458aa131a1dfd813c1e9",
+  "videos": {
+    "en": "a6c5432e8336f5115630747796076d8f",
+    "de": "2752845078a962fbce5f91c72d22d85b",
+    "fr": "9e8190cd8e38b8faa1bdee3077e342eb",
+    "es": "678ea574b5a4489bc739a48578be3dcb",
+    "it": "a8c3cb73ca5b3fefbefb439856dd7b43"
+  }
+}

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" role="img" aria-labelledby="title desc">
+  <title id="title">Brickwise Digital Corporate Seal</title>
+  <desc id="desc">Circular Brickwise corporate seal for digitally issued documents, Miami Florida, established 2022.</desc>
+  <defs>
+    <path id="topArc" d="M 112,400 A 288,288 0 0,1 688,400" />
+    <path id="bottomArc" d="M 110,400 A 290,290 0 0,0 690,400" />
+    <linearGradient id="blueGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#169ce0" />
+      <stop offset="1" stop-color="#0879c6" />
+    </linearGradient>
+    <linearGradient id="greenGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16b39a" />
+      <stop offset="1" stop-color="#039982" />
+    </linearGradient>
+  </defs>
+
+  <g fill="none" stroke="#071a3d">
+    <circle cx="400" cy="400" r="370" stroke-width="12" />
+    <circle cx="400" cy="400" r="342" stroke-width="3" />
+    <circle cx="400" cy="400" r="244" stroke-width="3" />
+  </g>
+
+  <g fill="#071a3d" font-family="'Times New Roman', Times, serif" font-weight="700" text-anchor="middle">
+    <text font-size="52" letter-spacing="8">
+      <textPath href="#topArc" startOffset="50%">BRICKWISE</textPath>
+    </text>
+    <text font-size="27" letter-spacing="5">
+      <textPath href="#bottomArc" startOffset="50%">FRACTIONAL REAL ESTATE</textPath>
+    </text>
+  </g>
+
+  <g fill="#1693d5">
+    <circle cx="83" cy="400" r="7" />
+    <circle cx="717" cy="400" r="7" />
+  </g>
+
+  <g transform="translate(324 214) scale(.72)">
+    <path d="M106 0 212 86v108H126l24-33-42-45-40 78H0V86Z" fill="url(#blueGradient)" />
+    <path d="M0 86 106 0v82l-48 39v73H0Z" fill="#071a3d" />
+    <path d="M0 212h86v70H0Z" fill="#071a3d" />
+    <path d="M104 212h108v70H104Z" fill="url(#greenGradient)" />
+    <path d="m78 169 32-54 52 46-31 2 20 25-20 16-20-27-18 27Z" fill="#fff" />
+    <circle cx="43" cy="248" r="11" fill="#fff" />
+    <rect x="39" y="248" width="8" height="34" fill="#fff" />
+  </g>
+
+  <g font-family="'Times New Roman', Times, serif" text-anchor="middle">
+    <text x="400" y="490" fill="#071a3d" font-size="31" font-weight="800" letter-spacing="4">DIGITALLY ISSUED</text>
+    <line x1="280" y1="512" x2="520" y2="512" stroke="#1693d5" stroke-width="5" />
+    <text x="400" y="550" fill="#071a3d" font-size="22" font-weight="700" letter-spacing="4">MIAMI, FLORIDA</text>
+    <text x="400" y="584" fill="#0b9e87" font-size="21" font-weight="800" letter-spacing="5">EST. 2022</text>
+  </g>
+</svg>

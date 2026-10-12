@@ -1,0 +1,5 @@
+.tools/
+__pycache__/
+sources/
+output/
+frames/

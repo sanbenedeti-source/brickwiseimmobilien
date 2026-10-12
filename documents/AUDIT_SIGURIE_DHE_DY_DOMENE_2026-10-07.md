@@ -1,0 +1,81 @@
+**Audit i sigurisë dhe përdorimit të frontend-it me dy domene — 7 tetor 2026**
+
+**Përfundimi:** i njëjti frontend mund të shërbejë në dy domene, me të njëjtat llogari, prona dhe balance. Projekti aktual kërkon përshtatje të autentikimit për t'i mbajtur të dy domenet aktive. Në siguri, dy problemet financiare P1 të korrigjuara më 2 tetor kaluan përsëri verifikimin; mbeten nëntë gjetje për trajtim, shtatë P2 dhe dy P3. Nuk u demonstrua një cenueshmëri e re P1 gjatë këtij kontrolli.
+
+U kontrolluan kodi aktual, konfigurimi dhe politikat reale të Supabase, faqja publike, paketat dhe testet ekzistuese. Deployment-i i lidhur me `www.brickwise-immo.de` është `dpl_BEXiXxwfmBBCWSPYt6RmFbcxRTwh`, me status **Ready**, krijuar më 2 tetor. Kontrollet e kodit lokal dhe të databazës dallohen nga verifikimi HTTP; nuk u bë krahasim i plotë, skedar për skedar, me build-in e Vercel.
+
+P2 do të thotë problem që duhet planifikuar për korrigjim; P3 problem me ndikim më të kufizuar. Këto prioritete marrin parasysh kushtet reale të shfrytëzimit dhe nuk janë e njëjta gjë me nivelin “high” që raporton npm për një paketë.
+
+| Nr. | Prioriteti | Gjetja dhe ndikimi | Veprimi i rekomanduar |
+| --- | --- | --- | --- |
+| 1 | P2 | **Autorizim i vjetër me email te pronat.** Politikat reale lejojnë INSERT/UPDATE/DELETE për një email të fiksuar, pavarësisht rolit aktual `admin`. Aplikacioni përdor një rregull tjetër: `app_metadata.role`. Heqja e rolit admin nuk heq këtë rrugë të drejtpërdrejtë në databazë për identitetin e lejuar. | Unifiko autorizimin me rolin e besuar dhe shkrimet e audituara; hiq politikat e vjetra dhe privilegjet e panevojshme. Testo edhe administratorin të cilit i është hequr roli. |
+| 2 | P2 | **Draftet e pronave nuk kanë kufi privatësie në databazë.** Politika publike `USING true` lejon të gjitha rreshtat; API publike pranon edhe `status=all` ose `draft`. | Kufizo leximin anonim te statuset publike në RLS dhe API; mbaj draftet te rruga e autorizuar e administratorit. |
+| 3 | P2 | **OTP, regjistrimi dhe ridërgimi i konfirmimit nuk refuzojnë kërkesat me origjinë të huaj.** Testet me shërbim autentikimi të simuluar pranuan JSON të dërguar si `text/plain`. Te OTP kjo krijon mundësi për ngatërrim sesioni/login CSRF; te regjistrimi dhe resend shton sipërfaqen e abuzimit. | Kërko origjinën e lejuar, `application/json`, trup të vlefshëm dhe rrjedhë hyrjeje të qëllimshme. Header-at CORS, vetëm, nuk ndalojnë përpunimin e kërkesës. |
+| 4 | P2 | **Kontaktet mund të futen drejtpërdrejt si anonim.** Politika reale lejon INSERT dhe nuk ka trigger kufizimi të ritmit. Kufijtë e fushave ekzistojnë, por honeypot-i i formularit anashkalohet. | Përdor rrugë serveri me kufizime dhe verifikim kundër abuzimit; mbyll INSERT-in anonim të drejtpërdrejtë nëse mbrojtja vendoset vetëm te ajo rrugë. |
+| 5 | P2 | **Regjistrimi zbulon nëse email-i ka llogari.** Përgjigjet `200/201` dhe `alreadyRegistered` dallojnë dy rastet. | Kthe përgjigje dhe status të njëjtë për kërkesat e regjistrimit; mbaj hollësitë e llogarisë private. |
+| 6 | P2 | **Paketa me njoftime sigurie.** Skanimi gjeti 11 hyrje paketash të prekura nga vetëm tre njoftime të veçanta. Dy prej tyre janë në pemën e varësive të prodhimit. | Përditëso në mënyrë të synuar `sharp` dhe `source-map-js`; ndiq korrigjimin për `braces`. Verifiko build-in dhe përpunimin e imazheve në Linux. |
+| 7 | P2 | **Porosia e blerë mund të marrë status pune të pasaktë.** Admini ende mund ta ndryshojë një kërkesë `completed` në `new/contacted/closed`, pa ndryshuar blerjen financiare. | Dallo porositë financiare nga kontaktet dhe blloko kalimet e papërshtatshme në server/databazë dhe formular. |
+| 8 | P3 | **JSON `null` shkakton gabim në tre endpoint-e.** Kontakt, OTP dhe verifikim telefoni lexojnë fusha pa kontrolluar që trupi është objekt. | Valido formën dhe tipet e trupit; kthe `400` për input të pavlefshëm. |
+| 9 | P3 | **Dalja nga llogaria kryhet me GET.** Një navigim nga një faqe tjetër mund të shkaktojë logout. | Kalo te POST/Server Action me kontroll origjine dhe cakto qartë nëse dalja vlen për sesionin lokal apo të gjitha sesionet. |
+
+Gjetjet 1–2 janë konfirmuar nga politikat dhe privilegjet reale, por tabela `public.properties` ishte **bosh** në çastin e kontrollit. Pronat e shfaqura aktualisht vijnë edhe nga katalogu në kod. Nuk ka provë që u zbuluan drafte ekzistuese ose u ndryshuan prona nga një person i paautorizuar. Politika me email nuk jep akses për çdo përdorues: kërkon identitetin e fiksuar në atë politikë. Rreziku është mospërputhja me kontrollin aktual të rolit dhe mungesa e rrugës së audituar.
+
+Për gjetjen 3 u verifikua sjellja e handler-ave me zëvendësues lokalë të Auth, pa OTP reale, llogari apo email-e. Një sulm i plotë në browser nuk u demonstrua. Për gjetjen 4 nuk u krye spam ose test ngarkese; mbrojtjet e jashtme WAF nuk u verifikuan. Për gjetjen 7 u kontrollua kodi aktual dhe evidenca e riprodhimit të 2 tetorit; kontrolli agregat aktual gjeti **zero** mospërputhje porosi/transaksion.
+
+Referencat kryesore në kod dhe evidencë:
+
+| Gjetja | Referenca |
+| --- | --- |
+| 1 | `app/lib/admin.ts:3`; `SUPABASE_ATOMIC_ADMIN_AUDIT.sql:27`; [politikat dhe privilegjet reale](../project-backups/security-domain-audit-2026-10-07/properties-security-metadata.json) |
+| 2 | `app/api/properties/route.ts:54` dhe `:68`; `app/admin/properties/actions.ts:73`; e njëjta evidencë e databazës |
+| 3 | `app/authentication/verify-otp/route.ts:7`; `app/interface/register/route.ts:62`; `app/interface/confirmation-email/route.ts:67`; [provat lokale](../project-backups/security-domain-audit-2026-10-07/auth-check-results.json) dhe [kontrolli i domeneve](../project-backups/security-domain-audit-2026-10-07/domain-source-findings.json) |
+| 4 | `app/interface/contact-request/route.ts:19`; `SUPABASE_PROPERTY_REQUESTS_RLS.sql:45`; [katalogu aktual](../project-backups/security-domain-audit-2026-10-07/database-catalog.json) |
+| 5 | `app/interface/register/route.ts:125` |
+| 6 | `package-lock.json`; [analiza e paketave](../project-backups/security-domain-audit-2026-10-07/dependency-findings.json) |
+| 7 | `app/admin/action.ts:30`; `app/admin/page.tsx:396`; [analiza financiare](../project-backups/security-domain-audit-2026-10-07/financial-findings.json) |
+| 8–9 | `app/interface/contact-request/route.ts:19`; `app/authentication/verify-otp/route.ts:9`; `app/authentication/verify-phone/route.ts:8`; `app/logout/route.ts:5` |
+
+**Hollësitë e paketave.** `sharp 0.35.4` ka korrigjim në `0.35.5` për cenueshmërinë e librsvg. Konfigurimi aktual nuk lejon optimizimin SVG ose imazhe nga hoste të largëta të pakonfiguruara; nuk u demonstrua një rrugë sulmi ndaj faqes. Runtime-i i saktë vendas i Vercel nuk u inspektua. [Njoftimi i mirëmbajtësit](https://github.com/lovell/sharp/security/advisories/GHSA-wq5f-xc86-pv6w).
+
+`source-map-js 1.2.1` korrigjohet në `1.2.2`; problemi lidhet me bllokim gjatë përpunimit të source maps të përgatitura keq. Në këtë projekt u identifikua përdorim nga mjetet e CSS/build-it, pa endpoint të gjetur që pranon source maps nga vizitorët. [Versioni i korrigjuar](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2).
+
+`braces 3.0.3` është vetëm në varësitë e zhvillimit dhe ende nuk kishte korrigjim të publikuar në kontrollin e sotëm. Mbaj inputet e lint/build-it të kontrolluara dhe ndiq njoftimin. [Njoftimi i cenueshmërisë](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). Për dy korrigjimet e disponueshme, intervalet aktuale të varësive i lejojnë versionet e reja; nuk rekomandohet `npm audit fix --force`.
+
+**Mbrojtjet që u verifikuan.** Kaluan të gjitha **132 testet e aplikacionit**, lint-i dhe build-i. Kaluan edhe **shtatë grupe verifikimesh në skemën ekzistuese të databazës**: izolimi i klientëve, privatësia e pagesave, auditimi atomik i adminit, auditimi i depozitave, marrëveshjet, blerjet me balance dhe ruajtja e disponueshmërisë së kuotave. Testet e databazës përdorën të dhëna sintetike brenda transaksioneve të anuluara me rollback; kontrollet e tyre konfirmuan ruajtjen e të dhënave ekzistuese. Nuk u aplikua migrim.
+
+Të 18 tabelat në skemën `public` kanë RLS aktiv, por gjetjet 1–2 tregojnë pse aktivizimi i RLS nuk mjafton pa politika të sakta. RPC-të e kreditimit, blerjes dhe ndryshimit të disponueshmërisë janë vetëm për serverin. Nëntë kontrollet agregate financiare kthyen zero mospërputhje: balance/ledger, monedha/balance negative, kuota/kosto, kuota të bllokuara, lidhje pagesash, auditim kreditesh/rimbursimesh dhe status porosish. [Rezultatet financiare](../project-backups/security-domain-audit-2026-10-07/production-readonly-results.json), [verifikimet e databazës](../project-backups/security-domain-audit-2026-10-07/database-verification.json).
+
+Faqja dhe prona e kontrolluar kthyen `200`; dashboard-i dhe administrimi ridrejtuan vizitorin anonim; API e marrëveshjeve dhe receipt-i kthyen `401`. Rrugët e kontrolluara për `.env`, `.git`, konfigurimin Vercel, raportet dhe backup-in ZIP kthyen `404`. ZIP-i u kontrollua me HEAD. Header-at mbrojtës, përfshirë CSP, HSTS dhe mbrojtjen ndaj iframe, janë të pranishëm. Tre faqe publike dhe 14 skriptet e referuara nuk përmbanin dy vlerat private të kredencialeve lokale të kontrolluara. Kjo është një kampionim i caktuar, jo provë për çdo aset të aplikacionit. [HTTP](../project-backups/security-domain-audit-2026-10-07/production-security-http.json), [asetet publike](../project-backups/security-domain-audit-2026-10-07/public-assets.json).
+
+**Forcime shtesë të rekomanduara.** Supabase lejon fjalëkalim minimal gjashtë karaktere, pa kontroll fjalëkalimesh të komprometuara dhe pa CAPTCHA. TOTP është i disponueshëm, por aplikacioni nuk imponon MFA për administratorët; faqja e quajtur “two-factor” përdor OTP email-i dhe nuk është vetvetiu imponim i një faktori të dytë për veprimet financiare. Rekomandohet politikë më e fortë fjalëkalimi dhe MFA real në kufijtë e autorizimit të adminit. CSP lejon `unsafe-inline`; kjo dobëson mbrojtjen shtesë, por nuk u gjet një XSS i riprodhuar.
+
+JWT-të kanë afat 3 600 sekonda. Disa politika/RPC lexojnë rolin nga JWT, prandaj revokimi i rolit dhe dalja globale duhen shqyrtuar si sjellje e sesionit; nuk duhet supozuar revokim i menjëhershëm kudo. Rruga e vjetër e ngarkimit PDF përdor claims dhe shkrim serveri në një objekt të përdoruesit: nëse mbahet, rekomandohet verifikim aktual i përdoruesit dhe kontrolle origjine. Në storage nuk kishte bucket-e në momentin e auditit; krijimi privat bëhet sipas kërkesës në kod dhe nuk u ushtrua. Nuk u identifikua bucket publik i dokumenteve. Kufiri i vjetër prej 200 përdoruesish në listat e adminit mbetet çështje funksionale e veçantë.
+
+**Si mund të punojnë dy domenet.** Duke qenë se emri dhe qëllimi i domenit të dytë nuk janë dhënë, vlerësimi bazë supozon të njëjtën kompani dhe të njëjtat llogari. Vercel lejon lidhjen e domeneve me projektin e prodhimit ose ridrejtimin nga njëri te tjetri. [Dokumentacioni Vercel](https://vercel.com/docs/domains/working-with-domains/deploying-and-redirecting).
+
+| Zgjedhja | Arkitektura | Pasoja për përdoruesin |
+| --- | --- | --- |
+| Domeni i dytë ridrejton te kryesori | Projekti ekzistues Vercel dhe Supabase; redirect i përhershëm që ruan rrugën dhe parametrat | Një adresë përfundimtare dhe një rrjedhë hyrjeje; ndryshimi më i vogël |
+| Të dy domenet mbeten në shiritin e adresës | Një kod/build, një projekt Vercel, një Supabase; konfigurim autentikimi për secilin host | Të njëjtat llogari dhe balance; hyrje e veçantë në secilin domen |
+| Dy pamje/brand-e, të dhëna të përbashkëta | Konfigurim pamjeje, metadata dhe identiteti sipas hostit të verifikuar | Pamje të ndryshme, por të njëjtët klientë dhe administratorë |
+| Dy biznese me klientë të ndarë | I njëjti repository mund të ushqejë dy projekte Vercel/Supabase; alternativisht duhet izolim i plotë tenant/RLS | Ndarje reale e të dhënave dhe autorizimit; nuk realizohet vetëm me DNS ose logo tjetër |
+
+Për variantin me **dy domene aktive**, rekomandimi është një projekt Vercel dhe backend-i ekzistues vetëm nëse llogaritë, balancat dhe administrimi duhet të jenë të përbashkëta. Cookies aktuale janë vetëm për hostin që i krijon. Dy domene të pavarura nuk mund të ndajnë drejtpërdrejt një cookie; përdoruesi mund të ketë të njëjtën llogari, por duhet të identifikohet në secilin. Hyrja automatike mes domeneve kërkon rrjedhë SSO të projektuar posaçërisht. [Rregullat e cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie).
+
+Ndryshimet konkrete për këtë variant janë:
+
+1. Konfirmo domenin e dytë dhe pronësinë; lidhe me projektin ekzistues, DNS dhe TLS sipas vlerave që jep Vercel për atë domen.
+2. Cakto një listë të qartë hostesh të besuara. Lidhjet e autentikimit duhet të kthehen te hosti ku nisi veprimi, pas verifikimit të tij; mos përdor verbërisht `Origin` ose `X-Forwarded-Host`.
+3. Përshtat regjistrimin, resend-in, reset-in dhe OTP-në. Sot përdorin `NEXT_PUBLIC_SITE_URL`; lidhjet e reset-it me PKCE mund të dështojnë kur callback-i vjen te një domen që nuk ka cookie-n e verifier-it. [Rrjedha PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow).
+4. Shto URL-të e sakta callback/recovery për domenin e dytë në Supabase dhe përshtat template-in e email-it. Konfigurimi real sot përmban vetëm domenin gjerman, variantin apex dhe localhost; template-i i konfirmimit përdor `SiteURL`, pa `RedirectTo`. Ndryshimi vetëm i DNS ose allowlist-it nuk e zgjidh këtë. [Redirect URLs në Supabase](https://supabase.com/docs/guides/auth/redirect-urls). Referenca lokale: `scripts/configure-auth-flow.mjs:13` dhe `app/interface/register/route.ts:29`.
+5. Mbaj formularët dhe API-të në të njëjtën origjinë me faqen përkatëse. Dy alias-e Vercel nuk kërkojnë vetvetiu `CORS *` ose çaktivizim të mbrojtjes së Server Actions. Kontrolli ekzistues i origjinës te marrëveshjet funksionon edhe me një host të dytë të vetë faqes, sipas provës lokale.
+6. Vendos politikën SEO. Për përmbajtje identike përdor një domen canonical të zgjedhur; për brand tjetër duhen metadata/përmbajtje dhe sitemap të përshtatura. Sot `app/lib/seo.ts:5`, sitemap-i dhe identiteti i kompanisë janë të fiksuar te Brickwise/domeni kryesor. Vetëm ndryshimi i një variabli mjedisi nuk mjafton. [Udhëzimi i Google për canonical](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls).
+7. Para publikimit testo login, konfirmim, reset, OTP, refresh dhe logout në secilin host; kontrollo refuzimin e origjinave të huaja, redirect-et, canonical/robots/sitemap dhe blerjen me retry në një mjedis të kontrolluar. Për brand-e të ndara verifiko edhe cache-t sipas hostit; për klientë të ndarë kërkohen teste të izolimit të të dhënave.
+
+Aktualisht `brickwise-immo.de` ridrejton me `308` te `www.brickwise-immo.de`. Alias-i i projektit `brickwiseimmobilien.vercel.app/sign-in` ridrejton me `307` te domeni gjerman. Emri i vjetër `brickwise-canada.ca` në listat CORS është vetëm konfigurim në kod; nuk vërteton pronësinë dhe nuk është trajtuar si domeni i dytë i kërkuar.
+
+**Rendi i punës i rekomanduar:** korrigjo politikat e pronave, kontrollet e origjinës dhe varësitë me patch të disponueshëm; pastaj mbyll spam-in/zbulimin e llogarive dhe statuset e porosive. Para hapjes së domenit të dytë aktiv, përfundo callback-et, template-et dhe testet e sesionit për të dy hostet. MFA e adminit ka përparësi praktike për shkak të veprimeve financiare.
+
+Ky audit prodhoi raport dhe evidencë lokale; nuk ndryshoi funksionet e faqes, DNS, konfigurimin Auth apo deployment-in. Nuk u dërguan email-e, nuk u kryen blerje/nënshkrime reale dhe nuk u ndryshuan të dhëna klientësh. Vercel `inspect` dhe kontrollet publike funksionuan, por leximi i detajuar i konfigurimit të projektit përmes API ktheu `403`, ndërsa rruga alternative CLI dështoi. Për këtë arsye WAF, konfigurimi i plotë i mbrojtjes së deployment-eve, DNS i një domeni të ardhshëm dhe procesi i rikthimit të backup-eve mbeten jashtë verifikimit. Raporti nuk është garanci se mungojnë çdo lloj cenueshmërie.
+
+Evidenca e këtij kontrolli ruhet te [project-backups/security-domain-audit-2026-10-07](../project-backups/security-domain-audit-2026-10-07/). Për korrigjimet financiare të publikuara më parë: [SECURITY_FIXES_01_02_2026-10-02.md](SECURITY_FIXES_01_02_2026-10-02.md).

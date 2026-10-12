@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env*
+.chrome-*
+project-backups
+/documents
+.agents
+.codex
+*.log
+*.tsbuildinfo

@@ -1,0 +1,23 @@
+﻿import {mkdir,writeFile} from 'node:fs/promises';
+process.loadEnvFile('.env');
+const ref=new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split('.')[0];
+const endpoint=`https://api.supabase.com/v1/projects/${ref}/config/auth`;
+const headers={Authorization:`Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,'Content-Type':'application/json'};
+const response=await fetch(endpoint,{headers});
+if(!response.ok)throw new Error(`Read config: ${response.status}`);
+const before=await response.json();
+const fields=['uri_allow_list','mailer_templates_confirmation_content'];
+const backup=Object.fromEntries(fields.map(k=>[k,before[k]]));
+const urls=new Set(before.uri_allow_list.split(',').filter(Boolean));
+for(const origin of ['https://www.brickwise-immo.de','https://brickwise-immo.de','http://localhost:3000'])for(const route of ['callback','recovery'])for(const portal of ['admin','client'])urls.add(`${origin}/authentication/${route}?next=${encodeURIComponent('/update-password?portal='+portal)}`);
+const template=before.mailer_templates_confirmation_content.replaceAll('{{ .ConfirmationURL }}','{{ .SiteURL }}/authentication/callback?token_hash={{ .TokenHash }}&amp;type=email');
+if(!template.includes('{{ .TokenHash }}'))throw new Error('Unexpected confirmation template');
+const desired={uri_allow_list:[...urls].join(','),mailer_templates_confirmation_content:template};
+if(process.argv[2]!=='apply'){console.log(JSON.stringify({mode:'check',smtpConfigured:!!before.smtp_host,emailConfirmationRequired:!before.mailer_autoconfirm,addedRedirects:urls.size-before.uri_allow_list.split(',').length,confirmationTemplateSupportsServerVerification:template.includes('{{ .TokenHash }}')}));process.exit(0)}
+await mkdir('project-backups/auth-flow',{recursive:true});
+await writeFile(`project-backups/auth-flow/config-before-${Date.now()}.json`,JSON.stringify(backup,null,2));
+const updated=await fetch(endpoint,{method:'PATCH',headers,body:JSON.stringify(desired)});
+if(!updated.ok)throw new Error(`Update config: ${updated.status}`);
+const verify=await fetch(endpoint,{headers});if(!verify.ok)throw new Error(`Verify config: ${verify.status}`);const after=await verify.json();
+for(const k of fields)if(after[k]!==desired[k])throw new Error(`Verification failed: ${k}`);
+console.log(JSON.stringify({updated:true,verified:true,changedFields:fields}));

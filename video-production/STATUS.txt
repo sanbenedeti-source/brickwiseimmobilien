@@ -1,0 +1,26 @@
+PRODUCTION STATUS
+
+Approved approach: render Kacper through HeyGen, then independently composite him in the corner over the demo UI.
+Submitted in order: English, German, French, Spanish, Italian.
+The inline HeyGen players track presenter rendering. No final video is claimed complete.
+Job IDs are persisted in jobs.json. Do not resubmit jobs to check status.
+
+Prepared locally:
+- Five narration scripts and storyboard in brickwise-how-it-works.txt.
+- Forty clearly labeled illustrative UI screens and five contact sheets under frames/.
+- compose.py can combine a downloaded presenter MP4 with the screens.
+- Python dependencies are isolated in .tools/; no application dependencies changed.
+
+Still required:
+1. Obtain completed presenter MP4s and caption files from HeyGen.
+2. Check native pronunciation and actual audio durations.
+3. Derive eight scene start times from each recording/caption file: registration, wallet funding, confirmed funding, Properties, purchase review, purchase success, Assets, Income.
+4. Pass that JSON timing array and source MP4 to compose.py for each language.
+5. Add synchronized captions and cursor cues, inspect the actual presenter crop, and review final videos end to end before delivery.
+
+Example after source download:
+python video-production/compose.py --language en --source video-production/sources/en.mp4 --timings video-production/sources/en-timings.json
+
+The automatic timing fallback only produces a review draft. Final exports must be checked against the actual spoken narration.
+The generated demo screens are illustrative reconstructions using local brand colors and assets, not captured live transactions. No production accounts, wallets or holdings were changed.
+No website code was changed or deployed. Local production materials are not live on the website.

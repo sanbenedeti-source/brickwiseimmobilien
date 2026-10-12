@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --font-sans-stack: var(--font-inter), Arial, Helvetica, sans-serif;
+  --font-display-stack: var(--font-sans-stack);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-sans-stack);
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-stack);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+*,
+button,
+input,
+textarea,
+select {
+  box-sizing: border-box;
+  font-family: var(--font-sans-stack) !important;
+}
+
+a,
+button {
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
+
+a,
+button,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+summary {
+  border-radius: 0.5rem;
+}
+
+::selection {
+  background: #ffd166;
+  color: #152238;
+}
+
+body:has(.investor-shell) > header,
+body:has(.investor-shell) > footer {
+  display: none;
+}
+
+.font-display {
+  font-family: var(--font-display-stack);
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid #b8eddf;
+  outline-offset: 5px;
+  border-radius: 4px;
+}

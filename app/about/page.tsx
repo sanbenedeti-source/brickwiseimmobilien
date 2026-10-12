@@ -1,0 +1,39 @@
+import Link from "next/link";
+import Team from "./Team";
+import { aboutTranslations } from "./translations";
+import { cookies } from "next/headers";
+import { localeCookieName, normalizeLocale } from "../lib/i18n";
+
+const content = {
+  ...aboutTranslations,
+  en: {
+    eyebrow: "About Brickwise", title: "Making real estate participation clearer and more attainable, wherever you are.", intro: "Property technology, fractional access, and guided investor communication in one experience.",
+    storyTitle: "Our story", storyOne: "Traditional property ownership can be difficult to access and compare. High entry costs, fragmented information, slow processes, and unclear assumptions create unnecessary barriers. Brickwise brings selected property information, fractional share modelling, account tools, and direct agent communication into one digital platform.", storyTwo: "Our role is to make the journey easier to understand—not to remove risk or promise returns. Every model remains informational until availability, documentation, eligibility, and payment instructions are reviewed separately.",
+    beliefLabel: "Our belief", beliefQuote: "“Better access starts with better information.”", beliefText: "Brickwise combines technology and human guidance so users can move from discovery to informed conversation with greater confidence.", missionTitle: "Our mission", valuesTitle: "Our values", properties: "Explore properties", contact: "Contact our team",
+    mission: ["Make property opportunities easier to understand without hiding the risks.", "Give investors practical tools to compare shares, income assumptions, and project information.", "Connect digital discovery with human review before funding or contractual steps.", "Build a transparent cross-border platform designed for long-term trust."],
+    values: [["Transparency", "Clear property data, assumptions, costs, risks, and request status in one place."], ["Accessibility", "A digital path for comparing fractional real-estate opportunities across markets."], ["Integrity", "Verified communication and payment instructions before any transfer is considered."], ["Innovation", "Technology that turns complex property information into a practical investor workflow."], ["Collaboration", "A guided process connecting clients, property information, and the Brickwise team."], ["Empowerment", "Tools and context that help users ask better questions and make informed decisions."], ["Sustainability", "Long-term thinking around property quality, operating costs, and responsible ownership."], ["Client focus", "A straightforward experience built around clarity, security, and responsive support."]],
+  },
+  it: {
+    eyebrow: "Chi siamo", title: "Rendere la partecipazione immobiliare più chiara e accessibile, ovunque tu sia.", intro: "Tecnologia immobiliare, accesso frazionato e assistenza guidata agli investitori in un'unica esperienza.",
+    storyTitle: "La nostra storia", storyOne: "La proprietà immobiliare tradizionale può essere difficile da raggiungere e confrontare. Costi di ingresso elevati, informazioni frammentate, procedure lente e ipotesi poco chiare creano barriere inutili. Brickwise riunisce in un'unica piattaforma digitale informazioni selezionate sugli immobili, modelli di quote frazionate, strumenti per il conto e comunicazione diretta con il team.", storyTwo: "Il nostro ruolo è rendere il percorso più facile da comprendere, non eliminare il rischio né promettere rendimenti. Ogni modello ha carattere informativo finché disponibilità, documentazione, idoneità e istruzioni di pagamento non vengono verificate separatamente.",
+    beliefLabel: "In cosa crediamo", beliefQuote: "“Un accesso migliore inizia da informazioni migliori.”", beliefText: "Brickwise unisce tecnologia e assistenza umana per aiutare gli utenti a passare dalla scoperta a un confronto consapevole con maggiore sicurezza.", missionTitle: "La nostra missione", valuesTitle: "I nostri valori", properties: "Esplora gli immobili", contact: "Contatta il nostro team",
+    mission: ["Rendere le opportunità immobiliari più semplici da comprendere senza nasconderne i rischi.", "Offrire strumenti pratici per confrontare quote, ipotesi di reddito e informazioni sui progetti.", "Collegare la ricerca digitale alla verifica umana prima di qualsiasi finanziamento o passaggio contrattuale.", "Costruire una piattaforma internazionale trasparente, pensata per una fiducia duratura."],
+    values: [["Trasparenza", "Dati, ipotesi, costi, rischi e stato delle richieste presentati in modo chiaro in un unico luogo."], ["Accessibilità", "Un percorso digitale per confrontare opportunità immobiliari frazionate in mercati diversi."], ["Integrità", "Comunicazioni e istruzioni di pagamento verificate prima che venga presa in considerazione qualsiasi operazione."], ["Innovazione", "Tecnologia che trasforma informazioni immobiliari complesse in un percorso pratico per l'investitore."], ["Collaborazione", "Un processo guidato che collega clienti, informazioni sugli immobili e il team Brickwise."], ["Autonomia", "Strumenti e contesto che aiutano gli utenti a porre domande migliori e prendere decisioni informate."], ["Sostenibilità", "Una visione di lungo periodo sulla qualità degli immobili, i costi operativi e la proprietà responsabile."], ["Attenzione al cliente", "Un'esperienza semplice, costruita intorno a chiarezza, sicurezza e assistenza reattiva."]],
+  },
+};
+
+export default async function AboutPage() {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get(localeCookieName)?.value) || "en";
+  const text = content[locale];
+  return <main className="bg-white text-[#111827]">
+    <section className="mx-auto max-w-[1380px] px-6 pb-14 pt-36 text-center"><p className="font-bold uppercase tracking-[0.18em] text-[#168bd3]">{text.eyebrow}</p><h1 className="mx-auto mt-5 max-w-6xl text-4xl font-bold leading-tight sm:text-6xl">{text.title}</h1><p className="mt-5 text-lg text-[#687486]">{text.intro}</p></section>
+    <section className="mx-auto max-w-[1380px] px-6 py-12">
+      <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr]"><div><h2 className="text-3xl font-bold">{text.storyTitle}</h2><p className="mt-5 text-lg leading-8 text-[#44516a]">{text.storyOne}</p><p className="mt-4 text-lg leading-8 text-[#44516a]">{text.storyTwo}</p></div><div className="rounded-2xl bg-[#eaf4fb] p-8"><p className="text-sm font-bold uppercase tracking-wide text-[#168bd3]">{text.beliefLabel}</p><blockquote className="mt-4 text-3xl font-bold leading-snug">{text.beliefQuote}</blockquote><p className="mt-5 leading-7 text-[#596579]">{text.beliefText}</p></div></div>
+      <div className="mt-16"><h2 className="text-3xl font-bold">{text.missionTitle}</h2><ul className="mt-6 grid gap-4 md:grid-cols-2">{text.mission.map((item) => <li key={item} className="flex gap-4 rounded-xl bg-[#f4f7fa] p-5 leading-7"><span className="mt-1.5 h-4 w-4 shrink-0 rounded-full bg-[#55aef0]" />{item}</li>)}</ul></div>
+      <div className="mt-20"><h2 className="text-center text-4xl font-bold">{text.valuesTitle}</h2><div className="mt-8 grid gap-5 md:grid-cols-2">{text.values.map(([title, description]) => <article key={title} className="rounded-xl bg-[#f3f6fa] p-6"><h3 className="text-xl font-bold text-[#168bd3]">{title}</h3><p className="mt-3 leading-7 text-[#35435a]">{description}</p></article>)}</div></div>
+      <Team locale={locale} title={{ en: "Our Leadership and Team", de: "Unsere Führung und unser Team", fr: "Notre direction et notre équipe", es: "Nuestra dirección y equipo", it: "Leadership e team" }[locale]} />
+      <div className="mt-16 flex flex-wrap justify-center gap-4"><Link href="/properties" className="rounded-lg bg-[#2f9bdb] px-7 py-4 font-bold text-white">{text.properties}</Link><Link href="/contact" className="rounded-lg border border-[#17233f] px-7 py-4 font-bold">{text.contact}</Link></div>
+    </section>
+  </main>;
+}
