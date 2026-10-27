@@ -77,11 +77,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day)));
 
   return (
-    <main className="min-h-screen bg-[#f7f7f4] px-6 py-20">
+    <main className="min-h-screen bg-canvas px-6 py-20">
       <article className="mx-auto max-w-4xl">
         <p className="mb-4 text-sm text-gray-600">{date}</p>
 
-        <h1 className="font-display mb-8 text-4xl font-bold leading-tight text-[#111827] md:text-5xl">
+        <h1 className="font-display mb-8 text-4xl font-bold leading-tight text-ink md:text-5xl">
           {title}
         </h1>
 
@@ -90,7 +90,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
           alt={title}
           width={1200}
           height={630}
-          priority
+          loading="eager"
+          fetchPriority="high"
           className="mb-10 h-[420px] w-full rounded-2xl object-cover shadow"
         />
 

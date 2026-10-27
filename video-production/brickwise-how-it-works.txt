@@ -1,6 +1,6 @@
 BRICKWISE — HOW IT WORKS
 Production brief — 2026-10-09
-Status: User approved separate composition. All five direct HeyGen presenter jobs have been submitted; see jobs.json. No final composite has been rendered. Video Agent was unavailable for this presenter, so compose.py prepares explicitly labeled illustrative demo screens and an independent corner-presenter composition.
+Status: All five 1080p composites rendered from local browser recordings with existing HeyGen presenter videos. See STATUS.txt for limitations and output/validation.json for technical checks.
 
 DELIVERY
 English master first, followed by German, French, Spanish and Italian.

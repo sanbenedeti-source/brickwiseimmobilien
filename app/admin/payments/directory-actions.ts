@@ -3,14 +3,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { parseCompanyPaymentMethod } from "@/app/lib/company-payment-methods";
 import { writeAdminMutation } from "@/app/lib/admin-audit";
 
 export async function saveCompanyPaymentMethod(form: FormData) {
   const client = await createClient();
   const { data: { user } } = await client.auth.getUser();
-  if (!user || !isAdminUser(user)) redirect("/sign-in");
+  if (!user || !(await hasAdminSession(client, user))) redirect("/sign-in");
   const kind = form.get("kind") === "crypto" ? "crypto" : "bank_transfer";
   const back = `/admin/payments?method=${kind}`;
   const payload = parseCompanyPaymentMethod(form);

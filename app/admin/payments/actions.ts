@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { parsePaymentMethodFields } from "@/app/lib/payment-methods";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import { writeAdminMutation } from "@/app/lib/admin-audit";
 
@@ -40,7 +41,7 @@ async function requireAdminUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!isAdminUser(user)) {
+  if (!(await hasAdminSession(supabase, user))) {
     return null;
   }
 

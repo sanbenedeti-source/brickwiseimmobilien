@@ -60,32 +60,30 @@ export default function ImportPropertiesForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section className="mb-12 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-      <h2 className="mb-2 text-3xl font-bold text-gray-900">{t("Import properties from API JSON")}</h2>
-
-      <p className="mb-6 text-base text-gray-600">{t("Paste licensed property data from CREA, Repliers, or another approved provider. Prices must be in EUR; convert foreign-currency prices before importing. Imported active properties appear on the public properties page.")}</p>
-      <p className="mb-6 rounded-xl bg-sky-50 p-4 text-sm text-sky-900">{t("Imported text keeps its source language. Review and supply translations in all five languages before publishing multilingual content.")}</p>
+    <div className="admin-form">
+      <p className="admin-help">{t("Paste licensed property data from CREA, Repliers, or another approved provider. Prices must be in EUR; convert foreign-currency prices before importing. Imported active properties appear on the public properties page.")}</p>
+      <p className="admin-note">{t("Imported text keeps its source language. Review and supply translations in all five languages before publishing multilingual content.")}</p>
 
       <textarea
         aria-label={t("Import properties from API JSON")}
         value={jsonValue}
         onChange={(event) => setJsonValue(event.target.value)}
         rows={14}
-        className="w-full resize-y rounded-xl border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 outline-none focus:border-[#0b1020]"
+        className="admin-code"
       />
 
-      <div className="mt-5 flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           type="button"
           onClick={importProperties}
           disabled={isSubmitting}
-          className="rounded-xl bg-[#0b1020] px-6 py-3 text-base font-bold text-white transition hover:bg-[#111827] disabled:cursor-not-allowed disabled:opacity-60"
+          className="admin-btn"
         >
           {t(isSubmitting ? "Importing..." : "Import JSON")}
         </button>
 
-        {message && <p className="text-base font-semibold text-gray-700">{message}</p>}
+        {message && <p role="status" className="admin-help">{message}</p>}
       </div>
-    </section>
+    </div>
   );
 }

@@ -6,6 +6,11 @@ import {
   localeCookieName,
   normalizeLocale,
 } from "@/app/lib/i18n";
+import { utilityMetadata } from "@/app/lib/utility-metadata";
+
+export function generateMetadata() {
+  return utilityMetadata("twoFactor");
+}
 
 const en: TwoFactorCopy = {
   title: "Email code",

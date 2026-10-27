@@ -2,11 +2,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "../lib/admin";
+import { hasAdminSession } from "../lib/admin-session";
 export type DepositState = { result: "" | "saved" | "error" };
 export async function submitDeposit(_state: DepositState, form: FormData): Promise<DepositState> {
  const client = await createClient();
  const {data:{user}} = await client.auth.getUser();
- if (!user || form.get("acknowledged") !== "on") return {result:"error"};
+ // Admin accounts are never credited (same rule as manual wallet credits).
+ if (!user || isAdminUser(user) || form.get("acknowledged") !== "on") return {result:"error"};
  let destination;
  try { destination=JSON.parse(String(form.get("destination") || "")); delete destination.created_at; delete destination.updated_at; } catch { return {result:"error"}; }
  const {error} = await client.rpc("submit_deposit", {
@@ -23,10 +25,18 @@ export async function reviewDeposit(_state: DepositState, form: FormData): Promi
  const client = await createClient();
  const {data:{user}} = await client.auth.getUser();
  const approve = form.get("decision") === "approve";
- if (!isAdminUser(user) || !["approve","reject"].includes(String(form.get("decision"))) || (approve && form.get("checked")!=="on")) return {result:"error"};
+ if (!(await hasAdminSession(client, user)) || !["approve","reject"].includes(String(form.get("decision"))) || (approve && form.get("checked")!=="on")) return {result:"error"};
+ const id = String(form.get("deposit_id") || "");
+ const amount = String(form.get("amount") || "").trim();
+ // No admin reviews their own deposit, and a credit that differs from the
+ // reported amount (fees, crypto conversion) needs an explicit confirmation.
+ const {data:deposit,error:readError} = await client.from("deposit_submissions").select("user_id,requested_eur").eq("id",id).maybeSingle();
+ if (readError || !deposit || deposit.user_id === user!.id) return {result:"error"};
+ if (approve && (!/^\d+(?:\.\d{1,2})?$/.test(amount)
+  || (Math.round(Number(amount)*100) !== Math.round(Number(deposit.requested_eur)*100) && form.get("amount_differs")!=="on"))) return {result:"error"};
  const {error} = await client.rpc("review_deposit", {
-  p_id:String(form.get("deposit_id") || ""), p_approve:approve,
-  p_eur: approve ? String(form.get("amount") || "") : null,
+  p_id:id, p_approve:approve,
+  p_eur: approve ? amount : null,
   p_settlement: approve ? String(form.get("settlement") || "").trim() : null,
   p_note:String(form.get("note") || "").trim(),
  });

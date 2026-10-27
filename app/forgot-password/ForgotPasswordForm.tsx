@@ -58,44 +58,45 @@ export default function ForgotPasswordForm({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f2] px-6 py-32 text-[#111111]">
+    <main className="min-h-screen bg-canvas px-6 py-32 text-ink">
       <section className="mx-auto w-full max-w-xl bg-white p-8 shadow-sm sm:p-10">
-        <p className="text-sm font-semibold uppercase text-[#2f9bdb]">{t("Brickwise security")}</p>
+        <p className="text-sm font-semibold uppercase text-brand">{t("Brickwise security")}</p>
         <h1 className="mt-3 text-4xl font-bold sm:text-5xl">{copy.title}</h1>
         <p className="mt-4 text-lg leading-7 text-slate-600">{copy.intro}</p>
 
         {sent ? (
-          <div className="mt-8 border-l-4 border-emerald-500 bg-emerald-50 p-5 text-emerald-800">
+          <div role="status" className="mt-8 border-l-4 border-emerald-500 bg-emerald-50 p-5 text-emerald-800">
             {copy.success}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
-              <label className="text-sm font-bold text-slate-600">{copy.email}</label>
+              <label htmlFor="forgot-email" className="text-sm font-bold text-slate-600">{copy.email}</label>
               <input
+                id="forgot-email"
                 type="email"
                 required
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="mt-2 w-full border border-slate-200 px-5 py-4 text-lg outline-none focus:border-[#2f9bdb]"
+                className="mt-2 w-full border border-line-strong px-5 py-4 text-lg outline-none focus:border-brand"
                 placeholder={copy.emailPlaceholder}
               />
             </div>
 
-            {message && <div className="bg-red-50 p-4 text-red-700">{message}</div>}
+            {message && <div role="alert" className="bg-red-50 p-4 text-red-700">{message}</div>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#17233f] py-4 text-lg font-bold text-white transition hover:bg-[#2f9bdb] disabled:opacity-60"
+              className="w-full bg-brand py-4 text-lg font-bold text-white transition hover:bg-brand-strong disabled:opacity-60 rounded-lg"
             >
               {loading ? copy.sending : copy.send}
             </button>
           </form>
         )}
 
-        <Link href={portal === "admin" ? "/admin" : "/sign-in"} className="mt-7 inline-flex font-semibold text-[#2f9bdb] hover:underline">
+        <Link href={portal === "admin" ? "/admin" : "/sign-in"} className="mt-5 inline-flex min-h-11 items-center font-semibold text-brand hover:underline">
           {copy.back}
         </Link>
       </section>

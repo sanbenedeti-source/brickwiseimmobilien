@@ -38,5 +38,8 @@ export async function signInWithPassword(
     return { error: t(message) };
   }
 
-  redirect(isAdminUser(data.user) ? "/admin" : "/dashboard");
+  if (isAdminUser(data.user)) redirect("/admin");
+  // Only same-site property and portal pages; never another origin ("//", "/\\").
+  const next = String(formData.get("next") || "");
+  redirect(/^\/(?:properties|dashboard|funding|contact)(?:[/?#][^\\\s]*)?$/.test(next) ? next : "/dashboard");
 }

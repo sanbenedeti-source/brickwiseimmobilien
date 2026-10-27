@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getRequestLocale, normalizeLocale } from "@/app/lib/i18n";
 import { agreementVersion, loadClientAgreement } from "@/app/lib/client-agreements";
+import { parseSignaturePng } from "@/app/lib/signed-agreement-pdf";
+import { requestEvidence, signAgreement } from "@/app/lib/agreement-signing";
 
 const headers = { "Cache-Control": "private, no-store" };
 function failure(status: number) { return Response.json({ error: "agreement_unavailable" }, { status, headers }); }
@@ -22,25 +24,28 @@ export async function POST(request: Request) {
     const client = await createClient();
     const { data: { user }, error } = await client.auth.getUser();
     if (error || !user) return failure(401);
-    if (!user.email_confirmed_at) return failure(403);
+    if (!user.email_confirmed_at || !user.email) return failure(403);
     let body: Record<string, unknown>;
     try {
       const text = await request.text();
-      if (text.length > 4096) return failure(413);
+      // Room for the drawn signature image; everything else is a few short fields.
+      if (text.length > 300_000) return failure(413);
       const parsed = JSON.parse(text);
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return failure(400);
       body = parsed;
     } catch { return failure(400); }
     const locale = typeof body.locale === "string" ? normalizeLocale(body.locale) : null;
     const name = typeof body.signerName === "string" ? body.signerName.trim() : "";
-    if (!locale || body.consent !== true || name.length < 2 || name.length > 120 || /[\u0000-\u001f\u007f]/.test(name)) return failure(422);
+    const signature = parseSignaturePng(body.signature);
+    if (!locale || body.consent !== true || name.length < 2 || name.length > 120 || /[\u0000-\u001f\u007f]/.test(name) || !signature) return failure(422);
     if (body.version !== agreementVersion) return failure(409);
-    // Read the current catalog before accepting; the database snapshots its exact PDF and consent.
-    await loadClientAgreement(client, user.id, locale, true);
-    const { error: writeError } = await client.rpc("accept_client_agreement", {
-      p_version: agreementVersion, p_locale: locale, p_signer_name: name, p_consent: true,
+    // Read the current catalog before signing; the database snapshots its exact PDF and consent.
+    const current = await loadClientAgreement(client, user.id, locale, true);
+    if (current.acceptance) return Response.json(current, { headers });
+    await signAgreement({
+      userId: user.id, email: user.email, signerName: name, locale, document: current.document,
+      signaturePng: signature, ...requestEvidence(request),
     });
-    if (writeError) return failure(503);
     return Response.json(await loadClientAgreement(client, user.id, locale, true), { headers });
   } catch { return failure(503); }
 }

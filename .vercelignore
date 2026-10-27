@@ -5,7 +5,9 @@ node_modules
 .chrome-*
 project-backups
 /documents
+/video-production
 .agents
 .codex
+.mcp.json
 *.log
 *.tsbuildinfo

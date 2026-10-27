@@ -10,7 +10,9 @@ import MetaPixelConsent from "./components/MetaPixelConsent";
 import ClientPortalSidebar from "./components/ClientPortalSidebar";
 import RouteShell from "./components/RouteShell";
 import FloatingLeadForm from "./components/FloatingLeadForm";
+import WebsiteChat from "./components/WebsiteChat";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import { isAdminUser } from "@/app/lib/admin";
 import {
   defaultLocale,
   i18nText,
@@ -23,7 +25,7 @@ import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
-  style: ["normal", "italic"],
+  style: ["normal"],
   variable: "--font-inter",
   display: "swap",
 });
@@ -42,11 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(siteUrl),
-    title: company.searchTitle,
+    title: `BRICKWISE | ${text.title}`,
     description: text.description,
     robots: { index: false, follow: false },
     openGraph: {
-      title: company.searchTitle,
+      title: `BRICKWISE | ${text.title}`,
       description: text.description,
       url: siteUrl,
       siteName: company.name,
@@ -63,7 +65,9 @@ export default async function RootLayout({
 }>) {
   const locale = await getCurrentLocale();
   const user = await getCurrentUser();
-  const isAuthenticated = Boolean(user);
+  // Administrators never use the client portal: public pages show them the public layout.
+  const isAdmin = isAdminUser(user);
+  const isAuthenticated = Boolean(user) && !isAdmin;
   const claimEmail = user?.email || "Client";
   const metadata = user?.user_metadata && typeof user.user_metadata === "object"
     ? user.user_metadata as Record<string, unknown>
@@ -78,13 +82,14 @@ export default async function RootLayout({
         <LocaleProvider locale={locale}>
         <RouteShell
           isAuthenticated={isAuthenticated}
-          header={<Header locale={locale} isAuthenticated={isAuthenticated} />}
+          header={<Header locale={locale} isAuthenticated={Boolean(user)} isAdmin={isAdmin} />}
           footer={<Footer locale={locale} />}
           sidebar={<ClientPortalSidebar active="none" email={claimEmail} fullName={fullName} locale={locale} />}
         >
           {children}
         </RouteShell>
         <FloatingLeadForm locale={locale} />
+        <WebsiteChat locale={locale} />
         <Suspense fallback={null}><MetaPixelConsent locale={locale} /></Suspense>
               </LocaleProvider>
       </body>

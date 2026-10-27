@@ -39,7 +39,10 @@ test("all seven property maps render their own address and selected language, wi
     assert.match(markup, /id="location"/);
     assert.ok(markup.includes(property.address), property.slug);
     assert.ok(markup.includes(`hl=${locale}`), property.slug);
-    assert.match(markup, /<iframe/);
+    // Google Maps loads only after a click: a button and the recorded embed URL, no iframe yet.
+    assert.doesNotMatch(markup, /<iframe/);
+    assert.match(markup, /<button type="button"[^>]*>.*Google Maps/);
+    assert.match(markup, /data-map-src="https:\/\/www\.google\.com\/maps\?/);
     if (property.slug === "edmonton-windsor-park-8712-120-st") assert.match(markup, /Street View/);
     else assert.doesNotMatch(markup, /Street View/);
   }

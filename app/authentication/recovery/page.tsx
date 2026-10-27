@@ -34,5 +34,5 @@ export default function RecoveryPage() {
     void recoverSession();
   }, []);
 
-  return <main className="flex min-h-screen items-center justify-center bg-[#f5f5f2]"><span className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#2f9bdb]" aria-label={t("Loading")} /></main>;
+  return <main className="flex min-h-screen items-center justify-center bg-canvas"><span className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-brand" aria-label={t("Loading")} /></main>;
 }

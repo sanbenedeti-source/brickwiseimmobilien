@@ -15,8 +15,11 @@ test("manual language selection persists across country and browser changes, and
   }
 });
 
-test("first visits use supported country or browser preferences and exclude refused languages", () => {
-  assert.equal(resolveLocale({ country: "ES", acceptLanguage: "en-US" }), "es");
+test("first visits use the browser language, fall back to the country, and exclude refused languages", () => {
+  assert.equal(resolveLocale({ country: "DE", acceptLanguage: "fr-FR" }), "fr");
+  assert.equal(resolveLocale({ country: "ES", acceptLanguage: "en-US" }), "en");
+  assert.equal(resolveLocale({ country: "DE", acceptLanguage: "pl-PL, pl;q=0.9" }), "de");
+  assert.equal(resolveLocale({ country: "IT" }), "it");
   assert.equal(resolveLocale({ country: "XX", acceptLanguage: "pt-BR, fr-FR;q=0.9, en;q=0.5" }), "fr");
   assert.equal(resolveLocale({ acceptLanguage: "ja-JP" }), "en");
   assert.equal(getLocaleFromAcceptLanguage("de;q=0, fr;q=invalid"), null);

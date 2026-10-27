@@ -27,8 +27,12 @@ export type ListingProperty = {
   image_url: string;
   image_urls?: string[];
   status: string;
-  constructionStatus?: "completed" | "under_construction";
+  constructionStatus?: "completed" | "under_construction" | "upcoming";
   investmentOpen?: boolean;
+  /** false = kept for existing holders and admin, but hidden from public listings, search and new purchases. */
+  listed?: boolean;
+  /** false when the listing has not stated operating costs; its yield is then before costs. */
+  costsStated?: boolean;
   created_at: string;
   sourceName: string;
   sourceUrl: string;
@@ -61,17 +65,17 @@ export const hiddenManualPropertySlugs = [
   "apartament-modern-berlin",
 ];
 
-const propertyCatalogue: ListingProperty[] = [
+const propertyCatalogue: Omit<ListingProperty, "appreciationYield" | "vacationPointYield" | "targetReturnBreakdown" | "payoutModel">[] = [
   {
     id: "external-sal-rei-boa-vista-b1-residences-ap1",
     title: "Sal Rei Boa Vista B1 Residences Ap1",
     slug: "sal-rei-boa-vista-b1-residences-ap1",
     description:
-      "A completed one-bedroom coastal apartment in Estoril, Sal Rei, Boa Vista, Cape Verde, designed for short-term holiday rentals. The 54 sqm apartment sleeps up to four guests, with a queen-size bedroom, sofa bed, fitted kitchen and walk-in shower. Listed amenities include a swimming pool, gym, air conditioning, laundry, Wi-Fi and security. The property is approximately ten minutes from Aristides Pereira International Airport. Figures are modelled estimates: the rental model assumes EUR 200 per day and 20 occupied days per month, giving EUR 4,000 monthly and EUR 48,000 annual gross rent before operating costs. The modelled annual target is 26%: 19% target rental return, 2.5% vacation-point benefits and 4.5% appreciation. The target rental return is separate from the rental-income estimate above. Availability, operating costs and returns must be independently confirmed before any commitment.",
+      "A completed one-bedroom coastal apartment in Estoril, Sal Rei, Boa Vista, Cape Verde, designed for short-term holiday rentals. The 54 sqm apartment sleeps up to four guests, with a queen-size bedroom, sofa bed, fitted kitchen and walk-in shower. Listed amenities include a swimming pool, gym, air conditioning, laundry, Wi-Fi and security. The property is approximately ten minutes from Aristides Pereira International Airport. Figures are modelled estimates: the rental model assumes EUR 200 per day and 20 occupied days per month, giving EUR 4,000 monthly and EUR 48,000 annual gross rent before operating costs. The modelled annual target is 26%, allocated as 70% rental, 15% vacation benefits and 15% appreciation. The target rental return is separate from the rental-income estimate above. Availability, operating costs and returns must be independently confirmed before any commitment.",
     price: 265366,
     city: "Sal Rei",
-    address: "Estoril, Sal Rei, Boa Vista, Cape Verde 5110",
-    mapLocation: { query: "Estoril, Sal Rei, Boa Vista, Cape Verde 5110", precision: "area" },
+    address: "Estoril, Sal Rei, Boa Vista, Cabo Verde 5110",
+    mapLocation: { query: "Estoril, Sal Rei, Boa Vista, Cabo Verde 5110", precision: "area" },
     property_type: "Coastal apartment",
     bedrooms: 1,
     bathrooms: 1,
@@ -108,22 +112,19 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 0,
     annualRent: 200 * 20 * 12,
     annualYield: 48000 / 265366 * 100,
-    vacationPointYield: 2.5,
-    targetTotalReturn: 26,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 4.5 },
-    appreciationYield: 4.5,
     sharePrice: 250,
     currency: "EUR",
     totalShares: 1061,
     blockedShares: 31,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 31 / 1061 * 100,
-    payoutModel: "Modelled gross rent at EUR 200 per day for 20 days per month, plus 9.5% non-cash vacation points; operating costs not yet provided",
   },
   {
     id: "external-edmonton-windsor-park-8712-120-st",
     title: "8712 120 ST Windsor Park",
     slug: "edmonton-windsor-park-8712-120-st",
+    listed: false,
+    investmentOpen: false,
     description:
       "A rare offering in Windsor Park, a one of a kind urban infill combines thoughtful design, exceptional location and versatile living space. Steps to River Valley, school, park and all conveniences including UofA campus and hospital. 6 minute drive to Royal Glenora, Victoria Park and downtown amenities. Approximately 4200 sf of total living space and impressive 1000 sf rooftop patio, with 2500 sf above grade main residence plus fully finished basement and garage suite. Thoughtfully designed with an open concept layout, enhanced by abundant natural light and a seamless sense of flow. 4 bedrooms, 3 living areas, open-to-above dining and convertible flex spaces. Chef's kitchen with ample storage and upgraded appliances and fixtures. NanaWall folding glass doors open completely to heated patio, backyard and sports court. Upper level features an oversized primary bedroom complete with 5 piece ensuite, dressing room and private balcony. 2 additional bedrooms and laundry room. Lower level highlights dual rec spaces, bedroom with murphy bed and hobby station. Extensive list of features to be appreciated in person.",
     price: 1008000,
@@ -162,20 +163,18 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 660 * 20 * 0.30,
     annualRent: 660 * 20 * 12,
     annualYield: 660 * 20 * 12 / 1008000 * 100,
-    appreciationYield: 4.75,
-    targetTotalReturn: 26.25,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 4.75 },
     sharePrice: 1000,
     currency: "EUR",
     totalShares: 1008,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 0,
-    payoutModel: "Illustrative 26.25% annual target: 19% target rental return, 4.75% assumed appreciation and 2.5% non-cash vacation points",
   },
   {
     id: "external-toronto-midtown-condo",
     title: "Toronto Midtown Condo",
     slug: "toronto-midtown-condo",
+    listed: false,
+    investmentOpen: false,
     description:
       "Fractional rental participation model for a two-bedroom condominium near transit, employment hubs, and established rental demand. Investors review the property value, expected gross rent, payout model, and risk notes before requesting access.",
     price: 735000,
@@ -196,20 +195,18 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 950,
     annualRent: 37200,
     annualYield: 5.06,
-    targetTotalReturn: 27,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 5.5 },
-    appreciationYield: 5.5,
     sharePrice: 250,
     currency: "EUR",
     totalShares: 2940,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 64,
-    payoutModel: "Monthly or annual",
   },
   {
     id: "external-vancouver-kitsilano-suite",
     title: "Vancouver Kitsilano Suite",
     slug: "vancouver-kitsilano-suite",
+    listed: false,
+    investmentOpen: false,
     description:
       "Modelled rental access for a compact urban suite in a high-demand Vancouver neighbourhood. The project focuses on resilient rental demand, clear assumptions, and transparent investor communication.",
     price: 895000,
@@ -230,15 +227,11 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 1200,
     annualRent: 41400,
     annualYield: 4.63,
-    targetTotalReturn: 27.5,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 6 },
-    appreciationYield: 6,
     sharePrice: 500,
     currency: "EUR",
     totalShares: 1790,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 38,
-    payoutModel: "Monthly or annual",
   },
   {
     id: "external-calgary-beltline-rental",
@@ -264,20 +257,18 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 650,
     annualRent: 24600,
     annualYield: 5.75,
-    targetTotalReturn: 28,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 6.5 },
-    appreciationYield: 6.5,
     sharePrice: 100,
     currency: "EUR",
     totalShares: 4280,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 51,
-    payoutModel: "Monthly or annual",
   },
   {
     id: "external-ottawa-centretown-duplex",
     title: "Ottawa Centretown Duplex",
     slug: "ottawa-centretown-duplex",
+    listed: false,
+    investmentOpen: false,
     description:
       "Two-unit residential income property in central Ottawa with modelled annual rent and a simple participation structure for investors comparing cash-flow assumptions.",
     price: 690000,
@@ -298,15 +289,11 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 1050,
     annualRent: 39600,
     annualYield: 5.74,
-    targetTotalReturn: 27.25,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 5.75 },
-    appreciationYield: 5.75,
     sharePrice: 250,
     currency: "EUR",
     totalShares: 2760,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 46,
-    payoutModel: "Monthly or annual",
   },
   {
     id: "external-montreal-plateau-triplex",
@@ -332,26 +319,32 @@ const propertyCatalogue: ListingProperty[] = [
     monthlyExpenses: 1200,
     annualRent: 46200,
     annualYield: 5.67,
-    targetTotalReturn: 26.75,
-    targetReturnBreakdown: { rental: 19, vacationPoint: 2.5, appreciation: 5.25 },
-    appreciationYield: 5.25,
     sharePrice: 500,
     currency: "EUR",
     totalShares: 1630,
     minInvestmentEur: MINIMUM_INVESTMENT_EUR,
     fundedPercent: 59,
-    payoutModel: "Monthly or annual",
   },
 ];
 
-// Rental inputs describe the property's rental scenario. The annual target is
-// a separate model, with explicitly configured rental and non-cash components.
+// Owner decision (2026-10-23): a listing publishes only the rental yield its own rent and
+// stated costs support. The former 26-28% targets (rental + vacation + appreciation) are no
+// longer shown; targetTotalReturn now carries that rental yield, with no component breakdown.
 // EUR denomination retains the catalogue's numerical prices by owner request.
 export const externalProperties: ListingProperty[] = propertyCatalogue.map((property) => {
   const annualRent = property.monthlyRent * 12;
   const annualYield = property.price > 0 ? annualRent / property.price * 100 : 0;
-  return { ...property, annualRent, annualYield };
+  const netAnnualRent = (property.monthlyRent - property.monthlyExpenses) * 12;
+  const rentalYield = property.price > 0 ? Math.round(netAnnualRent / property.price * 10000) / 100 : 0;
+  return { ...property, annualRent, annualYield, targetTotalReturn: rentalYield,
+    costsStated: property.monthlyExpenses > 0,
+    appreciationYield: 0,
+    payoutModel: "Projected rental yield = (monthly rent - stated monthly costs) x 12 / property value. No appreciation or other non-cash benefit is included.",
+  };
 });
+
+/** Listings shown publicly (home, marketplace, sitemap, API). */
+export const listedProperties = externalProperties.filter((property) => property.listed !== false);
 
 export function getExternalPropertyBySlug(slug: string) {
   return externalProperties.find((property) => property.slug === slug);

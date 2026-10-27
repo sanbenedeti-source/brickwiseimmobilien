@@ -7,10 +7,10 @@ export default async function InvestorPolicy() {
   const text = guideCopy[locale];
   const guidelines = text.guidelines.map(([title, text]) => ({ title, text }));
   return (
-    <main className="bg-[#f4f4f2] text-[#0f172a]">
+    <main className="bg-canvas text-ink">
       <section className="mx-auto max-w-5xl px-6 pb-24 pt-36">
         <p className="text-lg font-bold text-emerald-700">BRICKWISE</p>
-        <h1 className="font-display mt-4 text-6xl font-bold leading-tight">
+        <h1 className="font-display mt-4 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
           {text.policyTitle}
         </h1>
         <p className="mt-6 max-w-3xl text-xl leading-relaxed text-slate-600">

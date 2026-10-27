@@ -10,7 +10,7 @@ const sections = [
   },
   {
     title: "2. Platform information",
-    text: "BRICKWISE provides digital information about Canadian real estate projects, rental participation models, and investor workflows. The platform does not provide investment, legal, tax, or mortgage advice.",
+    text: "BRICKWISE provides digital information about international real estate projects, rental participation models, and investor workflows. The platform does not provide investment, legal, tax, or mortgage advice.",
   },
   {
     title: "3. Account registration",
@@ -71,10 +71,10 @@ export default async function Terms() {
   const translated = locale === "en" ? null : termsTranslations[locale];
   const visibleSections = translated ? translated.sections.map(([title, text]) => ({ title, text })) : sections;
   return (
-    <main className="bg-[#f4f4f2] text-[#0f172a]">
+    <main className="bg-canvas text-ink">
       <section className="mx-auto max-w-5xl px-6 pb-24 pt-36">
         <p className="text-lg font-bold text-emerald-700">BRICKWISE</p>
-        <h1 className="font-display mt-4 text-6xl font-bold leading-tight">
+        <h1 className="font-display mt-4 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
           {translated?.title || "Terms of Use"}
         </h1>
         <p className="mt-6 max-w-3xl text-xl leading-relaxed text-slate-600">
@@ -83,13 +83,13 @@ export default async function Terms() {
         <div className="mt-14 space-y-8 text-lg leading-relaxed text-slate-700">
           {visibleSections.map((section) => (
             <section key={section.title} className="border-t border-slate-300 pt-8">
-              <h2 className="text-2xl font-bold text-[#0f172a]">{section.title}</h2>
+              <h2 className="text-2xl font-bold text-ink">{section.title}</h2>
               <p className="mt-3">{section.text}</p>
             </section>
           ))}
         </div>
 
-        <p className="mt-14 border-t border-slate-300 pt-6 text-sm text-slate-500">{translated?.note || "Effective date: 6 August 2026. These terms provide the website framework and do not replace project-specific agreements or professional legal review."}</p>
+        <p className="mt-14 border-t border-slate-300 pt-6 text-sm text-slate-500">{translated?.note || "Effective date: 23 October 2026. These terms provide the website framework and do not replace project-specific agreements or professional legal review."}</p>
       </section>
     </main>
   );

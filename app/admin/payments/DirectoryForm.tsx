@@ -8,11 +8,12 @@ export default function DirectoryForm({ method, kind, slot, locale }: { method?:
   const t = getAdminText(locale);
   const Icon = kind === "bank" ? Landmark : Bitcoin;
   const title = method?.label || (kind === "bank" ? `${t("Bank account")} ${slot}` : t("Add crypto wallet"));
-  return <form action={saveCompanyPaymentMethod} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  return <form action={saveCompanyPaymentMethod} className="admin-card min-w-0 !mb-0">
     <input type="hidden" name="id" value={method?.id || ""} /><input type="hidden" name="kind" value={kind} />
     {kind === "bank" && <input type="hidden" name="bank_slot" value={slot} />}
-    <div className="mb-6 flex items-start justify-between gap-4"><h2 className="flex items-center gap-3"><Icon size={22} className="shrink-0 text-sky-600" />{title}</h2><span className={`rounded-full px-3 py-1 text-xs font-semibold ${method?.active ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{t(method?.active ? "Visible to clients" : "Not published")}</span></div>
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="admin-card-header"><h2 className="flex items-center gap-2.5"><Icon size={18} aria-hidden="true" className="shrink-0 text-[var(--admin-brand)]" />{title}</h2><span className={`admin-badge ${method?.active ? "admin-badge-success" : "admin-badge-neutral"}`}>{t(method?.active ? "Visible to clients" : "Not published")}</span></div>
+    <div className="admin-card-body admin-form">
+    <div className="admin-form-grid">
       <Field label={t("Display name")} name="label" value={method?.label} max={100} required />
       {kind === "bank" ? <>
         <Field label={t("Bank name")} name="bank_name" value={method?.bank_name} max={150} required />
@@ -25,13 +26,14 @@ export default function DirectoryForm({ method, kind, slot, locale }: { method?:
         <Field label={t("Blockchain network")} name="crypto_network" value={method?.crypto_network} max={60} placeholder="Bitcoin, Ethereum, TRON..." required />
         <Field label={t("Company wallet address")} name="wallet_address" value={method?.wallet_address} max={200} required />
       </>}
-      <label className="grid gap-2 text-slate-600 sm:col-span-2">{t("Instructions")}<textarea name="instructions" rows={3} maxLength={2000} defaultValue={method?.instructions || ""} className="w-full rounded-lg border border-slate-200 p-3" /></label>
+      <label className="admin-field admin-field-wide">{t("Instructions")}<textarea name="instructions" rows={3} maxLength={2000} defaultValue={method?.instructions || ""} /></label>
     </div>
-    <label className="mt-5 flex items-center gap-3 font-semibold text-slate-700"><input name="active" type="checkbox" defaultChecked={method?.active ?? false} className="h-4 w-4 accent-blue-600" />{t("Visible to clients")}</label>
-    <p className="mt-2 text-xs text-slate-500">{t("Only active details appear in the client payment methods.")}</p>
-    <button className="mt-5 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700" type="submit">{t("Save payment details")}</button>
+    <div><label className="admin-check font-semibold"><input name="active" type="checkbox" defaultChecked={method?.active ?? false} />{t("Visible to clients")}</label>
+    <p className="admin-help mt-1">{t("Only active details appear in the client payment methods.")}</p></div>
+    <div><button className="admin-btn" type="submit">{t("Save payment details")}</button></div>
+    </div>
   </form>;
 }
 function Field({ label, name, value, required=false, max, placeholder }: { label: string; name: string; value?: string | null; required?: boolean; max: number; placeholder?: string }) {
-  return <label className="grid min-w-0 gap-2 text-slate-600">{label}<input name={name} defaultValue={value || ""} required={required} maxLength={max} placeholder={placeholder} className="w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-slate-900" /></label>;
+  return <label className="admin-field min-w-0">{label}<input name={name} defaultValue={value || ""} required={required} maxLength={max} placeholder={placeholder} /></label>;
 }

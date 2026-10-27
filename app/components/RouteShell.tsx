@@ -56,7 +56,7 @@ export default function RouteShell({
           <div className="pt-16 lg:ml-[282px] lg:pt-0">{children}</div>
         </>
       ) : (
-        children
+        <div id="main-content" tabIndex={-1} className="outline-none">{children}</div>
       )}
       {!hidesPublicChrome && footer}
     </>

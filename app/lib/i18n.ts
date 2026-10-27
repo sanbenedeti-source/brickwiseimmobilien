@@ -22,7 +22,7 @@ export const localeLabels: Record<Locale, string> = {
 };
 
 export const localeHtmlLang: Record<Locale, string> = {
-  en: "en-CA",
+  en: "en-GB",
   de: "de-DE",
   fr: "fr-FR",
   es: "es-ES",
@@ -95,11 +95,13 @@ export function resolveLocale(options: {
   country?: string | null;
   acceptLanguage?: string | null;
 }): Locale {
+  // The browser language describes the reader; the IP country only decides when the
+  // browser asks for a language we do not offer (e.g. a French reader in Germany gets French).
   return (
     normalizeLocale(options.query) ||
     (options.manualPreference ? normalizeLocale(options.cookie) : null) ||
-    getLocaleFromCountry(options.country) ||
     getLocaleFromAcceptLanguage(options.acceptLanguage) ||
+    getLocaleFromCountry(options.country) ||
     normalizeLocale(options.cookie) ||
     defaultLocale
   );
@@ -160,8 +162,8 @@ export const i18nText: Record<
     metadata: {
       title: "Global Fractional Real Estate Investing",
       description:
-        "Digital access to cross-border real estate opportunities across the USA, Canada, Germany, Austria, and Switzerland with transparent project information.",
-      ogLocale: "en_CA",
+        "Digital access to real estate opportunities in Canada and Cape Verde with transparent project information.",
+      ogLocale: "en_GB",
     },
     nav: {
       home: "Home",
@@ -201,9 +203,9 @@ export const i18nText: Record<
   },
   de: {
     metadata: {
-      title: "Global anteilig in Immobilien investieren",
+      title: "Anteilig in Immobilien investieren",
       description:
-        "Digitaler Zugang zu Immobilienchancen in den USA, Kanada, Deutschland, Österreich und der Schweiz mit transparenten Projektdaten.",
+        "Digitaler Zugang zu Immobilienchancen in Kanada und Kap Verde mit transparenten Projektdaten.",
       ogLocale: "de_DE",
     },
     nav: {
@@ -212,11 +214,11 @@ export const i18nText: Record<
       properties: "Immobilien",
       mortgage: "Finanzierung",
       howItWorks: "So funktioniert es",
-      insights: "Einblicke",
+      insights: "Wissen",
       contact: "Kontakt",
       funding: "Kapital",
       signIn: "Anmelden",
-      join: "Konto eröffnen",
+      join: "Registrieren",
       menu: "Menü",
       language: "Sprache",
     },
@@ -246,12 +248,12 @@ export const i18nText: Record<
     metadata: {
       title: "Investissement immobilier fractionné",
       description:
-        "Accès numérique à des opportunités immobilières aux États-Unis, au Canada, en Allemagne, en Autriche et en Suisse.",
+        "Accès numérique à des opportunités immobilières au Canada et au Cap-Vert.",
       ogLocale: "fr_FR",
     },
     nav: {
       home: "Accueil",
-      about: "A propos",
+      about: "À propos",
       properties: "Biens",
       mortgage: "Hypothèque",
       howItWorks: "Fonctionnement",
@@ -289,7 +291,7 @@ export const i18nText: Record<
     metadata: {
       title: "Inversión inmobiliaria fraccionada",
       description:
-        "Acceso digital a oportunidades inmobiliarias en Estados Unidos, Canadá, Alemania, Austria y Suiza.",
+        "Acceso digital a oportunidades inmobiliarias en Canadá y Cabo Verde.",
       ogLocale: "es_ES",
     },
     nav: {
@@ -301,8 +303,8 @@ export const i18nText: Record<
       insights: "Ideas",
       contact: "Contacto",
       funding: "Financiación",
-      signIn: "Entrar",
-      join: "Unirse",
+      signIn: "Iniciar sesión",
+      join: "Registrarse",
       menu: "Menú",
       language: "Idioma",
     },
@@ -332,7 +334,7 @@ export const i18nText: Record<
     metadata: {
       title: "Investimento immobiliare frazionato",
       description:
-        "Accesso digitale a opportunità immobiliari negli Stati Uniti, in Canada, Germania, Austria e Svizzera.",
+        "Accesso digitale a opportunità immobiliari in Canada e a Capo Verde.",
       ogLocale: "it_IT",
     },
     nav: {
@@ -345,7 +347,7 @@ export const i18nText: Record<
       contact: "Contatto",
       funding: "Finanziamento",
       signIn: "Accedi",
-      join: "Unisciti",
+      join: "Registrati",
       menu: "Menu",
       language: "Lingua",
     },
@@ -369,49 +371,6 @@ export const i18nText: Record<
       investor: ["Crea account", "Accedi", "Prepara fondi", "Dashboard"],
       disclaimer:
         "Questo sito non fornisce consulenza in materia di investimenti, legale, fiscale o di mutui. Gli investimenti immobiliari comportano rischi e possono causare la perdita parziale o totale del capitale.",
-    },
-  },
-  sq: {
-    metadata: {
-      title: "Investim i pjesshëm në pasuri të paluajtshme",
-      description:
-        "Akses digjital në mundësi pronash në SHBA, Kanada, Gjermani, Austri dhe Zvicër.",
-      ogLocale: "sq_AL",
-    },
-    nav: {
-      home: "Kreu",
-      about: "Rreth nesh",
-      properties: "Prona",
-      mortgage: "Kredi banese",
-      howItWorks: "Si funksionon",
-      insights: "Analiza",
-      contact: "Kontakt",
-      funding: "Financim",
-      signIn: "Hyr",
-      join: "Bashkohu",
-      menu: "Menu",
-      language: "Gjuha",
-    },
-    footer: {
-      legal: [
-        "Kushtet e përdorimit",
-        "Privatësia dhe cookies",
-        "Shënime rreziku",
-        "Politika e investitorit",
-        "Investim në prona",
-      ],
-      companyTitle: "Kompania",
-      company: ["Kreu", "Rreth nesh", "Prona", "Si funksionon", "Statistika", "Kontakt"],
-      contactTitle: "Kontakt",
-      support: "Mbështetje",
-      info: "Info",
-      phone: "Telefon",
-      whatsapp: "Mesazh në WhatsApp",
-      companyAddress: "Kompania",
-      investorTitle: "Zona e investitorit",
-      investor: ["Krijo llogari", "Hyr", "Përgatit financimin", "Paneli"],
-      disclaimer:
-        "Kjo faqe nuk ofron këshilla investimi, ligjore, tatimore ose për kredi banese. Investimet në pasuri të paluajtshme kanë rrezik dhe mund të sjellin humbje të pjesshme ose të plotë të kapitalit.",
     },
   },
 };

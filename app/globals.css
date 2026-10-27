@@ -2,9 +2,23 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #14213d;
   --font-sans-stack: var(--font-inter), Arial, Helvetica, sans-serif;
   --font-display-stack: var(--font-sans-stack);
+}
+
+/* Brand palette: one navy, one blue, one neutral scale. Use these tokens instead of raw hex values. */
+@theme {
+  --color-ink: #14213d;          /* headings, primary text, dark surfaces */
+  --color-ink-soft: #24344f;     /* raised dark surfaces, hover on dark */
+  --color-brand: #1667a8;        /* actions and links on light backgrounds (5.9:1 with white) */
+  --color-brand-strong: #0f4f86; /* hover/pressed */
+  --color-brand-soft: #e8f1f9;   /* tinted surfaces, badges */
+  --color-brand-light: #8cc8f0;  /* accents and links on dark backgrounds */
+  --color-muted: #5b6678;        /* secondary text (5.8:1 on white) */
+  --color-line: #dfe5ec;         /* borders, dividers, tracks */
+  --color-line-strong: #8a94a7;  /* form-control borders (3:1 on white, WCAG 1.4.11) */
+  --color-canvas: #f5f7fa;       /* page sections */
 }
 
 @theme inline {
@@ -19,7 +33,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans-stack);
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
 }
 
@@ -32,32 +46,64 @@ select {
   font-family: var(--font-sans-stack) !important;
 }
 
-a,
-button {
-  overflow-wrap: anywhere;
+/* Element defaults live in the base layer so Tailwind utilities (rounded-*, text-*) can override them. */
+@layer base {
+  /* "anywhere" keeps long words from widening grid and flex layouts. */
+  a,
+  button {
+    overflow-wrap: anywhere;
+  }
+
+  /* Long German compounds hyphenate at syllables where the browser has a dictionary. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    text-wrap: balance;
+  }
+
+  a,
+  button,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  input,
+  summary {
+    border-radius: 0.5rem;
+  }
+
+  /* iOS Safari zooms into form fields smaller than 16px. */
+  @media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+    }
+
+    :is(input, select, textarea):is(.text-xs, .text-sm) {
+      font-size: 16px !important;
+    }
+  }
 }
 
-h1,
-h2,
-h3 {
-  overflow-wrap: anywhere;
-}
-
-a,
-button,
-summary {
-  -webkit-tap-highlight-color: transparent;
-}
-
-button,
-input,
-summary {
-  border-radius: 0.5rem;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 ::selection {
-  background: #ffd166;
-  color: #152238;
+  background: #cfe4f5;
+  color: #14213d;
 }
 
 body:has(.investor-shell) > header,
@@ -70,7 +116,7 @@ body:has(.investor-shell) > footer {
 }
 
 .site-footer a:focus-visible {
-  outline: 2px solid #b8eddf;
+  outline: 2px solid var(--color-brand-light);
   outline-offset: 5px;
   border-radius: 4px;
 }

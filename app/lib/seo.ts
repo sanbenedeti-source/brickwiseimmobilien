@@ -17,8 +17,10 @@ export function languageAlternates(path: string) {
 export function publicMetadata(path: string, locale: Locale, detail?: { title: string; description: string; image?: string; article?: boolean }): Metadata {
   const labels = (pages as Record<string, string[]>)[path];
   const label = detail?.title || labels?.[supportedLocales.indexOf(locale)] || "BRICKWISE";
-  const title = `${label} | BRICKWISE`;
-  const description = (detail?.description || `${label}. ${i18nText[locale].metadata.description}`).replace(/\s+/g, " ").trim().slice(0, 180);
+  const title = /brickwise/i.test(label) ? label : `${label} | BRICKWISE`;
+  // Search snippets show about 155 characters; cut at a word boundary instead of mid-word.
+  const fullDescription = (detail?.description || `${label}. ${i18nText[locale].metadata.description}`).replace(/\s+/g, " ").trim();
+  const description = fullDescription.length <= 160 ? fullDescription : `${fullDescription.slice(0, 156).replace(/[\s,;:–-]+\S*$/, "")}…`;
   const url = localizedUrl(path, locale);
   return {
     title, description,

@@ -3,10 +3,11 @@
 import type { Locale } from "../lib/i18n";
 import { sharedCopy } from "../lib/shared-copy";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { consentKey, readConsent, chooseConsent, checkMarketingRoute, stopMarketing, type Consent } from "../lib/marketing";
+import { cookieSettingsEvent } from "./CookieSettingsButton";
 
 export default function MetaPixelConsent({ locale }: { locale: Locale }) {
   const text = sharedCopy[locale];
@@ -15,6 +16,8 @@ export default function MetaPixelConsent({ locale }: { locale: Locale }) {
   const [consent, setConsent] = useState<Consent>(null);
   const [ready, setReady] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const visible = ready && (consent === null || settingsOpen);
 
   useEffect(() => {
     let active = true;
@@ -29,13 +32,20 @@ export default function MetaPixelConsent({ locale }: { locale: Locale }) {
       if (value !== "accepted") stopMarketing();
       setConsent(value);
     };
+    const openSettings = () => setSettingsOpen(true);
     window.addEventListener("storage", sync);
-    return () => { active = false; window.removeEventListener("storage", sync); };
+    window.addEventListener(cookieSettingsEvent, openSettings);
+    return () => { active = false; window.removeEventListener("storage", sync); window.removeEventListener(cookieSettingsEvent, openSettings); };
   }, []);
 
   useEffect(() => {
     if (ready) checkMarketingRoute();
   }, [ready, consent, pathname, searchParams]);
+
+  // The banner renders after the page content, so move keyboard focus to it when it appears.
+  useEffect(() => {
+    if (visible) heading.current?.focus();
+  }, [visible]);
 
   function choose(value: Exclude<Consent, null>) {
     chooseConsent(value);
@@ -43,28 +53,26 @@ export default function MetaPixelConsent({ locale }: { locale: Locale }) {
     setSettingsOpen(false);
   }
 
-  if (!ready) return null;
+  if (!visible) return null;
 
   return (
     <>
-      {(consent === null || settingsOpen) && (
-        <section role="dialog" aria-label={text.consentTitle} className="fixed inset-x-4 bottom-4 z-[100] mx-auto max-w-3xl border border-[#cfd6df] bg-white p-5 shadow-2xl sm:p-6">
-          <h2 className="text-xl font-bold text-[#17233f]">{text.consentTitle}</h2>
-          <p className="mt-2 leading-6 text-[#526078]">{text.consentText}</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={() => choose("accepted")} className="min-h-11 w-full bg-[#17233f] px-5 font-bold text-white sm:w-auto">{text.accept}</button>
-            <button type="button" onClick={() => choose("rejected")} className="min-h-11 w-full border border-[#17233f] bg-white px-5 font-bold text-[#17233f] sm:w-auto">{text.reject}</button>
+      {visible && (
+        <section role="dialog" aria-label={text.consentTitle} className="fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-3xl rounded-xl border border-line bg-white p-4 shadow-2xl sm:inset-x-4 sm:bottom-4 sm:p-6">
+          <h2 ref={heading} tabIndex={-1} className="text-lg font-bold text-ink outline-none sm:text-xl">{text.consentTitle}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{text.consentText}</p>
+          {/* Accept and reject are equally prominent, as German regulators expect. */}
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:flex sm:flex-wrap sm:items-center">
+            <button type="button" onClick={() => choose("accepted")} className="min-h-11 border border-ink bg-ink px-5 font-bold text-white hover:bg-ink-soft">{text.accept}</button>
+            <button type="button" onClick={() => choose("rejected")} className="min-h-11 border border-ink bg-ink px-5 font-bold text-white hover:bg-ink-soft">{text.reject}</button>
             <LinkToPrivacy label={text.privacy} />
           </div>
         </section>
-      )}
-      {consent !== null && !settingsOpen && (
-        <button type="button" onClick={() => setSettingsOpen(true)} style={{ left: "auto", right: "12px" }} className="fixed bottom-3 z-[90] border border-[#cfd6df] bg-white px-3 py-2 text-xs font-bold text-[#17233f] shadow-md" aria-label={text.change}>{text.settings}</button>
       )}
     </>
   );
 }
 
 function LinkToPrivacy({ label }: { label: string }) {
-  return <a href="/privacy" className="inline-flex min-h-11 items-center px-2 font-bold text-[#2f79a5] underline">{label}</a>;
+  return <a href="/privacy" className="col-span-2 inline-flex min-h-11 items-center px-2 font-bold text-brand underline">{label}</a>;
 }

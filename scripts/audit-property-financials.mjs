@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
 
 const base = process.argv[2] || "http://127.0.0.1:3005";
+// Publicly listed properties only; unlisted catalogue entries must not appear in the API.
+// [price, share price, published rental yield %]: (monthly rent - stated costs) x 12 / price.
 const expected = new Map([
-  ["sal-rei-boa-vista-b1-residences-ap1", [265366, 250, 26]],
-  ["edmonton-windsor-park-8712-120-st", [1008000, 1000, 26.25]],
-  ["toronto-midtown-condo", [735000, 250, 27]],
-  ["vancouver-kitsilano-suite", [895000, 500, 27.5]],
-  ["calgary-beltline-rental", [428000, 100, 28]],
-  ["ottawa-centretown-duplex", [690000, 250, 27.25]],
-  ["montreal-plateau-triplex", [815000, 500, 26.75]],
+  ["sal-rei-boa-vista-b1-residences-ap1", [265366, 250, 18.09]],
+  ["calgary-beltline-rental", [428000, 100, 3.93]],
+  ["montreal-plateau-triplex", [815000, 500, 3.9]],
 ]);
+const unlisted = ["edmonton-windsor-park-8712-120-st", "toronto-midtown-condo", "vancouver-kitsilano-suite", "ottawa-centretown-duplex"];
 const money = (value, digits = 2) => new Intl.NumberFormat("en-CA", {
   style: "currency", currency: "EUR", minimumFractionDigits: digits, maximumFractionDigits: digits,
 }).format(value);
@@ -39,6 +38,7 @@ const noForeignMoney = (content, context) => assert.doesNotMatch(content, /\bCAD
 
 const api = await (await get("/api/properties")).json();
 assert.equal(api.properties.length, expected.size, "All visible listings must be audited");
+assert.ok(!api.properties.some((property) => unlisted.includes(property.slug)), "Unlisted properties must stay out of the public API");
 const listing = await text("/properties?lang=en");
 noForeignMoney(listing, "Property listing currency");
 const rows = await Promise.all(api.properties.map(async (property) => {
@@ -57,35 +57,35 @@ const rows = await Promise.all(api.properties.map(async (property) => {
   close(model.monthlyPerShare, model.annualPerShare / 12, label);
   close(model.propertyAnnual, price * rate / 100, label);
   close(model.propertyMonthly, model.propertyAnnual / 12, label);
-  const breakdown = property.targetReturnBreakdown;
-  close(breakdown.rental + breakdown.vacationPoint + breakdown.appreciation, rate, label);
-  assert.deepEqual(breakdown, { rental: 19, vacationPoint: 2.5, appreciation: rate - 21.5 }, `${label}: target components`);
+  // No 26-28 % targets or rental / vacation / appreciation split may be published any more.
+  assert.ok(!property.targetReturnBreakdown, `${label}: no target components`);
+  const yieldLabel = property.costsStated === false ? "Projected rental yield p.a. (before costs)" : "Projected net rental yield p.a.";
   const page = await text(`/properties/${label}?lang=en`);
   noForeignMoney(page, label);
+  assert.doesNotMatch(page, /Target annual return|Vacation benefits|Annual return breakdown/, label);
   for (const value of [
-    `Target annual return ${percent(rate)}`,
-    property.rentalModel ? `Estimated net rent / month / share ${money((property.monthlyRent - property.monthlyExpenses) / property.totalShares)}` : `Modelled monthly return / share ${money(model.monthlyPerShare)}`,
-    property.rentalModel ? `Estimated net rent / year / share ${money((property.monthlyRent - property.monthlyExpenses) * 12 / property.totalShares)}` : `Modelled annual return / share ${money(model.annualPerShare)}`,
-    property.rentalModel ? `Property net rent / month ${money(property.monthlyRent - property.monthlyExpenses)}` : `Property monthly target ${money(model.propertyMonthly)}`,
-    property.rentalModel ? `Property net rent / year ${money((property.monthlyRent - property.monthlyExpenses) * 12)}` : `Property annual target ${money(model.propertyAnnual)}`,
+    `${yieldLabel} ${percent(rate)}`,
+    property.rentalModel ? `Estimated net rent / month / share ${money((property.monthlyRent - property.monthlyExpenses) / property.totalShares)}` : `Projected rent / share / month ${money(model.monthlyPerShare)}`,
+    property.rentalModel ? `Estimated net rent / year / share ${money((property.monthlyRent - property.monthlyExpenses) * 12 / property.totalShares)}` : `Projected rent / share / year ${money(model.annualPerShare)}`,
     `Available shares ${property.availableShares.toLocaleString("en-CA")}`,
-    `Modelled annual return · ${percent(rate)} ${money(2000 * rate / 100)}`,
-    property.rentalModel ? `Your estimated monthly net rent ${money((property.monthlyRent - property.monthlyExpenses) * 2000 / price)}` : `Modelled monthly return ${money(2000 * rate / 100 / 12)}`,
+    `Projected rent / year · ${percent(rate)} ${money(2000 * rate / 100)}`,
+    property.rentalModel ? `Your estimated monthly net rent ${money((property.monthlyRent - property.monthlyExpenses) * 2000 / price)}` : `Projected rent / month ${money(2000 * rate / 100 / 12)}`,
   ]) includes(page, value, label);
-  includes(listing, `${money(model.monthlyPerShare)} Modelled monthly return / share`, label);
-  includes(listing, `${money(model.annualPerShare)} Modelled annual return / share`, label);
-  includes(listing, `${percent(rate)} Target annual return`, label);
+  includes(listing, `${money(model.monthlyPerShare)} Projected rent / share / month`, label);
+  includes(listing, `${money(model.annualPerShare)} Projected rent / share / year`, label);
+  includes(listing, `${percent(rate)} ${yieldLabel}`, label);
   const contact = await text(`/contact?projekt=${label}&shares=${2000 / sharePrice}&lang=en`);
   noForeignMoney(contact, `${label}: contact`);
-  includes(contact, `Modelled annual return: ${money(2000 * rate / 100)}`, `${label}: contact`);
-  includes(contact, `Modelled monthly return: ${money(2000 * rate / 100 / 12)}`, `${label}: contact`);
-  return { property: label, valueEUR: price, annualTarget: rate, monthlyPerShareEUR: Number(model.monthlyPerShare.toFixed(2)), annualFor2000EUR: Number((2000 * rate / 100).toFixed(2)), monthlyFor2000EUR: Number((2000 * rate / 100 / 12).toFixed(2)), availableShares: property.availableShares };
+  includes(contact, `Projected rent / year: ${money(2000 * rate / 100)}`, `${label}: contact`);
+  includes(contact, `Projected rent / month: ${money(2000 * rate / 100 / 12)}`, `${label}: contact`);
+  return { property: label, valueEUR: price, rentalYield: rate, monthlyPerShareEUR: Number(model.monthlyPerShare.toFixed(2)), annualFor2000EUR: Number((2000 * rate / 100).toFixed(2)), monthlyFor2000EUR: Number((2000 * rate / 100 / 12).toFixed(2)), availableShares: property.availableShares };
 }));
 const homepage = await text("/?lang=en");
 noForeignMoney(homepage, "Homepage");
-for (const property of api.properties.slice(1, 4)) {
+for (const property of api.properties.slice(0, 3)) {
   includes(homepage, `Available shares ${property.availableShares.toLocaleString("en-CA")}`, "Homepage supply");
-  includes(homepage, percent(property.financials.annualRate), "Homepage annual target");
+  includes(homepage, percent(property.financials.annualRate), "Homepage rental yield");
+  assert.doesNotMatch(homepage, /Target annual return|26\.00%|28\.00%/, "Homepage must not publish former targets");
 }
 for (const route of ["/mortgage?lang=en", "/mortgage-calculator?lang=en", "/real-estate-investing?lang=en", "/investor-policy?lang=en"]) {
   noForeignMoney(await text(route), route);

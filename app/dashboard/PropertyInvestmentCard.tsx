@@ -1,10 +1,10 @@
 import { formatPropertyPercent, propertyUiCopy } from "../properties/property-ui-copy";
 import { localeHtmlLang, type Locale } from "../lib/i18n";
 import { investmentCopy } from "../lib/investment-copy";
-import { targetReturnCopy } from "../lib/target-return-copy";
+import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
 import { formatMinimumInvestment, MINIMUM_INVESTMENT_EUR, minimumInvestmentShares } from "../lib/investment-policy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
-import { ArrowRight, BedDouble, Bath, MapPin, TrendingUp } from "lucide-react";
+import { ArrowRight, BedDouble, Bath, MapPin } from "lucide-react";
 import Link from "next/link";
 import type { ListingProperty } from "@/app/lib/external-properties";
 import { createSharePurchaseRequest } from "./actions";
@@ -50,39 +50,37 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
   const targetReturn = projection.annualRate;
 
   return (
-    <article className="group overflow-hidden rounded-[14px] border border-[#e7ebef] bg-white shadow-[0_5px_18px_rgba(23,35,63,0.09)] transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(23,35,63,0.14)]">
-      <Link href={`/properties/${property.slug}`} className="block">
-        <div className="relative aspect-[16/10] overflow-hidden bg-[#e8edf1]">
-          <div className="h-full bg-cover bg-center transition duration-500 group-hover:scale-[1.025]" style={{ backgroundImage: `url(${property.image_url})` }} />
-          <span className="absolute bottom-4 right-4 rounded-full bg-[#2f9bdb] px-3 py-1.5 text-xs font-bold uppercase text-white">{text.primary}</span>
-          <span className="absolute left-4 top-4 rounded-lg bg-white/95 px-3 py-1.5 text-sm font-bold text-[#17233f] shadow-sm">{money(property.sharePrice)} / {text.share}</span>
-        </div>
+    <article className="flex flex-col overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(20,33,61,0.08)]">
+      <Link href={`/properties/${property.slug}`} className="group relative block aspect-[16/9] overflow-hidden bg-canvas">
+        <div className="h-full bg-cover bg-center transition duration-500 group-hover:scale-[1.02]" style={{ backgroundImage: `url(${property.image_url})` }} />
+        <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{money(property.sharePrice)} / {text.share}</span>
+        <span className="absolute right-3 top-3 rounded-md bg-ink/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{text.primary}</span>
       </Link>
 
-      <div className="p-5">
-        <h2 className="truncate text-lg font-bold text-[#101828]">{property.title}</h2>
+      <div className="flex flex-1 flex-col p-5">
+        <h2 className="truncate text-base font-semibold text-ink"><Link href={`/properties/${property.slug}`} className="hover:text-brand">{property.title}</Link></h2>
+        <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted"><MapPin size={14} aria-hidden="true" className="shrink-0" />{property.address}</p>
         {property.constructionStatus && <div className="mt-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /></div>}
-        <p className="mt-2 flex items-center gap-1.5 truncate text-sm text-[#596579]"><MapPin size={15} />{property.address}</p>
 
-        <div className="mt-6 grid gap-3 text-sm">
-          <div className="flex items-center justify-between"><span className="font-semibold text-[#17233f]">{copy.available}</span><strong className="text-[#168bd3]">{availableShares.toLocaleString(localeHtmlLang[locale])}</strong></div>
-          <div className="flex items-center justify-between"><span className="font-semibold text-[#17233f]">{hasTargetReturn ? returnText.targetTotalReturn : copy.targetReturn}</span><strong className="text-[#168bd3]">{formatPropertyPercent(targetReturn, locale)}</strong></div>
-        </div>
-        {hasTargetReturn && <p className="mt-3 text-xs leading-5 text-[#596579]">{hasReturnBreakdown ? returnText.modelNote : returnText.configuredTargetNote}</p>}
+        <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
+          <CardMetric label={hasTargetReturn ? rentalYieldLabel(locale, "costsStated" in property ? property.costsStated : undefined) : copy.targetReturn} value={formatPropertyPercent(targetReturn, locale)} accent />
+          <CardMetric label={copy.perShare} value={money(property.sharePrice)} />
+          <CardMetric label={copy.available} value={availableShares.toLocaleString(localeHtmlLang[locale])} />
+          <CardMetric label={text.minimum} value={`${formatMinimumInvestment(locale)}${minimumShares !== null ? ` / ${minimumShares} ${text.shares}` : ""}`} />
+        </dl>
+        {hasTargetReturn && <p className="mt-2.5 text-xs leading-5 text-muted">{hasReturnBreakdown ? returnText.modelNote : returnText.configuredTargetNote}</p>}
 
-        <div className="mt-5 flex items-center gap-5 border-y border-[#e6e9ed] py-3 text-sm text-[#596579]">
-          <span className="flex items-center gap-1.5" title={property.bedrooms ? ui.beds : ui.rooms}><BedDouble size={17} />{property.bedrooms || property.rooms || "—"}</span>
-          <span className="flex items-center gap-1.5" title={ui.baths}><Bath size={17} />{property.bathrooms || "—"}</span>
-          <span className="ml-auto text-xs font-semibold text-[#7b8595]">{text.details}</span>
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-line pt-4">
+          <div><p className="text-xs text-muted">{returnText.monthlyPerShare}</p><p className="mt-0.5 font-semibold tabular-nums text-ink">{money(projection.monthlyPerShare, 2)}<span className="ml-2 text-xs font-normal text-muted">{returnText.annualPerShare}: {money(projection.annualPerShare, 2)}</span></p></div>
+          <div className="flex items-center gap-3 text-xs text-muted"><span className="flex items-center gap-1" title={property.bedrooms ? ui.beds : ui.rooms}><BedDouble size={15} aria-hidden="true" />{property.bedrooms || property.rooms || "—"}</span><span className="flex items-center gap-1" title={ui.baths}><Bath size={15} aria-hidden="true" />{property.bathrooms || "—"}</span></div>
         </div>
-
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <div><p className="text-xs text-[#7b8595]">{returnText.monthlyPerShare}</p><p className="mt-1 flex items-center gap-1.5 font-bold text-[#17233f]"><TrendingUp size={16} className="text-[#2f9bdb]" />{money(projection.monthlyPerShare, 2)}</p><p className="mt-2 text-xs text-[#7b8595]">{returnText.annualPerShare}: {money(projection.annualPerShare, 2)}</p></div>
-          <Link href={`/properties/${property.slug}`} className="inline-flex min-h-11 items-center bg-[#2f9bdb] px-4 text-sm font-bold text-white hover:bg-[#17233f]">{text.view}<ArrowRight className="ml-2" size={16} /></Link>
-        </div>
-        <p className="mt-4 text-sm font-semibold">{text.minimum}: {formatMinimumInvestment(locale)}{minimumShares !== null && <> / {`${minimumShares} ${text.shares}`}</>}</p>
+        <Link href={`/properties/${property.slug}`} className="mt-3 inline-flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline">{text.view}<ArrowRight size={15} aria-hidden="true" /></Link>
         <SharePurchaseForm action={createSharePurchaseRequest} purchaseRequestId={randomUUID()} propertySlug={property.slug} minimumShares={minimumShares} availableShares={availableShares} sharePrice={property.sharePrice} walletBalance={walletBalance} locale={locale} copy={copy} />
       </div>
     </article>
   );
+}
+
+function CardMetric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return <div className="bg-white px-3 py-2.5"><dt className="text-[11px] font-medium leading-4 text-muted">{label}</dt><dd className={`mt-1 text-sm font-semibold tabular-nums ${accent ? "text-brand" : "text-ink"}`}>{value}</dd></div>;
 }

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      return NextResponse.redirect(new URL(await signupDestination(supabase, next), request.url));
     }
   }
 
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     });
 
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      return NextResponse.redirect(new URL(await signupDestination(supabase, next), request.url));
     }
   }
 
@@ -34,6 +34,21 @@ export async function GET(request: Request) {
     : "/sign-in?error=invalid-link";
 
   return NextResponse.redirect(new URL(errorPath, request.url));
+}
+
+// After a signup confirmation, return the client to the property they started from
+// (stored by /interface/register), then clear it so later links use the dashboard.
+async function signupDestination(supabase: Awaited<ReturnType<typeof createClient>>, next: string) {
+  if (next !== "/dashboard") return next;
+  try {
+    const { data } = await supabase.auth.getUser();
+    const stored = data.user?.user_metadata?.signup_next;
+    if (typeof stored !== "string" || !/^\/properties\/[a-z0-9-]{1,120}$/.test(stored)) return next;
+    await supabase.auth.updateUser({ data: { signup_next: null } });
+    return stored;
+  } catch {
+    return next;
+  }
 }
 
 function getSafeNextPath(value: string | null) {

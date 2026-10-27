@@ -16,7 +16,7 @@ const members = [
 
 function Initials({ value }: { value: string }) {
   return (
-    <span aria-hidden="true" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-[#dcebf5] bg-[#eaf4fb] text-3xl font-semibold tracking-tight text-[#168bd3] sm:h-28 sm:w-28 sm:text-4xl">
+    <span aria-hidden="true" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-brand-soft bg-brand-soft text-3xl font-semibold tracking-tight text-brand sm:h-28 sm:w-28 sm:text-4xl">
       {value}
     </span>
   );
@@ -25,14 +25,14 @@ function Initials({ value }: { value: string }) {
 export default function Team({ title, locale }: { title: string; locale: Locale }) {
   const t = createTranslator(locale);
   return (
-    <section aria-labelledby="team-title" className="mt-20 border-t border-[#e2e7ec] pt-14">
+    <section aria-labelledby="team-title" className="mt-20 border-t border-line pt-14">
       <h2 id="team-title" className="text-3xl font-bold sm:text-4xl">{title}</h2>
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         {leadership.map((person) => (
-          <article key={person.name} className="flex flex-col items-center rounded-xl bg-[#f4f7fa] px-6 py-9 text-center">
+          <article key={person.name} className="flex flex-col items-center rounded-xl bg-canvas px-6 py-9 text-center">
             <Initials value={person.initials} />
-            <h3 className="mt-6 text-xl font-bold text-[#168bd3]">{person.name}</h3>
-            <p className="mt-2 font-semibold text-[#111827]">{t(person.role)}</p>
+            <h3 className="mt-6 text-xl font-bold text-brand">{person.name}</h3>
+            <p className="mt-2 font-semibold text-ink">{t(person.role)}</p>
           </article>
         ))}
       </div>
@@ -41,8 +41,8 @@ export default function Team({ title, locale }: { title: string; locale: Locale 
           <article key={person.name} className="flex items-center gap-5 py-3">
             <Initials value={person.initials} />
             <div className="min-w-0">
-              <h3 className="text-xl font-bold text-[#168bd3]">{person.name}</h3>
-              <p className="mt-2 font-semibold leading-6 text-[#111827]">{t(person.role)}</p>
+              <h3 className="text-xl font-bold text-brand">{person.name}</h3>
+              <p className="mt-2 font-semibold leading-6 text-ink">{t(person.role)}</p>
             </div>
           </article>
         ))}

@@ -72,6 +72,24 @@ test("missing, partial, invalid, future and non-EUR purchase histories never inv
     assert.equal(dailyIncome(incomePosition, lots, now), null);
   }
 });
+test("admin activation date delays accrual and a paused property accrues nothing", () => {
+  const now = Date.parse("2026-01-04T12:00:00Z");
+  const delayed = dailyIncome({ ...incomePosition, accrualStart: Date.parse("2026-01-02T12:00:00Z") }, [first, second], now);
+  assert.deepEqual(delayed.lots.map(l => l.days), [2, 1]);
+  assert.ok(Math.abs(delayed.accrued - 190 / 365 * 3) < 1e-10);
+  assert.equal(delayed.start, Date.parse(first.created_at));
+  assert.equal(delayed.days, 2);
+  const future = dailyIncome({ ...incomePosition, accrualStart: Date.parse("2026-02-01T00:00:00Z") }, [first, second], now);
+  assert.equal(future.accrued, 0);
+  assert.equal(future.days, 0);
+  assert.equal(future.next, Date.parse("2026-02-02T00:00:00Z"));
+  const paused = dailyIncome({ ...incomePosition, paused: true }, [first, second], now);
+  assert.equal(paused.paused, true);
+  assert.equal(paused.accrued, 0);
+  assert.equal(paused.daily, 0);
+  assert.ok(paused.history.every(row => row.profit === 0 && row.total === 0));
+  assert.equal(dailyIncome({ ...incomePosition, accrualStart: Number.NaN }, [first, second], now), null);
+});
 test("leap days and daylight-saving transitions are counted as elapsed 24-hour periods", () => {
   for (const [start, end] of [["2024-02-28T12:00:00Z", "2024-03-01T12:00:00Z"], ["2026-03-28T12:00:00Z", "2026-03-30T12:00:00Z"]]) {
     const result = dailyIncome({...incomePosition, shares: 10}, [{...first, created_at: start}], Date.parse(end));

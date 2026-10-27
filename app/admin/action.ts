@@ -3,7 +3,7 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
-import { isAdminUser } from "../lib/admin";
+import { hasAdminSession } from "../lib/admin-session";
 import { writeAdminMutation } from "../lib/admin-audit";
 
 export async function updateRequestStatus(formData: FormData) {
@@ -20,7 +20,7 @@ export async function updateRequestStatus(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!isAdminUser(user)) {
+  if (!(await hasAdminSession(supabase, user))) {
     return;
   }
 

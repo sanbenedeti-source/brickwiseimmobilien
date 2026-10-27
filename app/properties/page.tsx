@@ -1,16 +1,12 @@
 import Image from "next/image";
 import { formatMinimumInvestment } from "../lib/investment-policy";
+import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
-import { targetReturnCopy } from "../lib/target-return-copy";
+import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
 import { getPropertyTranslations, localizeProperty } from "../lib/property-localization";
 import Link from "next/link";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import {
-  externalProperties,
-  hiddenManualPropertyIds,
-  hiddenManualPropertySlugs,
-} from "../lib/external-properties";
 import { localeHtmlLang, type Locale } from "../lib/i18n";
 import { getCurrentLocale } from "@/app/lib/server-locale";
 
@@ -31,7 +27,7 @@ type Property = {
   rooms: number | null;
   image_url: string | null;
   status: string | null;
-  constructionStatus?: "completed" | "under_construction";
+  constructionStatus?: "completed" | "under_construction" | "upcoming";
   created_at: string | null;
   sourceName?: string;
   sourceUrl?: string;
@@ -89,7 +85,7 @@ const propertiesCopy: Record<string, PropertiesCopy> = {
     propertyValue: "Property value",
     accessFrom: "Minimum investment",
     monthlyIncome: "Monthly income/share",
-    grossYield: "Target Total Return",
+    grossYield: "Net rental yield",
     onRequest: "On request",
     funded: "Funded",
     viewRentalShare: "View rental share",
@@ -99,7 +95,7 @@ const propertiesCopy: Record<string, PropertiesCopy> = {
   },
   de: {
     backHome: "Zur Startseite",
-    title: "Internationale Einkommensimmobilien mit modellierter Mietbeteiligung",
+    title: "Internationale Renditeimmobilien mit modellierter Mietbeteiligung",
     text:
       "Vergleichen Sie die verfügbaren Immobilien nach Lage, Wert, Mietannahmen und Mindestanlage. Prüfen Sie die Risikohinweise, bevor Sie eine Anfrage stellen.",
     noPropertiesTitle: "Keine Immobilien gefunden",
@@ -112,7 +108,7 @@ const propertiesCopy: Record<string, PropertiesCopy> = {
     propertyValue: "Immobilienwert",
     accessFrom: "Mindestanlage",
     monthlyIncome: "Monatliches Einkommen/Anteil",
-    grossYield: "Angestrebte Gesamtrendite",
+    grossYield: "Nettomietrendite",
     onRequest: "Auf Anfrage",
     funded: "Finanziert",
     viewRentalShare: "Mietanteil ansehen",
@@ -120,32 +116,9 @@ const propertiesCopy: Record<string, PropertiesCopy> = {
     importantNoteText:
       "Diese Website bietet keine Anlageberatung. Mieten, Renditen und Auszahlungen beruhen auf Modellrechnungen und sind nicht garantiert. Leerstand, Kosten, Steuern, Finanzierungsbedingungen und Marktveränderungen können die tatsächlichen Ergebnisse mindern.",
   },
-  fr: { backHome: "Retour à l'accueil", title: "Biens de rendement internationaux avec participation locative modélisée", text: "Comparez les biens disponibles selon leur emplacement, leur valeur, les hypothèses locatives et l’investissement minimum. Consultez les risques avant toute demande.", noPropertiesTitle: "Aucun bien trouvé", noPropertiesText: "Aucun bien n'est actuellement disponible pour cette sélection.", rentalShare: "Participation locative", available: "Disponible", property: "Bien", locationMissing: "Emplacement non indiqué", descriptionMissing: "Aucune description disponible.", propertyValue: "Valeur du bien", accessFrom: "Investissement minimum", monthlyIncome: "Revenu mensuel par part", grossYield: "Rendement total cible", onRequest: "Sur demande", funded: "Financé", viewRentalShare: "Voir la participation", importantNoteTitle: "Information importante", importantNoteText: "Ce site ne fournit aucun conseil en investissement. Les loyers, rendements et versements reposent sur des calculs modélisés et ne sont pas garantis. La vacance, les coûts, les impôts, les conditions de financement et l'évolution du marché peuvent réduire les résultats réels." },
-  es: { backHome: "Volver al inicio", title: "Inmuebles internacionales de renta con participación locativa modelizada", text: "Compara los inmuebles disponibles por ubicación, valor, hipótesis de alquiler e inversión mínima. Revisa los riesgos antes de enviar una solicitud.", noPropertiesTitle: "No se encontraron inmuebles", noPropertiesText: "Actualmente no hay inmuebles disponibles para esta selección.", rentalShare: "Participación locativa", available: "Disponible", property: "Inmueble", locationMissing: "Ubicación no indicada", descriptionMissing: "No hay descripción disponible.", propertyValue: "Valor del inmueble", accessFrom: "Inversión mínima", monthlyIncome: "Ingreso mensual por participación", grossYield: "Rentabilidad total objetivo", onRequest: "Previa solicitud", funded: "Financiado", viewRentalShare: "Ver la participación", importantNoteTitle: "Aviso importante", importantNoteText: "Este sitio no ofrece asesoramiento de inversión. Los alquileres, la rentabilidad y los pagos se basan en cálculos modelizados y no están garantizados. La desocupación, los costes, los impuestos, las condiciones de financiación y los cambios del mercado pueden reducir los resultados reales." },
-  it: { backHome: "Torna alla home", title: "Immobili internazionali a reddito con partecipazione locativa modellizzata", text: "Confronta gli immobili disponibili per posizione, valore, ipotesi di locazione e investimento minimo. Esamina i rischi prima di inviare una richiesta.", noPropertiesTitle: "Nessun immobile trovato", noPropertiesText: "Al momento non sono disponibili immobili per questa selezione.", rentalShare: "Partecipazione locativa", available: "Disponibile", property: "Immobile", locationMissing: "Posizione non indicata", descriptionMissing: "Nessuna descrizione disponibile.", propertyValue: "Valore dell'immobile", accessFrom: "Investimento minimo", monthlyIncome: "Reddito mensile per quota", grossYield: "Rendimento totale obiettivo", onRequest: "Su richiesta", funded: "Finanziato", viewRentalShare: "Vedi la partecipazione", importantNoteTitle: "Nota importante", importantNoteText: "Questo sito non offre consulenza in materia di investimenti. Canoni, rendimenti e pagamenti si basano su calcoli modellizzati e non sono garantiti. Sfitto, costi, imposte, condizioni di finanziamento e variazioni di mercato possono ridurre i risultati effettivi." },
-  sq: {
-    backHome: "Kthehu ne kryefaqe",
-    title: "Prona nderkombetare me te ardhura dhe pjesemarrje qiraje",
-    text:
-      "Krahaso prona te zgjedhura ne SHBA, Kanada, Gjermani, Austri dhe Zvicer. Shiko vleren, supozimet e qirase, shumen e aksesit dhe rreziqet para se te kerkosh detaje.",
-    noPropertiesTitle: "Nuk u gjeten prona",
-    noPropertiesText: "Per kete zgjedhje nuk ka prona te disponueshme per momentin.",
-    rentalShare: "Pjese qiraje",
-    available: "E disponueshme",
-    property: "Prone",
-    locationMissing: "Lokacioni mungon",
-    descriptionMissing: "Nuk ka pershkrim.",
-    propertyValue: "Vlera e prones",
-    accessFrom: "Akses nga",
-    monthlyIncome: "Te ardhura mujore/pjese",
-    grossYield: "Kthimi total i synuar",
-    onRequest: "Me kerkese",
-    funded: "Financuar",
-    viewRentalShare: "Shiko pjesen e qirase",
-    importantNoteTitle: "Shenim i rendesishem",
-    importantNoteText:
-      "Kjo faqe nuk ofron keshilla investimi. Qiraja, rendimenti dhe pagesat jane llogaritje bruto te modeluara dhe nuk garantohen. Vakanca, kostot, taksat, financimi dhe ndryshimet e tregut mund te ulin rezultatet reale.",
-  },
+  fr: { backHome: "Retour à l’accueil", title: "Biens de rendement internationaux avec participation locative modélisée", text: "Comparez les biens disponibles selon leur emplacement, leur valeur, les hypothèses locatives et l’investissement minimum. Consultez les risques avant toute demande.", noPropertiesTitle: "Aucun bien trouvé", noPropertiesText: "Aucun bien n’est actuellement disponible pour cette sélection.", rentalShare: "Participation locative", available: "Disponible", property: "Bien", locationMissing: "Emplacement non indiqué", descriptionMissing: "Aucune description disponible.", propertyValue: "Valeur du bien", accessFrom: "Investissement minimum", monthlyIncome: "Revenu mensuel par part", grossYield: "Rendement locatif net", onRequest: "Sur demande", funded: "Financé", viewRentalShare: "Voir la participation", importantNoteTitle: "Information importante", importantNoteText: "Ce site ne fournit aucun conseil en investissement. Les loyers, rendements et versements reposent sur des calculs modélisés et ne sont pas garantis. La vacance, les coûts, les impôts, les conditions de financement et l’évolution du marché peuvent réduire les résultats réels." },
+  es: { backHome: "Volver al inicio", title: "Inmuebles internacionales de renta con participación modelizada en el alquiler", text: "Compara los inmuebles disponibles por ubicación, valor, hipótesis de alquiler e inversión mínima. Revisa los riesgos antes de enviar una solicitud.", noPropertiesTitle: "No se encontraron inmuebles", noPropertiesText: "Actualmente no hay inmuebles disponibles para esta selección.", rentalShare: "Participación locativa", available: "Disponible", property: "Inmueble", locationMissing: "Ubicación no indicada", descriptionMissing: "No hay descripción disponible.", propertyValue: "Valor del inmueble", accessFrom: "Inversión mínima", monthlyIncome: "Ingreso mensual por participación", grossYield: "Rentabilidad neta del alquiler", onRequest: "Previa solicitud", funded: "Financiado", viewRentalShare: "Ver la participación", importantNoteTitle: "Aviso importante", importantNoteText: "Este sitio no ofrece asesoramiento de inversión. Los alquileres, la rentabilidad y los pagos se basan en cálculos modelizados y no están garantizados. La desocupación, los costes, los impuestos, las condiciones de financiación y los cambios del mercado pueden reducir los resultados reales." },
+  it: { backHome: "Torna alla home", title: "Immobili internazionali a reddito con partecipazione locativa modellizzata", text: "Confronta gli immobili disponibili per posizione, valore, ipotesi di locazione e investimento minimo. Esamina i rischi prima di inviare una richiesta.", noPropertiesTitle: "Nessun immobile trovato", noPropertiesText: "Al momento non sono disponibili immobili per questa selezione.", rentalShare: "Partecipazione locativa", available: "Disponibile", property: "Immobile", locationMissing: "Posizione non indicata", descriptionMissing: "Nessuna descrizione disponibile.", propertyValue: "Valore dell'immobile", accessFrom: "Investimento minimo", monthlyIncome: "Reddito mensile per quota", grossYield: "Rendimento netto da affitto", onRequest: "Su richiesta", funded: "Finanziato", viewRentalShare: "Vedi la partecipazione", importantNoteTitle: "Nota importante", importantNoteText: "Questo sito non offre consulenza in materia di investimenti. Canoni, rendimenti e pagamenti si basano su calcoli modellizzati e non sono garantiti. Sfitto, costi, imposte, condizioni di finanziamento e variazioni di mercato possono ridurre i risultati effettivi." },
 };
 
 
@@ -178,57 +151,6 @@ async function getShareSettings() {
   return new Map((data || []).map((item) => [item.property_slug, item]));
 }
 
-async function getDatabaseProperties() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return [];
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 900);
-
-  try {
-    const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    const { data: properties, error } = await supabase
-      .from("properties")
-      .select("*")
-      .in("status", ["active", "available"])
-      .order("created_at", { ascending: false })
-      .abortSignal(controller.signal);
-
-    if (error) {
-      if (!error.message.includes("AbortError")) {
-        console.error("Supabase properties error:", error);
-      }
-
-      return [];
-    }
-
-    return ((properties as Property[] | null) || []).filter(
-      (property) =>
-        !hiddenManualPropertyIds.includes(property.id) &&
-        !hiddenManualPropertySlugs.includes(property.slug)
-    );
-  } catch (error) {
-    if (error instanceof Error && error.name !== "AbortError") {
-      console.error("Supabase properties request failed:", error);
-    }
-
-    return [];
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-
 function filterProperties(properties: Property[], city?: string) {
   const normalizedCity = city?.trim().toLowerCase();
   if (!normalizedCity) return properties;
@@ -244,20 +166,20 @@ export default async function ProjektePage({ searchParams }: PageProps) {
   const locale = await getCurrentLocale();
   const copy = propertiesCopy[locale];
   const returnText = targetReturnCopy[locale];
-  const [params, databaseProperties, translations, shareSettings] = await Promise.all([
-    searchParams, getDatabaseProperties(), getPropertyTranslations(locale), getShareSettings(),
+  const [params, listed, translations, shareSettings] = await Promise.all([
+    searchParams, getListedProperties(), getPropertyTranslations(locale), getShareSettings(),
   ]);
 
   const visibleProperties: Property[] = filterProperties(
-    [...externalProperties, ...databaseProperties].map((property) => localizeProperty(property, translations)),
+    listed.map((property) => localizeProperty(property, translations)),
     params?.city
   );
 
   return (
-    <main className="min-h-screen bg-[#f5f5f2] text-[#111111]">
-      <section className="bg-[#0F172A] px-5 pb-16 pt-32 text-white sm:px-6 md:pb-24 md:pt-36">
+    <main className="min-h-screen bg-canvas text-ink">
+      <section className="bg-ink px-5 pb-16 pt-32 text-white sm:px-6 md:pb-24 md:pt-36">
         <div className="mx-auto max-w-7xl">
-          <Link href="/" className="text-sm font-bold text-white/70">
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm font-bold text-white/80 hover:text-white">
             {copy.backHome}
           </Link>
 
@@ -281,7 +203,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
           </div>
         )}
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
           {visibleProperties.map((property) => {
             const projection = getPropertyProjection(property);
             const supply = getPropertyShareSupply(property, shareSettings.get(property.slug));
@@ -297,7 +219,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                   src={property.image_url || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"}
                   alt={property.title}
                   fill
-                  sizes="(max-width: 767px) 100vw, (max-width: 1280px) 33vw, 420px"
+                  sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 420px"
                   unoptimized={!property.image_url?.startsWith("/")}
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
@@ -327,14 +249,13 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                   {property.description || copy.descriptionMissing}
                 </p>
 
-                <div className="mt-8 grid gap-4 sm:grid-cols-2 md:gap-5">
+                <div className="mt-8 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr))]">
                   <InfoBox label={copy.propertyValue} value={formatMoney(property.price, copy, getPropertyCurrency(property), locale)} />
                   <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale)} />
                   <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
                   <InfoBox label={returnText.annualPerShare} value={formatPropertyMoney(projection.annualPerShare, projection.currency, locale, 2)} />
-                  <InfoBox label={returnText.targetTotalReturn} value={formatPercent(projection.annualRate, copy, locale)} />
+                  <InfoBox label={rentalYieldLabel(locale, "costsStated" in property ? property.costsStated !== false : undefined)} value={formatPercent(projection.annualRate, copy, locale)} />
                 </div>
-                {(property.targetTotalReturn !== undefined || getPropertyReturnBreakdown(property)) && <p className="mt-3 text-xs leading-5 text-slate-500">{getPropertyReturnBreakdown(property) ? returnText.modelNote : returnText.configuredTargetNote}</p>}
 
                 {fundedPercent > 0 && (
                   <div className="mt-7">
@@ -351,7 +272,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                   </div>
                 )}
 
-                <div className="mt-8 rounded-2xl bg-[#0F172A] py-4 text-center text-lg font-bold text-white">
+                <div className="mt-8 rounded-2xl bg-ink py-4 text-center text-lg font-bold text-white">
                   {copy.viewRentalShare}
                 </div>
               </div>
@@ -359,6 +280,8 @@ export default async function ProjektePage({ searchParams }: PageProps) {
             );
           })}
         </div>
+        {/* The target disclaimer applies to every card, so it is shown once under the grid. */}
+        {visibleProperties.some((property) => property.targetTotalReturn !== undefined || getPropertyReturnBreakdown(property)) && <p className="mt-8 max-w-4xl text-sm leading-6 text-muted">{visibleProperties.some((property) => getPropertyReturnBreakdown(property)) ? returnText.modelNote : returnText.configuredTargetNote}{visibleProperties.some((property) => "costsStated" in property && property.costsStated === false) && ` ${returnText.costsMissingNote}`}</p>}
       </section>
 
       <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-6 md:pb-24">
@@ -376,9 +299,9 @@ export default async function ProjektePage({ searchParams }: PageProps) {
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-4">
-      <div className="text-xl font-bold md:text-2xl">{value}</div>
-      <div className="mt-1 text-sm font-bold text-slate-500">{label}</div>
+    <div className="rounded-xl border border-line bg-canvas p-4">
+      <div className="whitespace-nowrap text-lg font-bold tabular-nums text-ink [overflow-wrap:normal]">{value}</div>
+      <div className="mt-1 text-sm font-bold text-muted">{label}</div>
     </div>
   );
 }

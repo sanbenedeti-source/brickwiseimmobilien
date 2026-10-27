@@ -5,7 +5,9 @@ import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown,
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getExternalPropertyBySlug, isPropertyOpenForInvestment } from "@/app/lib/external-properties";
+import { isPropertyOpenForInvestment } from "@/app/lib/external-properties";
+import { findProperty } from "@/app/lib/property-registry";
+import { isAdminUser } from "@/app/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
@@ -42,13 +44,16 @@ export async function createSharePurchaseRequest(formData: FormData) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user?.email) redirect("/sign-in");
+  // Administrators never buy shares with the admin account.
+  if (isAdminUser(user)) redirect("/admin");
   const userId = user.id;
 
   const slug = String(formData.get("property_slug") || "");
   const requestedShares = Number(formData.get("shares"));
   const paymentMethod = String(formData.get("payment_method") || "");
   const submittedRequestId = formData.get("purchase_request_id");
-  const property = getExternalPropertyBySlug(slug);
+  // Catalogue listing or a property added in the admin panel; prices always come from the server.
+  const property = await findProperty(slug);
 
   if (!property || !Number.isSafeInteger(requestedShares) || requestedShares < 1 || !allowedMethods.has(paymentMethod)
     || (paymentMethod === "wallet_balance" && submittedRequestId === null)
@@ -108,7 +113,7 @@ export async function createSharePurchaseRequest(formData: FormData) {
     `Shares: ${requestedShares}`,
     `Price per share: ${money(property.sharePrice, currency)}`,
     `Total amount: ${money(totalAmount, currency)}`,
-    `Target annual return: ${projection.annualRate.toFixed(2)}%`,
+    `Projected rental yield: ${projection.annualRate.toFixed(2)}%`,
     ...(returnBreakdown ? [
       `Rental: ${returnBreakdown.rental.toFixed(2)}%`,
       `Vacation point: ${returnBreakdown.vacationPoint.toFixed(2)}%`,
@@ -116,10 +121,10 @@ export async function createSharePurchaseRequest(formData: FormData) {
       "The annual target includes non-cash benefits. Its monthly equivalent is annual / 12, not a guaranteed rental payment.",
     ] : []),
     `Payment method: ${methodLabel}`,
-    `Modelled daily return: ${money(projection.annual / 365.2425, currency)}`,
-    `Modelled weekly return: ${money(projection.annual / 52.1775, currency)}`,
-    `Modelled monthly return: ${money(projection.monthly, currency)}`,
-    `Modelled annual return: ${money(projection.annual, currency)}`,
+    `Projected net rent per day: ${money(projection.annual / 365.2425, currency)}`,
+    `Projected net rent per week: ${money(projection.annual / 52.1775, currency)}`,
+    `Projected net rent per month: ${money(projection.monthly, currency)}`,
+    `Projected net rent per year: ${money(projection.annual, currency)}`,
     "Next step: Agent must contact the client and provide verified payment instructions.",
   ].join("\n");
 

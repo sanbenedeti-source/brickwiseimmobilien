@@ -70,7 +70,7 @@ function Field({
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-bold text-slate-600">{label}</span>
-      <span className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0F172A]">
+      <span className="flex overflow-hidden rounded-xl border border-line-strong bg-white focus-within:border-ink">
         {prefix && (
           <span className="flex w-12 items-center justify-center bg-slate-50 text-lg font-bold text-slate-500">
             {prefix}
@@ -83,7 +83,7 @@ function Field({
           step={step}
           value={Number.isFinite(value) ? value : 0}
           onChange={(event) => onChange(Number(event.target.value))}
-          className="min-w-0 flex-1 px-4 py-3 text-lg font-bold text-[#0F172A] outline-none"
+          className="w-0 min-w-0 flex-1 px-4 py-3 text-lg font-bold text-ink outline-none"
         />
         {suffix && (
           <span className="flex w-14 items-center justify-center bg-slate-50 text-sm font-bold text-slate-500">
@@ -111,7 +111,7 @@ function BreakdownRow({
         <span className={`h-3 w-3 shrink-0 rounded-full ${color}`} />
         <span className="font-bold text-slate-700">{label}</span>
       </div>
-      <span className="text-lg font-bold text-[#0F172A]">{euro.format(Math.round(value))}</span>
+      <span className="text-lg font-bold text-ink">{euro.format(Math.round(value))}</span>
     </div>
   );
 }
@@ -169,7 +169,7 @@ export default function MortgageCalculatorPage() {
   ]);
 
   const segments = [
-    { label: t("Principal & interest"), value: result.principalInterest, color: "bg-[#0F172A]", stroke: "#0F172A" },
+    { label: t("Principal & interest"), value: result.principalInterest, color: "bg-ink", stroke: "#0F172A" },
     { label: t("Property tax"), value: result.monthlyTax, color: "bg-red-600", stroke: "#DC2626" },
     { label: t("Home insurance"), value: homeInsurance, color: "bg-emerald-600", stroke: "#059669" },
     { label: t("Mortgage insurance"), value: result.mortgageInsurance, color: "bg-amber-500", stroke: "#F59E0B" },
@@ -179,17 +179,17 @@ export default function MortgageCalculatorPage() {
   let offset = 0;
 
   return (
-    <main className="min-h-screen bg-[#f5f5f2] px-4 pb-16 pt-28 text-[#0F172A] sm:px-6 md:pt-36">
+    <main className="min-h-screen bg-canvas px-4 pb-16 pt-28 text-ink sm:px-6 md:pt-36">
       <section className="mx-auto max-w-7xl">
         <div className="max-w-4xl">
-          <p className="text-lg font-bold text-red-700">{t("Mortgage tools")}</p>
-          <h1 className="font-display mt-3 text-[2.55rem] font-bold leading-[0.98] sm:text-5xl md:text-7xl">
+          <p className="text-lg font-bold text-brand">{t("Mortgage tools")}</p>
+          <h1 className="font-display mt-3 text-[2rem] font-bold leading-[1.05] sm:text-5xl md:text-7xl">
             {t("Mortgage calculator")}</h1>
           <p className="mt-5 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg md:text-xl">
             {t("Estimate a monthly Canadian home payment, closing cash, and amortization using your own price, down payment, rate, and cost assumptions.")}</p>
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
+        <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_0.8fr]">
           <section className="rounded-[22px] bg-white p-5 shadow-sm md:rounded-[32px] md:p-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
@@ -256,7 +256,7 @@ export default function MortgageCalculatorPage() {
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-[#0F172A] p-5 text-white">
+              <div className="rounded-2xl bg-ink p-5 text-white">
                 <p className="text-sm font-bold text-white/60">{t("Due at close")}</p>
                 <p className="mt-2 text-2xl font-bold sm:text-3xl">{euro.format(Math.round(result.dueAtClose))}</p>
               </div>
@@ -283,7 +283,7 @@ export default function MortgageCalculatorPage() {
                 <select
                   value={loanTerm}
                   onChange={(event) => setLoanTerm(Number(event.target.value) as LoanTerm)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-lg font-bold text-[#0F172A] outline-none focus:border-[#0F172A]"
+                  className="w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-lg font-bold text-ink outline-none focus:border-ink"
                 >
                   <option value={15}>{t("15 years fixed")}</option>
                   <option value={20}>{t("20 years fixed")}</option>
@@ -312,7 +312,7 @@ export default function MortgageCalculatorPage() {
               {loanTerm} {t("year term")}</p>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
+          <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-brand mt-6 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-sm uppercase tracking-wide text-slate-500">

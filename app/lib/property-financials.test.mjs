@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyTargetReturn, getPropertyShareSupply, formatPropertyMoney } from "./property-financials.ts";
+import { allocateTargetReturn, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyTargetReturn, getPropertyShareSupply, formatPropertyMoney } from "./property-financials.ts";
+
+test("target allocation preserves exact components before display rounding", () => {
+  assert.deepEqual(allocateTargetReturn(26), { rental: 18.2, vacationPoint: 3.9, appreciation: 3.9 });
+  assert.deepEqual(allocateTargetReturn(26.25), { rental: 18.375, vacationPoint: 3.9375, appreciation: 3.9375 });
+  assert.deepEqual(allocateTargetReturn(0), { rental: 0, vacationPoint: 0, appreciation: 0 });
+  for (const bad of [-1, NaN, Infinity]) assert.throws(() => allocateTargetReturn(bad), RangeError);
+});
 
 const property = {
   currency: "EUR", price: 116100, sharePrice: 100, totalShares: 1161, blockedShares: 31,

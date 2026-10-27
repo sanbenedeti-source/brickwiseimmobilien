@@ -1,4 +1,3 @@
-import { ArrowUpRight, Landmark, Bitcoin, UsersRound, MessageSquareText, Activity } from "lucide-react";
 import { getAdminText } from "@/app/lib/admin-copy";
 import { getCurrentLocale } from "@/app/lib/server-locale";
 import { localeHtmlLang, type Locale } from "@/app/lib/i18n";
@@ -16,14 +15,18 @@ import {
   type CustomerRecord,
 } from "../lib/customer-store";
 import { isAdminUser } from "../lib/admin";
+import { hasAdminSession } from "../lib/admin-session";
+import { redirect } from "next/navigation";
 import WalletCreditForm from "./payments/WalletCreditForm";
 import AdminSignInForm from "./AdminSignInForm";
 import { agreementCopy } from "@/app/lib/agreement-copy";
+import { AdminCard, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "./ui";
+import { getAdminAttention } from "./attention";
 
 const adminSignInCopies = {
   en: { title: "Admin Panel", intro: "Sign in with an authorized administrator account.", clientSession: "A client session is active for", email: "Admin email", password: "Password", submitting: "Signing in...", submit: "Sign in to Admin Panel", forgot: "Forgot password?", back: "Back to website" },
   de: { title: "Admin-Panel", intro: "Melden Sie sich mit einem autorisierten Administratorkonto an.", clientSession: "Eine Kundensitzung ist aktiv für", email: "Admin-E-Mail", password: "Passwort", submitting: "Anmeldung...", submit: "Im Admin-Panel anmelden", forgot: "Passwort vergessen?", back: "Zur Website" },
-  fr: { title: "Panneau Admin", intro: "Connectez-vous avec un compte administrateur autorisé.", clientSession: "Une session client est active pour", email: "E-mail administrateur", password: "Mot de passe", submitting: "Connexion...", submit: "Accéder au panneau admin", forgot: "Mot de passe oublié ?", back: "Retour au site" },
+  fr: { title: "Panneau Admin", intro: "Connectez-vous avec un compte administrateur autorisé.", clientSession: "Une session client est active pour", email: "E-mail administrateur", password: "Mot de passe", submitting: "Connexion...", submit: "Accéder au panneau admin", forgot: "Mot de passe oublié ?", back: "Retour au site" },
   es: { title: "Panel Admin", intro: "Inicia sesión con una cuenta de administrador autorizada.", clientSession: "Hay una sesión de cliente activa para", email: "Correo de administrador", password: "Contraseña", submitting: "Iniciando sesión...", submit: "Entrar al Panel Admin", forgot: "¿Olvidaste la contraseña?", back: "Volver al sitio" },
   it: { title: "Pannello Admin", intro: "Accedi con un account amministratore autorizzato.", clientSession: "È attiva una sessione cliente per", email: "E-mail amministratore", password: "Password", submitting: "Accesso...", submit: "Accedi al Pannello Admin", forgot: "Password dimenticata?", back: "Torna al sito" },
 };
@@ -84,11 +87,6 @@ function getProperty(request: AdminRequestItem) {
 function getCustomerName(request: AdminRequestItem) {
   return request.name || request.full_name || "Unknown customer";
 }
-
-const paymentMethodCards = [
-  { title: "Bank transfer", description: "Verified bank details for deposits and property payments.", href: "/admin/payments?method=bank_transfer", value: "SEPA/Wire", icon: Landmark },
-  { title: "Cryptocurrency", description: "Choose the asset and network, then provide verified payment instructions.", href: "/admin/payments?method=crypto", value: "BTC / ETH / USDT / USDC", icon: Bitcoin },
-];
 
 async function getRegisteredAuthCustomers() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -152,6 +150,7 @@ export default async function AdminPage() {
   } = await supabase.auth.getUser();
 
   if (!isAdminUser(user)) return <AdminSignInForm currentEmail={user?.email} copy={adminSignInCopies[locale]} />;
+  if (!(await hasAdminSession(supabase, user))) redirect("/admin/security");
   const translations = await getPropertyTranslations(locale);
 
   const { count: requestsCount } = await supabase
@@ -187,286 +186,97 @@ export default async function AdminPage() {
   );
   const authCustomers = await getRegisteredAuthCustomers();
   const customers = mergeCustomers(authCustomers.customers, requestCustomers);
+  const attention = await getAdminAttention(supabase);
+  const requestStatusLabel = (status: string | null) => t(status === "contacted" ? "Contacted" : status === "closed" ? "Closed" : "New");
 
   return (
     <main className="admin-workspace">
-      <section className="admin-hero">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-lg font-bold text-emerald-300">{t("Panel Admin")}</p>
+      <AdminPageHeader
+        eyebrow={t("Administration")}
+        title={t("Overview")}
+        description={t("Work waiting for you and the latest client activity.")}
+        actions={<>
+          <Link href="/admin/payments" className="admin-btn admin-btn-secondary">{t("Payment methods")}</Link>
+          <Link href="/admin/properties" className="admin-btn">{t("Add property")}</Link>
+        </>}
+      />
 
-          <h1 className="font-display mt-4 max-w-5xl text-6xl font-bold leading-none">{t("Manage customer requests")}</h1>
-
-          <p className="mt-6 max-w-3xl text-xl leading-relaxed text-white/80">{t("Review customer profiles, property requests, and participation interest from one operational dashboard.")}</p>
-
-          <div className="mt-8">
-            <Link
-              href="/admin/properties"
-              className="inline-flex rounded-xl bg-white px-5 py-3 font-semibold text-[#0b1020]"
-            >{t("Add property")}</Link>
-            <Link
-              href="/admin/payments"
-              className="ml-4 inline-flex rounded-xl border border-white/30 px-5 py-3 font-semibold text-white"
-            >{t("Manage payments")}</Link>
-          </div>
-        </div>
+      <section className="admin-stats" aria-label={t("Key figures")}>
+        <AdminStat label={t("New requests")} value={attention.newRequests} hint={`${t("All requests")}: ${requestsCount || 0}`} href="#requests" linkLabel={t("View list")} attention={attention.newRequests > 0} />
+        <AdminStat label={t("Deposits to verify")} value={attention.pendingDeposits} href="/admin/payments/deposits" linkLabel={t("Open queue")} attention={attention.pendingDeposits > 0} />
+        <AdminStat label={t("Agreements to review")} value={attention.pendingAgreements} href="/admin/agreements" linkLabel={t("Open queue")} attention={attention.pendingAgreements > 0} />
+        <AdminStat label={t("Registered customers")} value={customers.length} hint={authCustomers.enabled ? undefined : t("Auth list requires service role key")} href="#customers" linkLabel={t("View list")} />
       </section>
 
-      <section className="admin-content-section">
-        <div className="admin-metrics grid md:grid-cols-3">
-          <AdminCard
-            icon={MessageSquareText}
-            title={t("All requests")}
-            description={t("Total number of customer requests.")}
-            value={String(requestsCount || 0)}
-          />
-
-          <AdminCard
-            icon={UsersRound}
-            title={t("Registered customers")}
-            description={t("Customers from registration, contact, and property requests.")}
-            value={String(customers.length)}
-          />
-
-          <AdminCard
-            icon={Activity}
-            title={t("Status")}
-            description={t("Backend and Supabase are connected.")}
-            value={t("Online")}
-          />
-        </div>
-
-        <div className="admin-panel admin-payment-hub">
-          <p className="text-lg font-bold text-emerald-300">{t("Payments")}</p>
-          <h2 className="mt-3 text-4xl font-bold">{t("Company payment methods")}</h2>
-          <p className="mt-4 max-w-4xl text-lg leading-relaxed text-white/75">{t("Manage company bank accounts and crypto addresses. Active details are shared with all signed-in clients.")}</p>
-
-          <div className="admin-method-grid">
-            {paymentMethodCards.map((method) => (
-              <Link
-                key={method.href}
-                href={method.href}
-                className="admin-method-link"
-              >
-                <span className="admin-method-icon"><method.icon size={22} aria-hidden="true" /></span>
-                <ArrowUpRight className="admin-method-arrow" size={22} aria-hidden="true" />
-                <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
-                  {t(method.value)}
-                </p>
-                <h3 className="mt-3 text-2xl font-bold">{t(method.title)}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  {t(method.description)}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div id="customers" className="admin-panel">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-4xl font-bold">{t("All customers")}</h2>
-              <p className="mt-3 text-lg text-slate-600">{t("Overview of customers captured through registration, contact, or rental participation requests.")}</p>
-            </div>
-
-            <div className="rounded-2xl bg-slate-50 px-5 py-3 text-sm font-bold text-slate-600">
-              {authCustomers.enabled
-                ? t("Supabase Auth connected")
-                : t("Auth list requires service role key")}
-            </div>
-          </div>
-
-          {customers.length === 0 ? (
-            <div className="admin-empty">
-              <p className="text-lg text-slate-600">{t("No customers yet. Once a customer sends a request, they will appear here.")}</p>
-            </div>
-          ) : (
-            <div className="mt-8 grid gap-5 md:grid-cols-2">
-              {customers.map((customer) => (
-                <div
-                  key={customer.id}
-                  className="rounded-2xl border border-slate-100 bg-slate-50 p-6"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                        {formatDate(customer.createdAt, locale)}
-                      </p>
-                      <h3 className="mt-2 text-3xl font-bold">
-                        {customer.fullName === "Unknown customer" ? t("Unknown customer") : customer.fullName}
-                      </h3>
-                    </div>
-
-                    <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
-                      {t(customer.status)}
-                    </span>
+      <AdminCard id="requests" title={t("Client requests")} description={t("Purchase requests and enquiries, newest first.")} flush>
+        {error ? <p role="alert" className="admin-empty-state">{t("Error loading customer requests.")}</p>
+          : !requests?.length ? <AdminEmpty>{t("There are currently no customer requests.")}</AdminEmpty>
+          : <table className="admin-table admin-table-stack">
+            <thead><tr><th scope="col">{t("Date")}</th><th scope="col">{t("Client")}</th><th scope="col">{t("Property")}</th><th scope="col">{t("Message")}</th><th scope="col">{t("Status")}</th></tr></thead>
+            <tbody>{(requests as AdminRequestItem[]).map((request) => {
+              const property = getProperty(request);
+              const listing = property?.slug ? getExternalPropertyBySlug(property.slug) : undefined;
+              const map = listing ? getPropertyMapLinks(listing, locale) : null;
+              const name = getCustomerName(request);
+              const title = translations.get(property?.slug || "")?.title || listing?.title || property?.title;
+              return <tr key={request.id}>
+                <td data-label={t("Date")} className="whitespace-nowrap">{formatDate(request.created_at, locale)}</td>
+                <td data-label={t("Client")}>
+                  <p className="admin-cell-main">{name === "Unknown customer" ? t("Unknown customer") : name}</p>
+                  <p className="admin-cell-sub">{request.email ? <a href={`mailto:${request.email}`} className="admin-link">{request.email}</a> : t("No email")}</p>
+                  {request.phone && <p className="admin-cell-sub"><a href={`tel:${request.phone.replace(/\s+/g, "")}`}>{request.phone}</a></p>}
+                </td>
+                <td data-label={t("Property")}>{title ? <>
+                  {property?.slug ? <Link href={`/properties/${property.slug}`} target="_blank" rel="noopener noreferrer" className="admin-cell-main hover:underline">{title}</Link> : <p className="admin-cell-main">{title}</p>}
+                  <p className="admin-cell-sub">{listing?.city || property?.city || t("Location not provided")} · {formatPrice(listing?.price || property?.price || null, locale)}{map && <> · <a href={map.mapUrl} target="_blank" rel="noopener noreferrer" className="admin-link">{t("Open map")}</a></>}</p>
+                </> : <span className="admin-cell-sub">—</span>}</td>
+                <td data-label={t("Message")}>{request.message ? <details><summary className="admin-message">{request.message.split("\n")[0]}</summary><p className="admin-message-full">{request.message}</p></details> : <span className="admin-cell-sub">—</span>}</td>
+                <td data-label={t("Status")}>
+                  <div className="flex flex-col items-start gap-2">
+                    <StatusBadge status={request.status} label={requestStatusLabel(request.status)} />
+                    <form action={updateRequestStatus} className="admin-inline-form">
+                      <input type="hidden" name="request_id" value={request.id} />
+                      <select name="status" defaultValue={request.status || "new"} aria-label={t("Status")}>
+                        <option value="new">{t("New")}</option>
+                        <option value="contacted">{t("Contacted")}</option>
+                        <option value="closed">{t("Closed")}</option>
+                      </select>
+                      <button type="submit" className="admin-btn admin-btn-secondary admin-btn-sm">{t("Save")}</button>
+                    </form>
                   </div>
+                </td>
+              </tr>;
+            })}</tbody>
+          </table>}
+      </AdminCard>
 
-                  <div className="mt-5 space-y-2 text-lg text-slate-600">
-                    <p>{customer.email}</p>
-                    {customer.phone && <p>{customer.phone}</p>}
-                    <p>{t("Source:")} {t(customer.source)}</p>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    {customer.source === "Registration" && <Link href={`/admin/agreements?customer=${encodeURIComponent(customer.id)}&status=all`} className="rounded-2xl border border-[#0F172A] px-5 py-3 text-sm font-bold text-[#0F172A]">{agreementCopy(locale).queue}</Link>}
-                    <a
-                      href={`mailto:${customer.email}`}
-                      className="rounded-2xl bg-[#0F172A] px-5 py-3 text-sm font-bold text-white"
-                    >{t("Send email")}</a>
-
-                    {customer.phone && (
-                      <a
-                        href={`tel:${customer.phone.replace(/\s+/g, "")}`}
-                        className="rounded-2xl border border-[#0F172A] px-5 py-3 text-sm font-bold text-[#0F172A]"
-                      >{t("Call")}</a>
-                    )}
-                  </div>
-                  {customer.source === "Registration" && (
-                    <WalletCreditForm userId={customer.id} operationId={crypto.randomUUID()} locale={locale} />
-                  )}
+      <AdminCard id="customers" title={t("Customers")} description={t("Overview of customers captured through registration, contact, or rental participation requests.")} flush>
+        {customers.length === 0 ? <AdminEmpty>{t("No customers yet. Once a customer sends a request, they will appear here.")}</AdminEmpty>
+          : <table className="admin-table admin-table-stack">
+            <thead><tr><th scope="col">{t("Customer")}</th><th scope="col">{t("Source")}</th><th scope="col">{t("Status")}</th><th scope="col">{t("Registered")}</th><th scope="col">{t("Actions")}</th></tr></thead>
+            <tbody>{customers.map((customer) => <tr key={customer.id}>
+              <td data-label={t("Customer")}>
+                <p className="admin-cell-main">{customer.fullName === "Unknown customer" ? t("Unknown customer") : customer.fullName}</p>
+                <p className="admin-cell-sub">{customer.email}{customer.phone ? ` · ${customer.phone}` : ""}</p>
+              </td>
+              <td data-label={t("Source")}>{t(customer.source)}</td>
+              <td data-label={t("Status")}><StatusBadge status={customer.status} label={t(customer.status)} /></td>
+              <td data-label={t("Registered")} className="whitespace-nowrap">{formatDate(customer.createdAt, locale)}</td>
+              <td data-label={t("Actions")}>
+                <div className="admin-actions">
+                  <a href={`mailto:${customer.email}`} className="admin-btn admin-btn-secondary admin-btn-sm">{t("Send email")}</a>
+                  {customer.phone && <a href={`tel:${customer.phone.replace(/\s+/g, "")}`} className="admin-btn admin-btn-secondary admin-btn-sm">{t("Call")}</a>}
+                  {customer.source === "Registration" && <Link href={`/admin/customers/${encodeURIComponent(customer.id)}`} className="admin-btn admin-btn-sm">{t("View profile")}</Link>}
+                  {customer.source === "Registration" && <Link href={`/admin/agreements?customer=${encodeURIComponent(customer.id)}&status=all`} className="admin-btn admin-btn-secondary admin-btn-sm">{agreementCopy(locale).queue}</Link>}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div id="requests" className="admin-panel">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-4xl font-bold">{t("All customer requests")}</h2>
-              <p className="mt-3 text-lg text-slate-600">{t("Overview of prospects and property projects.")}</p>
-            </div>
-
-            <Link
-              href="/dashboard"
-              className="rounded-2xl border border-[#0F172A] px-6 py-3 text-base font-bold text-[#0F172A]"
-            >{t("Back to dashboard")}</Link>
-          </div>
-
-          {error && (
-            <div className="mt-8 rounded-2xl bg-red-50 p-5 text-red-700">{t("Error loading customer requests.")}</div>
-          )}
-
-          {!error && (!requests || requests.length === 0) && (
-            <div className="admin-empty">
-              <p className="text-lg text-slate-600">{t("There are currently no customer requests.")}</p>
-            </div>
-          )}
-
-          {!error && requests && requests.length > 0 && (
-            <div className="mt-8 space-y-5">
-              {(requests as AdminRequestItem[]).map((request) => {
-                const property = getProperty(request);
-                const listing = property?.slug ? getExternalPropertyBySlug(property.slug) : undefined;
-                const map = listing ? getPropertyMapLinks(listing, locale) : null;
-
-                return (
-                  <div
-                    key={request.id}
-                    className="rounded-2xl border border-slate-100 bg-slate-50 p-6"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                          {formatDate(request.created_at, locale)}
-                        </p>
-
-                        <h3 className="mt-2 text-3xl font-bold">
-                          {getCustomerName(request) === "Unknown customer" ? t("Unknown customer") : getCustomerName(request)}
-                        </h3>
-
-                        <p className="mt-2 text-lg text-slate-600">
-                          {request.email || t("No email")}{" "}
-                          {request.phone ? `- ${request.phone}` : ""}
-                        </p>
-                      </div>
-
-                      <form
-                        action={updateRequestStatus}
-                        className="flex items-center gap-3"
-                      >
-                        <input
-                          type="hidden"
-                          name="request_id"
-                          value={request.id}
-                        />
-
-                        <select
-                          name="status"
-                          defaultValue={request.status || "new"}
-                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none"
-                        >
-                          <option value="new">{t("New")}</option>
-                          <option value="contacted">{t("Contacted")}</option>
-                          <option value="closed">{t("Closed")}</option>
-                        </select>
-
-                        <button
-                          type="submit"
-                          className="rounded-2xl bg-[#0F172A] px-5 py-3 text-sm font-bold text-white"
-                        >{t("Save")}</button>
-                      </form>
-                    </div>
-
-                    <div className="mt-6 rounded-2xl bg-white p-5">
-                      <p className="text-sm font-bold text-slate-500">{t("Property project")}</p>
-
-                      <h4 className="mt-2 text-2xl font-bold">
-                        {translations.get(property?.slug || "")?.title || listing?.title || property?.title || t("Property project")}
-                      </h4>
-
-                      <p className="mt-2 text-lg text-slate-600">
-                        {listing?.address || property?.city || t("Location not provided")} -{" "}
-                        {formatPrice(listing?.price || property?.price || null, locale)}
-                      </p>
-                      {map && <a href={map.mapUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block font-bold text-sky-700">{t("Open map")}</a>}
-
-                      {property?.slug && (
-                        <Link
-                          href={`/properties/${property.slug}`}
-                          className="mt-4 inline-block rounded-2xl bg-[#0F172A] px-6 py-3 text-base font-bold text-white"
-                        >{t("Open project")}</Link>
-                      )}
-                    </div>
-
-                    {request.message && (
-                      <div className="mt-5 rounded-2xl bg-white p-5">
-                        <p className="text-sm font-bold text-slate-500">{t("Message")}</p>
-
-                        <p className="mt-2 text-lg leading-relaxed text-slate-700">
-                          {request.message}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
+                {customer.source === "Registration" && <details className="admin-popover mt-2">
+                  <summary className="admin-link text-[12.5px]">{t("Credit wallet")}</summary>
+                  <div><WalletCreditForm userId={customer.id} operationId={crypto.randomUUID()} locale={locale} /></div>
+                </details>}
+              </td>
+            </tr>)}</tbody>
+          </table>}
+      </AdminCard>
     </main>
-  );
-}
-
-function AdminCard({
-  icon: Icon,
-  title,
-  description,
-  value,
-}: {
-  icon: typeof Activity;
-  title: string;
-  description: string;
-  value: string;
-}) {
-  return (
-    <div className="admin-metric">
-      <div className="text-5xl font-bold">{value}</div><Icon className="absolute right-6 top-6 text-sky-600" size={24} />
-      <h2 className="mt-6 text-3xl font-bold">{title}</h2>
-      <p className="mt-3 text-lg leading-relaxed text-slate-600">
-        {description}
-      </p>
-    </div>
   );
 }

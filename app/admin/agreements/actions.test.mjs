@@ -15,13 +15,17 @@ function compile(path, modules = {}) {
   return loaded.exports;
 }
 const adminModule = compile('app/lib/admin.ts');
+const sessionModule = compile('app/lib/admin-session.ts', { './admin': adminModule });
 const id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const admin = { id: 'trusted-admin', app_metadata: { role: 'admin' } };
 
 function harness(options = {}) {
   const writes = [], invalidations = [];
   const client = {
-    auth: { getUser: async () => ({ data: { user: options.user === undefined ? admin : options.user }, error: options.authError || null }) },
+    auth: {
+      getUser: async () => ({ data: { user: options.user === undefined ? admin : options.user }, error: options.authError || null }),
+      getClaims: async () => ({ data: { claims: { sub: (options.user === undefined ? admin : options.user)?.id, aal: options.aal || 'aal2' } }, error: null }),
+    },
     rpc: async (name, args) => {
       writes.push({ name, args });
       if (options.rpcThrows) throw new Error('Network unavailable');
@@ -31,7 +35,7 @@ function harness(options = {}) {
   const { reviewAgreement } = compile('app/admin/agreements/actions.ts', {
     'next/cache': { revalidatePath: (...args) => invalidations.push(args) },
     '@/lib/supabase/server': { createClient: async () => client },
-    '@/app/lib/admin': adminModule,
+    '@/app/lib/admin-session': sessionModule,
   });
   return { writes, invalidations, review: values => {
     const form = new FormData();
@@ -66,6 +70,20 @@ test('valid approval and rejection use the authenticated RPC and refresh relevan
     assert.deepEqual(h.writes, [{ name: 'review_client_agreement', args: { p_id: id, p_decision: decision, p_note: 'Checked document' } }]);
     assert.deepEqual(h.invalidations, [['/admin/agreements'], ['/admin'], ['/dashboard', 'layout']]);
   }
+});
+
+test('an admin with an enrolled authenticator must confirm it in this session', async () => {
+  const enrolled = { ...admin, factors: [{ id: 'factor', factor_type: 'totp', status: 'verified' }] };
+  const unconfirmed = harness({ user: enrolled, aal: 'aal1' });
+  assert.deepEqual(await unconfirmed.review({}), { result: 'error' });
+  assert.equal(unconfirmed.writes.length, 0);
+  const confirmed = harness({ user: enrolled, aal: 'aal2' });
+  assert.deepEqual(await confirmed.review({}), { result: 'saved' });
+  assert.equal(confirmed.writes.length, 1);
+  // Since MFA is mandatory, an admin with only an unverified (abandoned) setup is refused until they enroll.
+  const pending = harness({ user: { ...admin, factors: [{ id: 'factor', factor_type: 'totp', status: 'unverified' }] }, aal: 'aal1' });
+  assert.deepEqual(await pending.review({}), { result: 'error' });
+  assert.equal(pending.writes.length, 0);
 });
 
 test('review RPC errors cannot report saved or invalidate views as if a review succeeded', async () => {

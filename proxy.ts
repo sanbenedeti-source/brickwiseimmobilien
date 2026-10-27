@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
   });
 
   // A language selected by the visitor remains stable. Without a manual
-  // selection, every request follows the country header and then the browser.
+  // selection, every request follows the browser language and then the country.
   if (normalizeLocale(localeQuery)) {
     response.cookies.set(localePreferenceCookieName, "1", {
       maxAge: oneYear,

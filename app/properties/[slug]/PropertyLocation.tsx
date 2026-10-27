@@ -2,6 +2,23 @@ import { ExternalLink, MapPin } from "lucide-react";
 import type { Locale } from "../../lib/i18n";
 import { getPropertyMapLinks } from "../../lib/property-location";
 import { propertyUiCopy } from "../property-ui-copy";
+import PropertyMapEmbed from "./PropertyMapEmbed";
+
+const loadMapLabels: Record<Locale, string> = {
+  en: "Load map (Google Maps)",
+  de: "Karte laden (Google Maps)",
+  fr: "Charger la carte (Google Maps)",
+  es: "Cargar el mapa (Google Maps)",
+  it: "Carica la mappa (Google Maps)",
+};
+
+const mapConsentNotes: Record<Locale, string> = {
+  en: "Loading the map sends data (such as your IP address) to Google.",
+  de: "Beim Laden der Karte werden Daten (z. B. Ihre IP-Adresse) an Google übermittelt.",
+  fr: "Le chargement de la carte transmet des données (comme votre adresse IP) à Google.",
+  es: "Al cargar el mapa se envían datos (como tu dirección IP) a Google.",
+  it: "Caricando la mappa vengono inviati dati (come il tuo indirizzo IP) a Google.",
+};
 
 const mapLabels: Record<Locale, string> = {
   en: "Open in Google Maps",
@@ -33,26 +50,19 @@ export default function PropertyLocation({ property, title, address, heading, lo
   const { mapUrl, embedUrl } = location;
 
   return (
-    <section id="location" aria-labelledby="property-location-heading" className="my-8 scroll-mt-24 overflow-hidden rounded-xl border border-[#dfe5eb] bg-white shadow-sm">
+    <section id="location" aria-labelledby="property-location-heading" className="my-8 scroll-mt-24 overflow-hidden rounded-xl border border-line bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-5 p-6">
         <div>
-          <h2 id="property-location-heading" className="flex items-center gap-2 text-2xl font-bold text-[#17233f]"><MapPin size={23} aria-hidden="true" />{heading}</h2>
-          <p className="mt-2 text-[#687486]">{address}</p>
-          {location.precision === "area" && <p className="mt-2 max-w-xl text-sm text-[#687486]">{areaNotes[locale]}</p>}
+          <h2 id="property-location-heading" className="flex items-center gap-2 text-2xl font-bold text-ink"><MapPin size={23} aria-hidden="true" />{heading}</h2>
+          <p className="mt-2 text-muted">{address}</p>
+          {location.precision === "area" && <p className="mt-2 max-w-xl text-sm text-muted">{areaNotes[locale]}</p>}
         </div>
         <div className="flex flex-wrap gap-3">
-          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#2f9bdb] px-4 py-3 text-sm font-bold text-white hover:bg-[#17233f]">{mapLabels[locale]}<ExternalLink size={16} aria-hidden="true" /></a>
-          {location.streetViewUrl && <a href={location.streetViewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#dfe5eb] px-4 py-3 text-sm font-bold text-[#17233f] hover:bg-[#f4f6f8]">{propertyUiCopy[locale].streetView}<ExternalLink size={16} aria-hidden="true" /></a>}
+          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-bold text-white hover:bg-brand-strong">{mapLabels[locale]}<ExternalLink size={16} aria-hidden="true" /></a>
+          {location.streetViewUrl && <a href={location.streetViewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 py-3 text-sm font-bold text-ink hover:bg-canvas">{propertyUiCopy[locale].streetView}<ExternalLink size={16} aria-hidden="true" /></a>}
         </div>
       </div>
-      <iframe
-        title={`${heading}: ${title} — ${address}`}
-        src={embedUrl}
-        className="h-80 w-full border-0 sm:h-96"
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-      />
+      <PropertyMapEmbed src={embedUrl} title={`${heading}: ${title} — ${address}`} loadLabel={loadMapLabels[locale]} notice={mapConsentNotes[locale]} />
     </section>
   );
 }

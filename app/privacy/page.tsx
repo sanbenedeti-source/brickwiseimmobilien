@@ -56,6 +56,9 @@ const sections = [
       "Vercel provides website hosting, delivery, security, and operational logs.",
       "Meta receives marketing-event information through Meta Pixel only after you accept marketing tracking.",
       "Google receives advertising measurement information through the Google tag only after you accept marketing tracking.",
+      "OpenAI receives the messages you type into the website chat assistant in order to generate replies. No account data is sent, requests are made with response storage at OpenAI disabled (store: false), and the information is processed in the USA.",
+      "Resend delivers transactional emails, such as internal notifications to our team about new registrations.",
+      "Google receives your IP address and browser information through the Google Maps embed on property pages only after you click to load the map.",
       "Email, telecommunications, professional advisory, compliance, and support providers may process the minimum information needed for their service.",
       "Authorities, courts, regulators, or counterparties may receive information where disclosure is legally required or necessary to establish, exercise, or defend legal claims.",
       "Information may be transferred as part of a merger, financing, restructuring, or sale, subject to appropriate confidentiality and legal safeguards.",
@@ -65,6 +68,7 @@ const sections = [
     title: "7. International transfers",
     paragraphs: [
       "The website supports users and property opportunities across borders, including the United States, Canada, Germany, Austria, and Switzerland. Service providers may process information in these or other locations where they operate.",
+      "In particular, OpenAI processes chat assistant messages in the USA, and Google processes Google Maps requests in the USA; the map is loaded only after you click to load it.",
       "Where required, international transfers are supported by an adequacy decision, contractual safeguards, or another legally recognized transfer mechanism. No transfer mechanism removes all risks associated with processing information in another jurisdiction.",
     ],
   },
@@ -120,6 +124,7 @@ const sections = [
 const cookies = [
   ["Supabase authentication cookies (names beginning with sb-)", "Necessary", "Maintain secure sign-in, refresh authenticated sessions, and protect account access.", "Session or provider-defined period"],
   ["brickwise-locale", "Preference", "Remember the selected or regionally resolved website language.", "Up to 12 months"],
+  ["brickwise-locale-manual", "Necessary (functional)", "Remember that you chose the website language manually, so it is not changed automatically.", "Up to 12 months"],
   ["brickwise-marketing-consent", "Consent preference (local storage)", "Remember whether Meta marketing tracking was accepted or rejected.", "Until cleared or changed by you"],
   ["Meta Pixel cookies and identifiers", "Marketing", "Measure page visits, registration events, and advertising performance after explicit consent.", "As determined by Meta and your browser settings"],
   ["Google Ads cookies and identifiers (AW-18367220713)", "Marketing", "Measure visits, conversions, and advertising performance after explicit consent.", "As determined by Google and your browser settings"],
@@ -132,23 +137,23 @@ export default async function PrivacyPage() {
   const visibleSections: PrivacySection[] = text?.sections || sections;
   const visibleCookies = text?.cookies || cookies;
   return (
-    <main className="bg-[#f4f4f2] text-[#0f172a]">
+    <main className="bg-canvas text-ink">
       <section className="mx-auto max-w-6xl px-6 pb-24 pt-36">
-        <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#2f9bdb]">{text?.eyebrow || "Legal and privacy information"}</p>
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand">{text?.eyebrow || "Legal and privacy information"}</p>
         <h1 className="font-display mt-4 text-5xl font-bold leading-tight sm:text-6xl">{text?.title || "Privacy and Cookies"}</h1>
         <p className="mt-6 max-w-4xl text-xl leading-8 text-slate-600">
           {text?.intro || "This policy explains how personal information is collected, used, shared, protected, and controlled when you use the BRICKWISE platform."}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 border-y border-slate-300 py-5 text-sm text-slate-600">
-          <p><strong className="text-[#0f172a]">{text?.effective || "Effective date:"}</strong> {text?.date || "3 August 2026"}</p>
-          <p><strong className="text-[#0f172a]">{text?.contact || "Contact:"}</strong> <a className="underline" href="mailto:privacy@brickwise-immo.de">privacy@brickwise-immo.de</a></p>
-          <p><strong className="text-[#0f172a]">{text?.choices || "Cookie choices:"}</strong> {text?.choicesText || "use the “Cookie settings” button at the bottom of the website."}</p>
+          <p><strong className="text-ink">{text?.effective || "Effective date:"}</strong> {text?.date || "23 October 2026"}</p>
+          <p><strong className="text-ink">{text?.contact || "Contact:"}</strong> <a className="underline" href="mailto:privacy@brickwise-immo.de">privacy@brickwise-immo.de</a></p>
+          <p><strong className="text-ink">{text?.choices || "Cookie choices:"}</strong> {text?.choicesText || "use the “Cookie settings” button at the bottom of the website."}</p>
         </div>
 
         <nav aria-label={text?.contents || "Privacy policy contents"} className="mt-10 rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold">{text?.contents || "Contents"}</h2>
-          <div className="mt-4 grid gap-2 text-[#2f79a5] sm:grid-cols-2">
+          <div className="mt-4 grid gap-2 text-brand sm:grid-cols-2">
             {visibleSections.map((section, index) => (
               <a key={section.title} href={`#privacy-${index + 1}`} className="underline-offset-4 hover:underline">{section.title}</a>
             ))}
@@ -159,7 +164,7 @@ export default async function PrivacyPage() {
         <div className="mt-14 space-y-12 text-lg leading-8 text-slate-700">
           {visibleSections.map((section, index) => (
             <section key={section.title} id={`privacy-${index + 1}`} className="scroll-mt-28 border-t border-slate-300 pt-8">
-              <h2 className="text-3xl font-bold text-[#0f172a]">{section.title}</h2>
+              <h2 className="text-3xl font-bold text-ink">{section.title}</h2>
               {section.paragraphs?.map((paragraph) => <p key={paragraph} className="mt-4">{paragraph}</p>)}
               {section.bullets && (
                 <ul className="mt-5 list-disc space-y-3 pl-6">
@@ -175,9 +180,9 @@ export default async function PrivacyPage() {
           <h2 className="text-3xl font-bold">{text?.storage || "Cookie and storage details"}</h2>
           <p className="mt-4 text-lg leading-8 text-slate-700">
             {text?.storageText || "Necessary technologies operate the website and authenticated sessions. Meta Pixel and Google Ads remain disabled unless you select “Accept marketing”. Rejecting marketing does not prevent account, security, language, or other necessary functions."}</p>
-          <div className="mt-7 overflow-x-auto rounded-2xl border border-slate-300 bg-white">
+          <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-brand mt-7 overflow-x-auto rounded-2xl border border-slate-300 bg-white">
             <table className="w-full min-w-[820px] border-collapse text-left">
-              <thead className="bg-[#0f172a] text-white">
+              <thead className="bg-ink text-white">
                 <tr>{(text?.headings || ["Technology", "Category", "Purpose", "Typical duration"]).map((heading) => <th key={heading} className="px-5 py-4">{heading}</th>)}</tr>
               </thead>
               <tbody>
@@ -189,17 +194,17 @@ export default async function PrivacyPage() {
               </tbody>
             </table>
           </div>
-          <div className="mt-7 rounded-2xl bg-[#eaf5fb] p-6 text-slate-700">
-            <h3 className="text-xl font-bold text-[#0f172a]">{text?.managing || "Managing cookies"}</h3>
+          <div className="mt-7 rounded-2xl bg-brand-soft p-6 text-slate-700">
+            <h3 className="text-xl font-bold text-ink">{text?.managing || "Managing cookies"}</h3>
             <p className="mt-3 leading-7">{text?.managingText || "Use the persistent “Cookie settings” control to accept or reject optional marketing tracking. You can also delete browser cookies and local storage through your browser settings. Blocking necessary cookies may prevent sign-in or other account features from working correctly."}</p>
           </div>
         </section>
 
-        <div className="mt-14 rounded-2xl bg-[#0f172a] p-7 text-white sm:p-9">
+        <div className="mt-14 rounded-2xl bg-ink p-7 text-white sm:p-9">
           <h2 className="text-3xl font-bold">{text?.rights || "Contact or exercise your rights"}</h2>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-white/80">{text?.rightsText || "Email privacy@brickwise-immo.de with the subject “Privacy request”. Describe the request and the email associated with your account. Do not send passwords, private keys, or identity documents unless specifically requested through a secure process."}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="mailto:privacy@brickwise-immo.de?subject=Privacy%20request" className="bg-[#2f9bdb] px-6 py-3 font-bold text-white">{text?.send || "Send privacy request"}</a>
+            <a href="mailto:privacy@brickwise-immo.de?subject=Privacy%20request" className="bg-brand px-6 py-3 font-bold text-white rounded-lg">{text?.send || "Send privacy request"}</a>
             <Link href="/risk" className="border border-white/60 px-6 py-3 font-bold text-white">{text?.risks || "Read risk warnings"}</Link>
           </div>
         </div>

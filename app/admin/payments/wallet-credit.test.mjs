@@ -6,7 +6,7 @@ const code=ts.transpileModule(readFileSync(new URL('./actions.ts',import.meta.ur
 function harness({admin=true,fail=false}={}){
  const calls=[];const modules={
   'next/cache':{revalidatePath(){}},'next/navigation':{redirect(){throw Error('Unexpected redirect');}},
-  '@/app/lib/payment-methods':{},'@/app/lib/admin':{isAdminUser:u=>u?.app_metadata?.role==='admin'},
+  '@/app/lib/payment-methods':{},'@/app/lib/admin':{isAdminUser:u=>u?.app_metadata?.role==='admin'},'@/app/lib/admin-session':{hasAdminSession:async(_c,u)=>u?.app_metadata?.role==='admin'},
   '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'admin-id',app_metadata:{role:admin?'admin':'client'}}}})}})},
   '@supabase/supabase-js':{createClient:()=>({auth:{admin:{getUserById:async()=>({data:{user:{email:'actual@example.invalid',user_metadata:{full_name:'Actual customer'}}},error:null})}},rpc:async(name,args)=>{calls.push({name,args});return {data:fail?null:'transaction-id',error:fail?{message:'Test failure'}:null};}})},
   '@/app/lib/admin-audit':{writeAdminAuditLog:async()=>{}},

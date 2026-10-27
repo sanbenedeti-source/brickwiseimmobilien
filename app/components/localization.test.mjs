@@ -28,6 +28,7 @@ function load(relative) {
   modules.set(filename, loaded);
   const require = (name) => {
     if (name.endsWith("deposit-store")) return { getDeposits: async () => ({deposits:[],error:false}) };
+    if (name.endsWith("gateway-store")) return { getGatewayDeposits: async () => ({deposits:[],error:false}), syncOpenGatewayDeposits: async () => false };
     if (name.endsWith("deposit-actions")) return { submitDeposit: async () => { throw Error("No writes during render"); } };
     if (name === "next/link") return function TestLink({ children, ...props }) { return createElement("a", props, children); };
     if (name === "next/image") return function TestImage({ src, alt, width, height, className }) { return createElement("img", { src, alt, width, height, className }); };
@@ -119,7 +120,7 @@ test("validation and provider authentication failures follow the selected langua
     ["app/interface/confirmation-email/route.ts", "Please enter a valid email address."],
   ];
   const { createTranslator } = load("app/lib/translate.ts");
-  const request = (locale, body) => new Request("https://example.test/action", { method: "POST", headers: { "content-type": "application/json", cookie: `brickwise-locale=${locale}; brickwise-locale-manual=1`, "accept-language": "en" }, body: JSON.stringify(body) });
+  const request = (locale, body) => new Request("https://example.test/action", { method: "POST", headers: { origin: "https://example.test", "content-type": "application/json", cookie: `brickwise-locale=${locale}; brickwise-locale-manual=1`, "accept-language": "en" }, body: JSON.stringify(body) });
   for (const locale of locales) {
     for (const [route, source] of routes) {
       const response = await load(route).POST(request(locale, {}));
@@ -128,6 +129,10 @@ test("validation and provider authentication failures follow the selected langua
     }
   }
   assert.equal(authCalls, 0, "invalid submissions never reach authentication");
+  // A cross-site page cannot sign the visitor in (login CSRF).
+  const crossSite = new Request("https://example.test/action", { method: "POST", headers: { origin: "https://evil.example", "content-type": "application/json" }, body: JSON.stringify({ email: "client@example.test", token: "123456" }) });
+  assert.equal((await load("app/authentication/verify-otp/route.ts").POST(crossSite)).status, 403);
+  assert.equal(authCalls, 0, "cross-site sign-in attempts never reach authentication");
   for (const locale of locales) {
     const response = await load("app/authentication/verify-otp/route.ts").POST(request(locale, { email: "client@example.test", token: "123456" }));
     const data = await response.json();

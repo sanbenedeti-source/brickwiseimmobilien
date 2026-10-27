@@ -8,7 +8,8 @@ const allowedOrigins = new Set([
   "https://www.brickwise-immo.de",
   "https://brickwise-canada.ca",
   "https://www.brickwise-canada.ca",
-  "http://localhost:3000",
+  // Local development only; never trusted by a production deployment.
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
 ]);
 
 function corsHeaders(req: Request) {
@@ -43,8 +44,8 @@ function getSiteOrigin(req: Request) {
     return configuredSiteUrl.replace(/\/$/, "");
   }
 
-  const origin = req.headers.get("origin") || new URL(req.url).origin;
-  return origin.replace(/\/$/, "");
+  // The request URL, not the caller-controlled Origin header, decides the link target.
+  return new URL(req.url).origin.replace(/\/$/, "");
 }
 
 function getAuthErrorDetails(error: { message: string; status?: number; code?: string }) {

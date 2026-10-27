@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import ts from 'typescript';
+import { signaturePng } from '../../../scripts/tests/signature-fixture.mjs';
+
+const require = createRequire(import.meta.url);
 
 function compile(path, modules = {}) {
   const code = ts.transpileModule(readFileSync(path, 'utf8'), {
@@ -18,9 +22,11 @@ function compile(path, modules = {}) {
 const manifest = JSON.parse(readFileSync('app/lib/agreement-manifest.json', 'utf8'));
 const i18n = compile('app/lib/i18n.ts');
 const agreements = compile('app/lib/client-agreements.ts', { './agreement-manifest.json': manifest });
+const signedPdf = compile('app/lib/signed-agreement-pdf.ts', { 'pdf-lib': require('pdf-lib') });
 const origin = 'https://www.brickwise-immo.de';
 const user = { id: 'customer-fixture', email: 'customer@example.invalid', email_confirmed_at: '2026-10-01T12:00:00Z' };
-const validInput = { version: manifest.version, locale: 'en', signerName: 'Fixture Customer', consent: true };
+const signature = signaturePng();
+const validInput = { version: manifest.version, locale: 'en', signerName: 'Fixture Customer', consent: true, signature };
 
 function harness(options = {}) {
   const queries = [], writes = [];
@@ -44,25 +50,29 @@ function harness(options = {}) {
             version: manifest.version, locale,
             document_path: document.path, document_sha256: document.sha256,
             consent_text: document.consentText, is_draft: document.isDraft,
+            requires_signature: document.requiresSignature,
             ...options.documentPatch,
           } };
         },
       };
     },
-    async rpc(name, args) {
-      writes.push({ name, args });
-      if (options.rpcThrows) throw new Error('Connection interrupted');
-      if (options.rpcError) return { data: null, error: options.rpcError };
-      const document = manifest.documents.find(item => item.locale === args.p_locale);
+  };
+  const signing = {
+    requestEvidence: request => ({ ip: request.headers.get('x-real-ip'), userAgent: request.headers.get('user-agent') }),
+    async signAgreement(input) {
+      writes.push({ name: 'signAgreement', input });
+      if (options.signThrows) throw new Error('Storage interrupted');
+      const document = manifest.documents.find(item => item.locale === input.locale);
       acceptance ||= {
-        id: 'acceptance-fixture', user_id: authUser.id, email: authUser.email,
-        signer_name: args.p_signer_name, version: args.p_version, locale: args.p_locale,
+        id: 'acceptance-fixture', user_id: input.userId, email: input.email,
+        signer_name: input.signerName, version: input.document.version, locale: input.locale,
         document_path: document.path, document_sha256: document.sha256,
         consent_text: document.consentText, is_draft: document.isDraft,
-        accepted_at: '2026-10-02T12:00:00Z', status: 'pending',
+        accepted_at: '2026-10-24T12:00:00Z', status: 'pending',
         reviewed_by: null, reviewed_at: null, review_note: null,
+        signed_pdf_path: `${input.userId}/acceptance-fixture.pdf`, signed_pdf_sha256: 'a'.repeat(64), signer_ip: input.ip,
       };
-      return { data: acceptance, error: null };
+      return acceptance.id;
     },
   };
   const routes = compile('app/api/client-agreements/route.ts', {
@@ -72,6 +82,8 @@ function harness(options = {}) {
     } },
     '@/app/lib/i18n': i18n,
     '@/app/lib/client-agreements': agreements,
+    '@/app/lib/signed-agreement-pdf': signedPdf,
+    '@/app/lib/agreement-signing': signing,
   });
   return {
     queries, writes, get authCalls() { return authCalls; },
@@ -125,7 +137,7 @@ test('cross-origin, missing-origin and non-JSON submissions are rejected before 
 });
 
 test('malformed JSON, null, arrays and oversized bodies never write acceptance', async () => {
-  for (const [raw, status] of [['{', 400], ['null', 400], ['[]', 400], ['"text"', 400], ['true', 400], [' '.repeat(4097), 413]]) {
+  for (const [raw, status] of [['{', 400], ['null', 400], ['[]', 400], ['"text"', 400], ['true', 400], [' '.repeat(300_001), 413]]) {
     const h = harness();
     await expectFailure(await h.post(validInput, { raw }), status);
     assert.equal(h.queries.length, 0);
@@ -133,12 +145,15 @@ test('malformed JSON, null, arrays and oversized bodies never write acceptance',
   }
 });
 
-test('a signature requires explicit boolean consent, a valid name and a supported locale', async () => {
+test('a signature requires explicit boolean consent, a valid name, a drawn signature and a supported locale', async () => {
   const patches = [
     { consent: false }, { consent: 'true' }, { consent: 1 }, { consent: null },
     { signerName: '' }, { signerName: ' ' }, { signerName: 'A' },
     { signerName: 'A'.repeat(121) }, { signerName: 'First\nLast' }, { signerName: 'Name\u007f' },
     { signerName: 123 }, { locale: 'sq' }, { locale: '' }, { locale: null },
+    { signature: undefined }, { signature: '' }, { signature: 'data:image/jpeg;base64,AAAA' },
+    { signature: 'data:image/png;base64,' + Buffer.from('not a png image at all').toString('base64') },
+    { signature: signaturePng({ width: 40, height: 20 }) }, { signature: signaturePng({ width: 4000, height: 300 }) },
   ];
   for (const patch of patches) {
     const h = harness();
@@ -174,47 +189,50 @@ test('GET loads only the signed-in owner and current localized document with no-
   assert.equal(h.writes.length, 0);
 });
 
-test('acceptance uses server identity and document metadata, ignoring forged client values', async () => {
+test('signing uses server identity, request evidence and catalog metadata, ignoring forged client values', async () => {
   const h = harness();
   const response = await h.post({ ...validInput, signerName: '  Fixture Customer  ', locale: 'DE-de',
-    user_id: 'someone-else', email: 'attacker@example.invalid', hash: 'forged',
+    user_id: 'someone-else', email: 'attacker@example.invalid', hash: 'forged', ip: '6.6.6.6',
     document_sha256: 'forged', consent_text: 'Forged consent', status: 'approved',
-  });
+  }, { headers: { 'x-real-ip': '203.0.113.7', 'user-agent': 'Fixture Browser' } });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'private, no-store');
-  assert.deepEqual(h.writes, [{ name: 'accept_client_agreement', args: {
-    p_version: manifest.version, p_locale: 'de', p_signer_name: 'Fixture Customer', p_consent: true,
-  } }]);
+  assert.equal(h.writes.length, 1);
+  const { input } = h.writes[0];
+  const document = manifest.documents.find(d => d.locale === 'de');
+  assert.equal(input.userId, user.id);
+  assert.equal(input.email, user.email);
+  assert.equal(input.signerName, 'Fixture Customer');
+  assert.equal(input.locale, 'de');
+  assert.equal(input.ip, '203.0.113.7');
+  assert.equal(input.userAgent, 'Fixture Browser');
+  assert.deepEqual({ version: input.document.version, path: input.document.path, sha256: input.document.sha256, consentText: input.document.consentText },
+    { version: manifest.version, path: document.path, sha256: document.sha256, consentText: document.consentText });
+  assert.ok(input.signaturePng instanceof Uint8Array && input.signaturePng.length > 600);
   const data = await response.json();
   assert.equal(data.acceptance.user_id, user.id);
   assert.equal(data.acceptance.email, user.email);
   assert.equal(data.acceptance.status, 'pending');
-  assert.equal(data.acceptance.document_sha256, manifest.documents.find(d => d.locale === 'de').sha256);
-  assert.equal(data.acceptance.consent_text, data.document.consentText);
+  assert.equal(data.document.requiresSignature, true);
   for (const query of h.queries.filter(q => q.table === 'client_agreement_acceptances')) {
     assert.ok(query.filters.some(([key, value]) => key === 'user_id' && value === user.id));
   }
 });
 
-test('duplicate or unavailable acceptance RPC errors cannot report success', async () => {
-  for (const options of [
-    { rpcError: { code: '23505', message: 'Duplicate operation' } },
-    { rpcError: { code: 'P0001', message: 'Acceptance unavailable' } },
-    { rpcThrows: true },
-  ]) {
-    const h = harness(options);
-    await expectFailure(await h.post(), 503);
-    assert.equal(h.writes.length, 1);
-    assert.equal(h.queries.filter(q => q.table === 'client_agreement_acceptances').length, 1);
-  }
+test('storage or signature recording failures cannot report success', async () => {
+  const h = harness({ signThrows: true });
+  await expectFailure(await h.post(), 503);
+  assert.equal(h.writes.length, 1);
+  assert.equal(h.queries.filter(q => q.table === 'client_agreement_acceptances').length, 1);
 });
 
-test('retry returns the existing accepted record without replacing its identity or signature', async () => {
+test('retry returns the existing signed record without signing again', async () => {
   const h = harness();
   const first = await (await h.post()).json();
   const second = await (await h.post({ ...validInput, signerName: 'Different name' })).json();
   assert.deepEqual(second.acceptance, first.acceptance);
   assert.equal(second.acceptance.signer_name, validInput.signerName);
+  assert.equal(h.writes.length, 1);
 });
 
 test('missing storage configuration or unavailable database fails closed without a write', async () => {
@@ -226,10 +244,10 @@ test('missing storage configuration or unavailable database fails closed without
   }
 });
 
-test('changed document hash, path, consent or draft status cannot be accepted', async () => {
+test('changed document hash, path, consent, draft or signature requirement cannot be signed', async () => {
   for (const documentPatch of [
     { document_sha256: 'different-hash' }, { document_path: '/documents/other.pdf' },
-    { consent_text: 'Different consent' }, { is_draft: false },
+    { consent_text: 'Different consent' }, { is_draft: false }, { requires_signature: false },
   ]) {
     const h = harness({ documentPatch });
     await expectFailure(await h.get(), 503);

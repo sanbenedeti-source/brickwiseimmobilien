@@ -4,15 +4,15 @@ type GuideCopy = { title: string; intro: string; items: [string, string][]; revi
 export const guideCopy: Record<Locale, GuideCopy> = {
   "en": {
     "title": "Real estate investing",
-    "intro": "Review property values in EUR and annual target returns, with a monthly equivalent calculated as the annual amount divided by 12.",
+    "intro": "Review property values in EUR and each property's net rental yield, with a monthly equivalent calculated as the annual amount divided by 12.",
     "items": [
       [
         "Choose a property",
-        "Compare property values, share prices, annual targets and separately identified rental assumptions."
+        "Compare property values, share prices, rent and stated costs."
       ],
       [
         "Calculate your amount",
-        "Choose an investment from {minimum}. Annual target = investment × annual rate; monthly target = annual target ÷ 12."
+        "Choose an investment from {minimum}. Projected net rent = investment × net rental yield; monthly = annual ÷ 12."
       ],
       [
         "Send a request",
@@ -43,7 +43,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
       ],
       [
         "Clear model calculations",
-        "Annual target models combine the listed return components. Their monthly equivalent is annual ÷ 12. Rental operating income, non-cash benefits and actual payments are identified separately."
+        "The net rental yield is (monthly rent − stated costs) × 12 ÷ property value. The monthly equivalent is annual ÷ 12. Projections are not actual payments, and no increase in value is included."
       ],
       [
         "Identity and communication",
@@ -61,15 +61,15 @@ export const guideCopy: Record<Locale, GuideCopy> = {
   },
   "de": {
     "title": "In Immobilien investieren",
-    "intro": "Vergleichen Sie Immobilienwerte in EUR und jährliche Renditeziele. Der monatliche Vergleichswert ist der Jahresbetrag geteilt durch 12.",
+    "intro": "Vergleichen Sie Immobilienwerte in EUR und die Nettomietrendite jeder Immobilie. Der monatliche Vergleichswert ist der Jahresbetrag geteilt durch 12.",
     "items": [
       [
         "Immobilie auswählen",
-        "Vergleichen Sie Immobilienwerte, Anteilspreise, Jahresziele und gesondert ausgewiesene Mietannahmen."
+        "Vergleichen Sie Immobilienwerte, Anteilspreise, Miete und angegebene Kosten."
       ],
       [
         "Betrag berechnen",
-        "Wählen Sie eine Investition ab {minimum}. Jahresziel = Investition × Jahresrendite; Monatsziel = Jahresziel ÷ 12."
+        "Wählen Sie eine Investition ab {minimum}. Prognostizierte Nettomiete = Investition × Nettomietrendite; monatlich = jährlich ÷ 12."
       ],
       [
         "Anfrage senden",
@@ -100,7 +100,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
       ],
       [
         "Klare Modellrechnungen",
-        "Jahresziele bestehen aus den angegebenen Renditebestandteilen. Der Monatswert ist Jahresbetrag ÷ 12. Mieterträge, nicht ausgezahlte Vorteile und tatsächliche Zahlungen werden getrennt ausgewiesen."
+        "Die Nettomietrendite ist (Monatsmiete − angegebene Kosten) × 12 ÷ Immobilienwert. Der Monatswert ist Jahresbetrag ÷ 12. Prognosen sind keine tatsächlichen Zahlungen und enthalten keine Wertsteigerung."
       ],
       [
         "Identität und Kommunikation",
@@ -118,15 +118,15 @@ export const guideCopy: Record<Locale, GuideCopy> = {
   },
   "fr": {
     "title": "Investir dans l'immobilier",
-    "intro": "Comparez les valeurs immobilières en EUR et les objectifs annuels. L'équivalent mensuel est le montant annuel divisé par 12.",
+    "intro": "Comparez les valeurs immobilières en EUR et le rendement locatif net de chaque bien. L’équivalent mensuel est le montant annuel divisé par 12.",
     "items": [
       [
         "Choisir un bien",
-        "Comparez les valeurs, prix par part, objectifs annuels et hypothèses locatives distinctes."
+        "Comparez les valeurs, prix par part, loyers et charges indiquées."
       ],
       [
         "Calculer votre montant",
-        "Choisissez un investissement à partir de {minimum}. Objectif annuel = investissement × taux annuel ; objectif mensuel = objectif annuel ÷ 12."
+        "Choisissez un investissement à partir de {minimum}. Loyer net prévisionnel = investissement × rendement locatif net ; mensuel = annuel ÷ 12."
       ],
       [
         "Envoyer une demande",
@@ -157,7 +157,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
       ],
       [
         "Calculs modélisés clairs",
-        "Les objectifs annuels combinent les composantes indiquées. L'équivalent mensuel est le montant annuel ÷ 12. Loyers, avantages non monétaires et paiements réels sont distingués."
+        "Le rendement locatif net est égal à (loyer mensuel − charges indiquées) × 12 ÷ valeur du bien. L’équivalent mensuel est le montant annuel ÷ 12. Les prévisions ne sont pas des paiements réels et n’incluent aucune plus-value."
       ],
       [
         "Identité et communication",
@@ -175,15 +175,15 @@ export const guideCopy: Record<Locale, GuideCopy> = {
   },
   "es": {
     "title": "Inversión inmobiliaria",
-    "intro": "Compara valores inmobiliarios en EUR y objetivos anuales. El equivalente mensual es el importe anual dividido entre 12.",
+    "intro": "Compara valores inmobiliarios en EUR y la rentabilidad neta del alquiler de cada inmueble. El equivalente mensual es el importe anual dividido entre 12.",
     "items": [
       [
         "Elegir una propiedad",
-        "Compara valores, precios por participación, objetivos anuales e hipótesis de alquiler por separado."
+        "Compara valores, precios por participación, alquileres y gastos indicados."
       ],
       [
         "Calcular tu importe",
-        "Elige una inversión desde {minimum}. Objetivo anual = inversión × tasa anual; objetivo mensual = objetivo anual ÷ 12."
+        "Elige una inversión desde {minimum}. Alquiler neto previsto = inversión × rentabilidad neta del alquiler; mensual = anual ÷ 12."
       ],
       [
         "Enviar una solicitud",
@@ -214,7 +214,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
       ],
       [
         "Cálculos claros",
-        "Los objetivos anuales combinan los componentes indicados. El equivalente mensual es el importe anual ÷ 12. Se distinguen alquileres, beneficios no monetarios y pagos reales."
+        "La rentabilidad neta del alquiler es (alquiler mensual − gastos indicados) × 12 ÷ valor del inmueble. El equivalente mensual es el importe anual ÷ 12. Las previsiones no son pagos reales y no incluyen revalorización."
       ],
       [
         "Identidad y comunicación",
@@ -232,15 +232,15 @@ export const guideCopy: Record<Locale, GuideCopy> = {
   },
   "it": {
     "title": "Investimenti immobiliari",
-    "intro": "Confronta valori immobiliari in EUR e obiettivi annui. L'equivalente mensile è l'importo annuo diviso per 12.",
+    "intro": "Confronta valori immobiliari in EUR e il rendimento netto da affitto di ogni immobile. L’equivalente mensile è l’importo annuo diviso per 12.",
     "items": [
       [
         "Scegli un immobile",
-        "Confronta valori, prezzi per quota, obiettivi annui e ipotesi di affitto indicate separatamente."
+        "Confronta valori, prezzi per quota, affitti e costi indicati."
       ],
       [
         "Calcola il tuo importo",
-        "Scegli un investimento da {minimum}. Obiettivo annuo = investimento × tasso annuo; obiettivo mensile = obiettivo annuo ÷ 12."
+        "Scegli un investimento da {minimum}. Affitto netto previsto = investimento × rendimento netto da affitto; mensile = annuo ÷ 12."
       ],
       [
         "Invia una richiesta",
@@ -271,7 +271,7 @@ export const guideCopy: Record<Locale, GuideCopy> = {
       ],
       [
         "Calcoli chiari",
-        "Gli obiettivi annui combinano le componenti indicate. L'equivalente mensile è l'importo annuo ÷ 12. Affitti, benefici non monetari e pagamenti effettivi sono distinti."
+        "Il rendimento netto da affitto è (affitto mensile − costi indicati) × 12 ÷ valore dell’immobile. L’equivalente mensile è l’importo annuo ÷ 12. Le previsioni non sono pagamenti effettivi e non includono rivalutazioni."
       ],
       [
         "Identità e comunicazione",

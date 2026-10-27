@@ -2,8 +2,8 @@
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
-function load(path, auth) {
- const modules={'next/server':{NextResponse:{json:(b,i)=>Response.json(b,i),redirect:u=>Response.redirect(u,307)}},'@/app/lib/i18n':{getRequestLocale:()=> 'en'},'@/app/lib/translate':{createTranslator:()=>s=>s},'@/lib/supabase/server':{createClient:async()=>({auth})},'../../../lib/supabase/server':{createClient:async()=>({auth})},'@supabase/supabase-js':{createClient:()=>({auth})}};
+function load(path, auth, notify = async () => {}, after = callback => callback()) {
+ const modules={'@/app/lib/registration-notification':{notifyAdminOfRegistration:notify},'next/server':{after,NextResponse:{json:(b,i)=>Response.json(b,i),redirect:u=>Response.redirect(u,307)}},'@/app/lib/i18n':{getRequestLocale:()=> 'en'},'@/app/lib/translate':{createTranslator:()=>s=>s},'@/lib/supabase/server':{createClient:async()=>({auth})},'../../../lib/supabase/server':{createClient:async()=>({auth})},'@supabase/supabase-js':{createClient:()=>({auth})}};
  const code=ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  const m={exports:{}};new Function('require','module','exports','process',code)(n=>{assert.ok(n in modules,n);return modules[n]},m,m.exports,{env:{NEXT_PUBLIC_SITE_URL:'https://www.brickwise-immo.de',NEXT_PUBLIC_SUPABASE_URL:'https://example.invalid',NEXT_PUBLIC_SUPABASE_ANON_KEY:'fixture'}});return m.exports;
 }
@@ -14,3 +14,38 @@ test('resend rejects null and invalid email and uses canonical redirect for vali
 test('confirmation token works without PKCE cookie and ignores external next destinations',async()=>{let verified;const {GET}=load('app/authentication/callback/route.ts',{verifyOtp:async p=>{verified=p;return {error:null}}});const r=await GET(new Request('https://www.brickwise-immo.de/authentication/callback?token_hash=fixture&type=email&next=https://attacker.invalid'));assert.deepEqual(verified,{token_hash:'fixture',type:'email'});assert.equal(r.headers.get('location'),'https://www.brickwise-immo.de/dashboard');});
 test('recovery code preserves both supported portals',async()=>{const {GET}=load('app/authentication/callback/route.ts',{exchangeCodeForSession:async()=>({error:null})});for(const portal of ['admin','client']){const next='/update-password?portal='+portal;const r=await GET(new Request('https://www.brickwise-immo.de/authentication/callback?code=fixture&next='+encodeURIComponent(next)));assert.equal(r.headers.get('location'),'https://www.brickwise-immo.de'+next);}});
 test('expired confirmation and recovery links return actionable error routes',async()=>{const {GET}=load('app/authentication/callback/route.ts',{verifyOtp:async()=>({error:{message:'expired'}})});for(const recovery of [false,true]){const r=await GET(new Request('https://www.brickwise-immo.de/authentication/callback?token_hash=fixture&type=email'+(recovery?'&next='+encodeURIComponent('/update-password?portal=admin'):'')));assert.equal(r.headers.get('location'),'https://www.brickwise-immo.de'+(recovery?'/forgot-password?error=invalid-link&portal=admin':'/sign-in?error=invalid-link'));}});
+
+test('only new accounts notify the admin after the response',async()=>{
+ for(const duplicate of [false,true]){
+  const pending=[];const notices=[];
+  const {POST}=load('app/interface/register/route.ts',{signUp:async()=>({data:{user:{id:'new-user',created_at:'2026-10-15T10:00:00Z',identities:duplicate?[]:[{}]}},error:null})},async u=>notices.push(u),cb=>pending.push(cb));
+  assert.equal((await POST(req({full_name:' Test ',email:'USER@example.invalid',password:'aStrongPass1'}))).status,duplicate?200:201);
+  assert.equal(notices.length,0);assert.equal(pending.length,duplicate?0:1);
+  for(const cb of pending)await cb();
+  if(!duplicate)assert.deepEqual(notices[0],{id:'new-user',name:'Test',email:'user@example.invalid',createdAt:'2026-10-15T10:00:00Z'});
+ }
+});
+
+test('signup stores only a property page as the post-confirmation destination', async () => {
+ for (const [next, stored] of [['/properties/calgary-beltline-rental', '/properties/calgary-beltline-rental'], ['https://attacker.invalid', null], ['/admin', null], [undefined, null]]) {
+  let sent;
+  const {POST} = load('app/interface/register/route.ts', {signUp: async p => { sent = p; return {data: {user: {identities: [{}]}}, error: null}; }});
+  assert.equal((await POST(req({full_name: 'Test', email: 'user@example.invalid', password: 'aStrongPass1', next}))).status, 201);
+  assert.equal(sent.options.data.signup_next, stored, String(next));
+  assert.equal(sent.options.emailRedirectTo, 'https://www.brickwise-immo.de/authentication/callback');
+ }
+});
+
+test('confirmation returns a new client to the stored property once and ignores unsafe values', async () => {
+ for (const [stored, expected] of [['/properties/calgary-beltline-rental', '/properties/calgary-beltline-rental'], ['https://attacker.invalid', '/dashboard'], [undefined, '/dashboard']]) {
+  const updates = [];
+  const {GET} = load('app/authentication/callback/route.ts', {
+   verifyOtp: async () => ({error: null}),
+   getUser: async () => ({data: {user: {user_metadata: stored === undefined ? {} : {signup_next: stored}}}}),
+   updateUser: async p => { updates.push(p); return {error: null}; },
+  });
+  const r = await GET(new Request('https://www.brickwise-immo.de/authentication/callback?token_hash=fixture&type=email'));
+  assert.equal(r.headers.get('location'), 'https://www.brickwise-immo.de' + expected);
+  assert.deepEqual(updates, expected === '/dashboard' ? [] : [{data: {signup_next: null}}]);
+ }
+});

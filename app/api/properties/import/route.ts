@@ -1,8 +1,9 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { writeAdminMutation } from "@/app/lib/admin-audit";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
-import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import { isEuroCurrency, parseEuroAmount } from "./euro-amount";
 import { getRequestLocale } from "@/app/lib/i18n";
@@ -140,9 +141,17 @@ function normalizeImportedProperty(value: unknown, index: number, copy: typeof a
       area: asNumber(item.area),
       rooms: asNumber(item.rooms),
       image_url: getFirstPhotoUrl(item),
-      status: asString(item.status) || "active",
+      // Unknown statuses are imported as hidden drafts rather than published.
+      status: !asString(item.status) ? "active" : importStatuses.has(asString(item.status)) ? asString(item.status) : "draft",
     } satisfies PropertyInsert,
   };
+}
+
+const importStatuses = new Set(["active", "available", "draft"]);
+
+/** Constant-time comparison of equal-length digests (no timing leak of the key). */
+function sameSecret(supplied: string, expected: string) {
+  return timingSafeEqual(createHash("sha256").update(supplied).digest(), createHash("sha256").update(expected).digest());
 }
 
 async function getWriteClient(request: NextRequest) {
@@ -150,7 +159,7 @@ async function getWriteClient(request: NextRequest) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const requestApiKey = request.headers.get("x-api-key");
 
-  if (configuredApiKey && serviceRoleKey && requestApiKey === configuredApiKey) {
+  if (configuredApiKey && serviceRoleKey && requestApiKey && sameSecret(requestApiKey, configuredApiKey)) {
     return {
       client: createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -173,7 +182,7 @@ async function getWriteClient(request: NextRequest) {
     error,
   } = await client.auth.getUser();
 
-  if (error || !isAdminUser(user)) {
+  if (error || !(await hasAdminSession(client, user))) {
     return null;
   }
 

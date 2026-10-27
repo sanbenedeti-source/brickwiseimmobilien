@@ -1,40 +1,45 @@
 {
-  "version": "cooperation-2026-10-02-v2",
+  "version": "cooperation-2026-10-24-v3",
   "documents": [
     {
       "locale": "en",
-      "path": "/documents/agreements/cooperation-2026-10-02-v2/en.pdf",
-      "sha256": "1df7b8b26ba6a8be9f9770e630336a8c7b0a71ed78d7c1fbb88b6a6f6ca19c72",
-      "consentText": "By clicking “Sign automatically”, I confirm that I have read and accept this draft document and sign with the first and last name shown in my profile.",
-      "isDraft": true
+      "path": "/documents/agreements/cooperation-2026-10-24-v3/en.pdf",
+      "sha256": "0b2ab0c1f25b250bb3df96f008c3d807d761aedc93b59eb861381b0dbd95bc50",
+      "consentText": "I have read the Client Cooperation Agreement in full. By drawing my signature and clicking “Sign agreement”, I accept its terms and sign it electronically with the name shown. A signed PDF copy will be stored in my client account.",
+      "isDraft": true,
+      "requiresSignature": true
     },
     {
       "locale": "de",
-      "path": "/documents/agreements/cooperation-2026-10-02-v2/de.pdf",
-      "sha256": "c38c4a8757911916bd0f683959e2bf417de2ac6c08fdeb3c3ebcea00919bbb2b",
-      "consentText": "Mit einem Klick auf „Automatisch unterschreiben“ bestätige ich, dass ich dieses Entwurfsdokument gelesen habe und akzeptiere, und unterschreibe mit dem Vor- und Nachnamen aus meinem Profil.",
-      "isDraft": true
+      "path": "/documents/agreements/cooperation-2026-10-24-v3/de.pdf",
+      "sha256": "27bfb81df6c0d3788f476052a6c0d63d32971b2cda85d0295ac63e09856163e5",
+      "consentText": "Ich habe den Kundenkooperationsvertrag vollständig gelesen. Indem ich meine Unterschrift zeichne und auf „Vertrag unterschreiben“ klicke, akzeptiere ich seine Bedingungen und unterzeichne ihn elektronisch mit dem angezeigten Namen. Eine unterzeichnete PDF-Kopie wird in meinem Kundenkonto gespeichert.",
+      "isDraft": true,
+      "requiresSignature": true
     },
     {
       "locale": "fr",
-      "path": "/documents/agreements/cooperation-2026-10-02-v2/fr.pdf",
-      "sha256": "ad3a8e283c7b2cac6ac7b698901fcde4067a88da47dea39a2ca57538b76650ae",
-      "consentText": "En cliquant sur « Signer automatiquement », je confirme avoir lu et accepté ce document provisoire et je signe avec le prénom et le nom indiqués dans mon profil.",
-      "isDraft": true
+      "path": "/documents/agreements/cooperation-2026-10-24-v3/fr.pdf",
+      "sha256": "1087977efbe515aed3f20864cab8ee0b4129772e2d2c1e07d3129848e1c466ea",
+      "consentText": "J’ai lu l’intégralité du contrat de coopération client. En traçant ma signature et en cliquant sur « Signer le contrat », j’accepte ses conditions et je le signe électroniquement sous le nom affiché. Une copie PDF signée sera conservée dans mon compte client.",
+      "isDraft": true,
+      "requiresSignature": true
     },
     {
       "locale": "es",
-      "path": "/documents/agreements/cooperation-2026-10-02-v2/es.pdf",
-      "sha256": "3ee61a275749117454b9c37247a2abdd3f77ab51a78af24c2589100919253a00",
-      "consentText": "Al pulsar « Firmar automáticamente », confirmo que he leído y acepto este documento en borrador y firmo con el nombre y los apellidos de mi perfil.",
-      "isDraft": true
+      "path": "/documents/agreements/cooperation-2026-10-24-v3/es.pdf",
+      "sha256": "576127995457b00346728547faf5fdccc22d0a4ae08ab9b6eb8a82513b0e1ca8",
+      "consentText": "He leído íntegramente el contrato de cooperación con el cliente. Al trazar mi firma y pulsar «Firmar contrato», acepto sus condiciones y lo firmo electrónicamente con el nombre indicado. Se guardará una copia en PDF firmada en mi cuenta de cliente.",
+      "isDraft": true,
+      "requiresSignature": true
     },
     {
       "locale": "it",
-      "path": "/documents/agreements/cooperation-2026-10-02-v2/it.pdf",
-      "sha256": "d9a009c5861249fdedacd82aa70a10b7a152754919846c37a7494da9fcc1cd4c",
-      "consentText": "Cliccando su « Firma automaticamente », confermo di aver letto e accettato questo documento in bozza e firmo con il nome e il cognome indicati nel mio profilo.",
-      "isDraft": true
+      "path": "/documents/agreements/cooperation-2026-10-24-v3/it.pdf",
+      "sha256": "d268fd50ba9d4138a3cb5c0b1b229449b0700e1a171fa447da9b9f9b07360f21",
+      "consentText": "Ho letto integralmente il contratto di cooperazione con il cliente. Tracciando la mia firma e cliccando su «Firma il contratto», ne accetto le condizioni e lo firmo elettronicamente con il nome indicato. Una copia PDF firmata sarà conservata nel mio account cliente.",
+      "isDraft": true,
+      "requiresSignature": true
     }
   ]
 }

@@ -60,7 +60,8 @@ for (const locale of Object.keys(languages)) {
       assert.ok(text.includes(translation.title), `${locale} ${slug}: localized title`);
       assert.ok(text.includes(translation.property_type), `${locale} ${slug}: localized type`);
       assert.ok(page.html.includes('id="location"'), `${locale} ${slug}: map section`);
-      assert.match(page.html, /<iframe[^>]+loading="lazy"/, `${locale} ${slug}: lazy map`);
+      assert.match(page.html, /data-map-src="[^"]+"/, `${locale} ${slug}: click-to-load map`);
+      assert.doesNotMatch(page.html, /<iframe[^>]+google\.com\/maps/, `${locale} ${slug}: no map before consent`);
       assert.ok(page.html.includes(`hl=${locale}`), `${locale} ${slug}: map language`);
       report.mapChecks++;
     }

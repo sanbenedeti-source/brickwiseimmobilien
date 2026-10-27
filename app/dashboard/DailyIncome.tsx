@@ -2,15 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Calculator, TrendingUp } from "lucide-react";
+import { CalendarDays, Info, WalletCards } from "lucide-react";
 import { localeHtmlLang, type Locale } from "../lib/i18n";
 import { dailyIncomeCopy } from "./daily-income-copy";
 import { dailyIncome, type DailyIncomePosition, type IncomePurchase } from "./daily-income-model";
+import { walletOverviewCopy } from "./wallet-overview-copy";
+import { PortalCard, StatTile, cellClass, fieldClass, headCellClass, numberCellClass, primaryButtonClass, tableClass } from "./portal-ui";
 
-export default function DailyIncome({ positions, purchases, locale, asOf, historyAvailable }: {
+type HistoryRow = { at: number; profit: number; total: number };
+
+export default function DailyIncome({ positions, purchases, locale, asOf, historyAvailable, walletBalance }: {
   positions: DailyIncomePosition[]; purchases: IncomePurchase[]; locale: Locale; asOf: number; historyAvailable: boolean;
+  /** When given, the credited wallet balance is shown next to (never added to) the projection. */
+  walletBalance?: number | null;
 }) {
   const copy = dailyIncomeCopy[locale];
+  const walletCopy = walletOverviewCopy[locale];
   const [now, setNow] = useState(asOf);
   const [slug, setSlug] = useState("");
   useEffect(() => {
@@ -19,6 +26,8 @@ export default function DailyIncome({ positions, purchases, locale, asOf, histor
   }, []);
   const money = (value: number) => new Intl.NumberFormat(localeHtmlLang[locale], { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(value);
   const date = (value: number) => new Intl.DateTimeFormat(localeHtmlLang[locale], { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(value);
+  const shortDate = (value: number) => new Intl.DateTimeFormat(localeHtmlLang[locale], { day: "numeric", month: "short", timeZone: "UTC" }).format(value);
+  const compact = (value: number) => new Intl.NumberFormat(localeHtmlLang[locale], { style: "currency", currency: "EUR", notation: "compact", maximumFractionDigits: 1 }).format(value);
   const percent = (value: number) => new Intl.NumberFormat(localeHtmlLang[locale], { style: "percent", maximumFractionDigits: 2 }).format(value / 100);
   const selected = positions.filter(p => !slug || p.slug === slug);
   const calculations = selected.map(p => ({ position: p, model: dailyIncome(p, purchases, now) }));
@@ -27,29 +36,108 @@ export default function DailyIncome({ positions, purchases, locale, asOf, histor
   const total = models.reduce((sum, m) => sum + m.accrued, 0);
   const daily = models.reduce((sum, m) => sum + m.daily, 0);
   const days = Math.max(0, ...models.map(m => m.days));
-  const rows = Array.from({ length: 14 }, (_, i) => ({ at: now - i * 86_400_000, profit: models.reduce((sum, m) => sum + m.history[i].profit, 0), total: models.reduce((sum, m) => sum + m.history[i].total, 0) }))
+  const rows: HistoryRow[] = Array.from({ length: 14 }, (_, i) => ({ at: now - i * 86_400_000, profit: models.reduce((sum, m) => sum + m.history[i].profit, 0), total: models.reduce((sum, m) => sum + m.history[i].total, 0) }))
     .filter(row => models.some(m => row.at >= m.start));
+  const balance = walletBalance !== undefined && walletBalance !== null && Number.isFinite(walletBalance) && walletBalance >= 0 ? money(walletBalance) : walletCopy.unavailable;
+  const paused = calculations.some(({ model }) => model?.paused);
 
-  if (!positions.length && historyAvailable) return <section className="rounded-3xl border border-dashed border-sky-200 bg-white p-10 text-center"><CalendarDays className="mx-auto text-sky-600" size={36} /><h2 className="mt-5 text-2xl font-bold">{copy.title}</h2><p className="mt-3 text-slate-500">{copy.empty}</p><Link href="/dashboard/marketplace" className="mt-6 inline-block rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white">{copy.browse}</Link></section>;
+  if (!positions.length && historyAvailable) return <section className="rounded-xl border border-dashed border-line-strong bg-white px-6 py-14 text-center">
+    <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand"><CalendarDays size={22} aria-hidden="true" /></span>
+    <h2 className="mt-4 text-lg font-semibold">{copy.title}</h2>
+    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">{copy.empty}</p>
+    <Link href="/dashboard/marketplace" className={`${primaryButtonClass} mt-6`}>{copy.browse}</Link>
+  </section>;
 
   return <div className="space-y-6">
-    <section className="rounded-3xl bg-[#10213e] p-6 text-white sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-widest text-sky-300">{copy.portfolio}</p><h2 className="mt-3 text-3xl font-bold">{copy.title}</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">{copy.intro}</p></div><Calculator size={32} className="text-sky-300" /></div>
-      <label className="mt-6 block max-w-sm text-sm">{copy.property}<select value={slug} onChange={e => setSlug(e.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-slate-500 bg-[#172f50] px-3 text-white"><option value="">{copy.all}</option>{positions.map(p => <option key={p.slug} value={p.slug}>{p.title}</option>)}</select></label>
-      {valid ? <><div className="mt-7 grid gap-4 sm:grid-cols-3"><Metric label={copy.accrued} value={money(total)} /><Metric label={copy.daily} value={money(daily)} /><Metric label={copy.days} value={String(days)} /></div><div className="mt-5 flex flex-wrap justify-between gap-3 text-xs text-slate-300"><span>{copy.next}: {date(Math.min(...models.map(m => m.next)))} UTC</span><span>{copy.refresh}</span></div></> : <p role="status" className="mt-6 rounded-xl bg-white/10 p-5 text-sm leading-6">{copy.unavailable}</p>}
-    </section>
-    <p className="rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-sky-950">{copy.note}</p>
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div><h2 className="text-lg font-semibold">{copy.title}</h2><p className="mt-1 flex items-center gap-2 text-xs text-muted"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500" />{copy.refresh}</p></div>
+      {positions.length > 1 && <label className="w-full text-xs font-semibold text-muted sm:w-72">{copy.property}<select value={slug} onChange={e => setSlug(e.target.value)} className={fieldClass}><option value="">{copy.all}</option>{positions.map(p => <option key={p.slug} value={p.slug}>{p.title}</option>)}</select></label>}
+    </div>
+
+    <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${walletBalance !== undefined ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
+      {walletBalance !== undefined && <StatTile emphasis icon={WalletCards} label={walletCopy.base} value={balance} hint={walletCopy.baseHint} />}
+      <StatTile estimate label={copy.accrued} value={valid ? money(total) : "—"} hint={valid ? `${copy.next}: ${date(Math.min(...models.map(m => m.next)))} UTC` : undefined} />
+      <StatTile label={copy.daily} value={valid ? money(daily) : "—"} />
+      <StatTile label={copy.days} value={valid ? String(days) : "—"} />
+    </dl>
+    {!valid && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">{copy.unavailable}</p>}
+    <p className="flex items-start gap-2 text-xs leading-5 text-muted"><Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" /><span>{walletBalance !== undefined && `${walletCopy.note} `}{copy.note}</span></p>
+
     {valid && <>
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7">
-        <h3 className="flex items-center gap-2 text-xl font-bold"><TrendingUp className="text-emerald-600" size={22} />{copy.history}</h3><p className="mt-2 text-sm text-slate-500">{copy.window}</p>
-        <div className="mt-6 flex h-32 items-end gap-2" aria-hidden="true">{[...rows].reverse().map(row => <div key={row.at} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-600 to-emerald-400" style={{ height: `${Math.max(2, total > 0 ? row.total / total * 100 : 0)}%` }} />)}</div>
-        <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead><tr>{[copy.date, copy.profit, copy.total].map(label => <th key={label} scope="col" className="border-b p-3 font-medium text-slate-500">{label}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.at} className="border-b border-slate-100"><th scope="row" className="p-3 text-left font-normal">{date(row.at)}</th><td className="p-3 tabular-nums text-emerald-700">+{money(row.profit)}</td><td className="p-3 font-semibold tabular-nums">{money(row.total)}</td></tr>)}</tbody></table></div>
-      </section>
-      <section><h3 className="mb-4 text-xl font-bold">{copy.purchases}</h3><div className="grid gap-4 lg:grid-cols-2">{calculations.map(({ position, model }) => model && <article key={position.slug} className="rounded-2xl border border-slate-200 bg-white p-5"><Link className="font-semibold text-sky-800" href={`/properties/${position.slug}`}>{position.title}</Link><p className="mt-2 text-xs text-slate-500">{copy.start}: {date(model.start)} UTC</p><p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">{copy.formula}</p><div className="mt-4 space-y-3">{model.lots.map((lot, i) => <div key={i} className="border-t border-slate-100 pt-3"><p className="text-xs text-slate-500">{date(Date.parse(lot.created_at))} UTC · {copy.rate}: {percent(position.rentalRate)}</p><p className="mt-2 font-mono text-sm leading-6">{money(lot.amount)} × {percent(position.rentalRate)} ÷ 365 × {lot.days} = <strong className="text-emerald-700">{money(lot.daily * lot.days)}</strong></p></div>)}</div></article>)}</div></section>
+      <PortalCard title={copy.history} description={copy.window}>
+        <RunningTotalChart rows={[...rows].reverse()} money={money} date={date} shortDate={shortDate} compact={compact} />
+        <details className="border-t border-line">
+          <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-brand hover:bg-canvas">{copy.showTable}</summary>
+          <div className="overflow-x-auto"><table className={`${tableClass} min-w-[520px]`}>
+            <thead><tr><th scope="col" className={headCellClass}>{copy.date}</th><th scope="col" className={`${headCellClass} text-right`}>{copy.profit}</th><th scope="col" className={`${headCellClass} text-right`}>{copy.total}</th></tr></thead>
+            <tbody>{rows.map(row => <tr key={row.at}><th scope="row" className={`${cellClass} font-normal`}>{date(row.at)}</th><td className={`${numberCellClass} text-emerald-700`}>+{money(row.profit)}</td><td className={`${numberCellClass} font-semibold`}>{money(row.total)}</td></tr>)}</tbody>
+          </table></div>
+        </details>
+      </PortalCard>
+
+      <PortalCard title={copy.purchases} description={copy.formula}>
+        <div className="overflow-x-auto"><table className={`${tableClass} min-w-[760px]`}>
+          <thead><tr>{[copy.property, copy.start, copy.capital, copy.rate, copy.days].map(label => <th key={label} scope="col" className={headCellClass}>{label}</th>)}<th scope="col" className={`${headCellClass} text-right`}>{copy.accrued}</th></tr></thead>
+          <tbody>{calculations.flatMap(({ position, model }) => model ? model.lots.map((lot, index) => <tr key={`${position.slug}-${index}`}>
+            <td className={`${cellClass} min-w-56`}><Link href={`/properties/${position.slug}`} className="font-semibold text-ink hover:text-brand">{position.title}</Link>{model.paused && <span className="ml-2 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{copy.pausedShort}</span>}{model.accrualStart > model.start && index === 0 && <p className="mt-0.5 text-xs text-muted">{copy.accrualFrom}: {date(model.accrualStart)} UTC</p>}</td>
+            <td className={`${cellClass} whitespace-nowrap text-muted`}>{date(Date.parse(lot.created_at))} UTC</td>
+            <td className={`${cellClass} whitespace-nowrap tabular-nums`}>{money(lot.amount)}</td>
+            <td className={`${cellClass} tabular-nums`}>{percent(position.rentalRate)}</td>
+            <td className={`${cellClass} tabular-nums`}>{lot.days}</td>
+            <td className={`${numberCellClass} font-semibold text-emerald-700`}>{money(lot.daily * lot.days)}</td>
+          </tr>) : [])}</tbody>
+        </table></div>
+        {paused && <p role="status" className="border-t border-line bg-amber-50 px-5 py-3 text-sm text-amber-950">{copy.paused}</p>}
+      </PortalCard>
     </>}
   </div>;
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl border border-white/10 bg-white/5 p-5"><p className="text-xs text-slate-300">{label}</p><p className="mt-3 text-3xl font-bold tabular-nums text-emerald-300">{value}</p></div>;
+/** Single-series running total: 2px line over a 10% wash, end value labelled, crosshair tooltip on hover/focus. */
+function RunningTotalChart({ rows, money, date, shortDate, compact }: { rows: HistoryRow[]; money: (value: number) => string; date: (value: number) => string; shortDate: (value: number) => string; compact: (value: number) => string }) {
+  const [active, setActive] = useState<number | null>(null);
+  const max = niceCeiling(Math.max(...rows.map(row => row.total), 0));
+  const x = (index: number) => rows.length === 1 ? 100 : index / (rows.length - 1) * 100;
+  const y = (value: number) => max > 0 ? value / max * 100 : 0;
+  const points = rows.map((row, index) => `${x(index)},${100 - y(row.total)}`);
+  const line = `M${points.join("L")}`;
+  const area = `${line}L${x(rows.length - 1)},100L${x(0)},100Z`;
+  const last = rows.length - 1;
+  const shown = active ?? last;
+  const ticks = [0, max / 2, max];
+  return <div className="px-5 pb-5 pt-6">
+    <div className="relative h-56 pl-14">
+      {ticks.map(tick => <div key={tick} className="absolute inset-x-0" style={{ bottom: `${y(tick)}%` }}>
+        <span className="absolute left-0 -translate-y-1/2 text-[11px] tabular-nums text-muted">{compact(tick)}</span>
+        <div className="ml-14 border-t border-slate-100" />
+      </div>)}
+      <div className="absolute inset-y-0 left-14 right-2" onMouseLeave={() => setActive(null)}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
+          <path d={area} fill="var(--color-brand)" fillOpacity={0.1} />
+          <path d={line} fill="none" stroke="var(--color-brand)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {active !== null && <span aria-hidden="true" className="absolute inset-y-0 w-px bg-slate-300" style={{ left: `${x(active)}%` }} />}
+        <span aria-hidden="true" className="absolute h-2.5 w-2.5 -translate-x-1/2 translate-y-1/2 rounded-full bg-brand ring-2 ring-white" style={{ left: `${x(shown)}%`, bottom: `${y(rows[shown].total)}%` }} />
+        {active === null && <span className="absolute -translate-y-3 translate-x-[-100%] whitespace-nowrap pr-2 text-xs font-semibold tabular-nums text-ink" style={{ left: `${x(last)}%`, bottom: `${y(rows[last].total)}%` }}>{money(rows[last].total)}</span>}
+        {rows.map((row, index) => <button key={row.at} type="button" aria-label={`${date(row.at)} UTC: ${money(row.total)}`}
+          onMouseEnter={() => setActive(index)} onFocus={() => setActive(index)} onBlur={() => setActive(null)}
+          className="absolute inset-y-0 -translate-x-1/2 focus-visible:outline-2 focus-visible:outline-brand"
+          style={{ left: `${x(index)}%`, width: `${rows.length === 1 ? 100 : 100 / (rows.length - 1)}%` }} />)}
+        {active !== null && <div role="status" className="pointer-events-none absolute z-10 w-max -translate-x-1/2 rounded-lg border border-line bg-white px-3 py-2 text-xs shadow-lg"
+          style={{ left: `${Math.min(88, Math.max(12, x(active)))}%`, bottom: `calc(${y(rows[active].total)}% + 14px)` }}>
+          <p className="text-muted">{date(rows[active].at)} UTC</p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">{money(rows[active].total)}</p>
+          <p className="tabular-nums text-emerald-700">+{money(rows[active].profit)}</p>
+        </div>}
+      </div>
+    </div>
+    <div className="ml-14 mr-2 mt-2 flex justify-between text-[11px] text-muted"><span>{shortDate(rows[0].at)}</span>{rows.length > 2 && <span>{shortDate(rows[Math.floor(last / 2)].at)}</span>}<span>{shortDate(rows[last].at)}</span></div>
+  </div>;
+}
+
+function niceCeiling(value: number) {
+  if (value <= 0) return 1;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 2.5, 5, 10].find(candidate => candidate * magnitude >= value) ?? 10;
+  return step * magnitude;
 }

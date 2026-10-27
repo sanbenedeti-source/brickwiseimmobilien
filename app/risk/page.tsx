@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { riskTranslations } from "./translations";
 import ClientPortalSidebar from "@/app/components/ClientPortalSidebar";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import { isAdminUser } from "@/app/lib/admin";
 import { localeCookieName, normalizeLocale } from "../lib/i18n";
 
 const content = {
@@ -12,7 +13,9 @@ const content = {
 
 export default async function RiskPage() {
   const cookieStore = await cookies();
-  const user = await getCurrentUser();
+  const signedIn = await getCurrentUser();
+  // Administrators see the public risk page, not the client portal.
+  const user = isAdminUser(signedIn) ? null : signedIn;
   const locale = normalizeLocale(cookieStore.get(localeCookieName)?.value) || "en";
   const text = content[locale];
   const email = user?.email || "";
@@ -20,6 +23,6 @@ export default async function RiskPage() {
 
   return <>
     {user && <ClientPortalSidebar active="risk" email={email} fullName={fullName} locale={locale} />}
-    <main className={`bg-[#f4f4f2] text-[#0f172a] ${user ? "min-h-screen pt-16 lg:ml-[282px] lg:pt-0" : ""}`}><section className="mx-auto max-w-5xl px-6 pb-24 pt-36"><p className="text-lg font-bold text-emerald-700">BRICKWISE</p><h1 className="font-display mt-4 text-6xl font-bold leading-tight">{text.title}</h1><p className="mt-6 max-w-3xl text-xl leading-relaxed text-slate-600">{text.intro}</p><div className="mt-14 grid gap-5">{text.risks.map((risk) => <div key={risk} className="rounded-2xl bg-white p-6 shadow-sm"><p className="text-lg leading-relaxed text-slate-700">{risk}</p></div>)}</div><div className="mt-12 rounded-2xl bg-[#0F172A] p-8 text-white"><h2 className="text-3xl font-bold">{text.adviceTitle}</h2><p className="mt-4 text-lg leading-relaxed text-white/75">{text.advice}</p></div></section></main>
+    <main className={`bg-canvas text-ink ${user ? "min-h-screen pt-16 lg:ml-[282px] lg:pt-0" : ""}`}><section className="mx-auto max-w-5xl px-6 pb-24 pt-36"><p className="text-lg font-bold text-emerald-700">BRICKWISE</p><h1 className="font-display mt-4 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">{text.title}</h1><p className="mt-6 max-w-3xl text-xl leading-relaxed text-slate-600">{text.intro}</p><div className="mt-14 grid gap-5">{text.risks.map((risk) => <div key={risk} className="rounded-2xl bg-white p-6 shadow-sm"><p className="text-lg leading-relaxed text-slate-700">{risk}</p></div>)}</div><div className="mt-12 rounded-2xl bg-ink p-8 text-white"><h2 className="text-3xl font-bold">{text.adviceTitle}</h2><p className="mt-4 text-lg leading-relaxed text-white/75">{text.advice}</p></div></section></main>
   </>;
 }

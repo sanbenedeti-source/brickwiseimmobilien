@@ -26,13 +26,13 @@ export default function LanguageSwitcher({
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm font-bold text-[#0F172A]">
+    <label className="flex items-center gap-2 text-sm font-bold text-ink">
       <span className="sr-only">{label}</span>
       <select
         value={currentLocale}
         onChange={(event) => changeLocale(event.target.value)}
         aria-label={label}
-        className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold outline-none transition hover:border-slate-400 focus:border-[#0F172A]"
+        className="min-h-10 rounded-xl border border-line-strong bg-white px-3 text-sm font-bold outline-none transition hover:border-slate-400 focus:border-ink"
       >
         {supportedLocales.map((locale) => (
           <option key={locale} value={locale}>

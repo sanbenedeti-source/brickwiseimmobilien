@@ -19,6 +19,9 @@ export function readConsent(): Consent {
   catch { return null; }
 }
 
+// Ad click identifiers and campaign tags: needed to attribute a lead to its ad.
+const attributionKeys = new Set(["gclid", "gbraid", "wbraid", "fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"]);
+
 // Tags can inspect the document URL themselves. Do not load them on private
 // pages or URLs/referrers containing arbitrary query values or fragments.
 export function safeMarketingUrl(value: string): string | null {
@@ -26,12 +29,16 @@ export function safeMarketingUrl(value: string): string | null {
     const url = new URL(value);
     if (!/^https?:$/.test(url.protocol) || url.hash || url.username || url.password) return null;
     if (!(url.pathname in publicPages) && !["/join", "/thank-you"].includes(url.pathname) && !/^\/(properties|insights)\/[a-z0-9-]+$/.test(url.pathname)) return null;
+    const attribution = new URLSearchParams();
     for (const [key, value] of url.searchParams) {
       if (key === "lang" && ["en", "de", "fr", "es", "it"].includes(value)) continue;
       if (url.pathname === "/thank-you" && key === "conversion" && value === "lead") continue;
+      if (url.pathname === "/contact" && key === "projekt" && /^[a-z0-9-]{1,120}$/.test(value)) continue;
+      if (attributionKeys.has(key) && /^[\w.~%-]{1,200}$/.test(value)) { attribution.append(key, value); continue; }
       return null;
     }
-    return url.origin + url.pathname;
+    const query = attribution.toString();
+    return url.origin + url.pathname + (query ? `?${query}` : "");
   } catch { return null; }
 }
 function permitted() {
@@ -77,13 +84,14 @@ export function trackConversion(name: "Lead" | "CompleteRegistration") {
   if (name === "Lead") window.gtag?.("event", "conversion", { send_to: `${adsId}/0uIqCIPvxN0cEOmXlrZE`, page_location: safeMarketingUrl(window.location.href), page_referrer: "" });
   return true;
 }
-export function stopMarketing() {
+/** clearCookies: on consent withdrawal only; leaving a public page keeps ad attribution. */
+export function stopMarketing(clearCookies = true) {
   if (window.fbq?.queue) window.fbq.queue.length = 0;
   if (window.dataLayer) window.dataLayer.length = 0;
   window.fbq?.("consent", "revoke");
   window.gtag?.("consent", "update", consentValues("denied"));
   // Remove accessible marketing cookies only; never clear authentication cookies.
-  const names = document.cookie.split(";").map(cookie => cookie.trim().split("=")[0]).filter(name => /^(_ga($|_)|_gid$|_gat|_gcl_|_fbp$|_fbc$)/.test(name));
+  const names = !clearCookies ? [] : document.cookie.split(";").map(cookie => cookie.trim().split("=")[0]).filter(name => /^(_ga($|_)|_gid$|_gat|_gcl_|_fbp$|_fbc$)/.test(name));
   const host = window.location.hostname.split(".");
   for (const name of names) {
     document.cookie = `${name}=; Max-Age=0; Path=/`;
@@ -96,6 +104,6 @@ export function chooseConsent(value: Exclude<Consent, null>) {
   if (value === "rejected") stopMarketing();
 }
 export function checkMarketingRoute() {
-  if (initialized && !permitted()) stopMarketing();
+  if (initialized && !permitted()) stopMarketing(false);
   else trackPage();
 }

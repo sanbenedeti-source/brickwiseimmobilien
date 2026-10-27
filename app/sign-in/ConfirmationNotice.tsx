@@ -43,7 +43,7 @@ export default function ConfirmationNotice({ initialEmail, invalidLink }: { init
     <form onSubmit={resend} className="mt-4 space-y-3">
       <label htmlFor="confirmation-email" className="block text-sm font-semibold">{text.email}</label>
       <input id="confirmation-email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-xl border border-emerald-300 bg-white p-3 text-slate-900" />
-      <button disabled={busy || cooldown} className="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-60">{busy || cooldown ? text.waiting : text.send}</button>
+      <button disabled={busy || cooldown} className="rounded-lg bg-brand px-4 py-3 font-semibold text-white disabled:opacity-60 hover:bg-brand-strong">{busy || cooldown ? text.waiting : text.send}</button>
       <p role="status" className="text-sm">{message}</p>
     </form>
   </section>;

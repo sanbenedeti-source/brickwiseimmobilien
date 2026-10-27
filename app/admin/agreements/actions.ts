@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 
 export type AgreementReviewState = { result: "" | "saved" | "error" };
 export async function reviewAgreement(_previous: AgreementReviewState, form: FormData): Promise<AgreementReviewState> {
   try {
     const client = await createClient();
     const { data: { user }, error } = await client.auth.getUser();
-    if (error || !isAdminUser(user)) return { result: "error" };
+    if (error || !(await hasAdminSession(client, user))) return { result: "error" };
     const id = form.get("id"), decision = form.get("decision"), note = form.get("note");
     if (typeof id !== "string" || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id)
       || !["approved", "rejected"].includes(String(decision)) || typeof note !== "string"

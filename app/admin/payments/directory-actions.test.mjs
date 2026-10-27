@@ -11,7 +11,7 @@ function harness(adminUser=true){
   'next/cache':{revalidatePath:path=>paths.push(path)},
   'next/navigation':{redirect:location=>{throw Object.assign(Error('redirect'),{location});}},
   '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'admin',app_metadata:{role:adminUser?'admin':'client'}}}})}})},
-  '@/app/lib/admin':{isAdminUser:user=>user?.app_metadata?.role==='admin'},
+  '@/app/lib/admin':{isAdminUser:user=>user?.app_metadata?.role==='admin'},'@/app/lib/admin-session':{hasAdminSession:async(_c,user)=>user?.app_metadata?.role==='admin'},
   '@/app/lib/company-payment-methods':{parseCompanyPaymentMethod},
   '@supabase/supabase-js':{createClient:()=>database},
   '@/app/lib/admin-audit':{writeAdminMutation:async(_client,event,ops)=>{assert.equal(event.action,'company_payment_method.save');for(const op of ops)writes.push({operation:op.operation,payload:op.data});return {error:null};}},

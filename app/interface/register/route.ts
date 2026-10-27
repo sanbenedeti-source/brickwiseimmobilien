@@ -1,6 +1,7 @@
 import { getRequestLocale } from "@/app/lib/i18n";
 import { createTranslator } from "@/app/lib/translate";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { notifyAdminOfRegistration } from "@/app/lib/registration-notification";
 import { createClient } from "@/lib/supabase/server";
 
 const allowedOrigins = new Set([
@@ -8,7 +9,8 @@ const allowedOrigins = new Set([
   "https://www.brickwise-immo.de",
   "https://brickwise-canada.ca",
   "https://www.brickwise-canada.ca",
-  "http://localhost:3000",
+  // Local development only; never trusted by a production deployment.
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
 ]);
 
 function corsHeaders(req: Request) {
@@ -75,10 +77,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const fullName = String(body.full_name || "").trim();
+  // Control characters (e.g. newlines) could forge lines in the admin notification.
+  const fullName = String(body.full_name || "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
   const email = String(body.email || "").trim().toLowerCase();
   const password = String(body.password || "");
   const referralCode = String(body.referral_code || "").trim().slice(0, 64);
+  // Only a property page may be stored as the post-confirmation destination.
+  const signupNext = typeof body.next === "string" && /^\/properties\/[a-z0-9-]{1,120}$/.test(body.next) ? body.next : null;
   const emailLanguage = locale;
 
   if (!fullName || !email || !password) {
@@ -107,6 +112,7 @@ export async function POST(req: Request) {
         full_name: fullName,
         email_language: emailLanguage,
         referral_code: referralCode || null,
+        signup_next: signupNext,
       },
       emailRedirectTo: `${getSiteOrigin(req)}/authentication/callback`,
     },
@@ -118,7 +124,8 @@ export async function POST(req: Request) {
 
     const lowerMessage = error.message.toLowerCase();
     const friendlyMessage = lowerMessage.includes("rate limit")
-      ? t("Please wait before trying again.") : t("Please check your input.");
+      ? t("Please wait before trying again.")
+      : error.code === "weak_password" ? t("This password is too weak or has appeared in a data breach. Choose a different password with at least 8 characters.") : t("Please check your input.");
     return json(req, { error: friendlyMessage }, { status: 400 });
   }
 
@@ -127,6 +134,18 @@ export async function POST(req: Request) {
 
   if (alreadyRegistered) {
     return json(req, { success: true, alreadyRegistered: true }, { status: 200 });
+  }
+
+  if (data.user?.id) {
+    const registration = { id: data.user.id, name: fullName, email,
+      createdAt: data.user.created_at };
+    after(async () => {
+      try {
+        await notifyAdminOfRegistration(registration);
+      } catch {
+        console.error("Admin registration notification failed", { userId: registration.id });
+      }
+    });
   }
 
   return json(req, { success: true, alreadyRegistered: false }, { status: 201 });

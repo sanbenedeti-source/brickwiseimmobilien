@@ -24,7 +24,7 @@ function harness({ authorized = true, configured = true, translationFailure = fa
     "next/cache": { revalidatePath() {} },
     "next/navigation": { redirect(location) { throw Object.assign(new Error("redirect"), { location }); } },
     "@/lib/supabase/server": { createClient: async () => session },
-    "@/app/lib/admin": { isAdminUser: () => authorized },
+    "@/app/lib/admin": { isAdminUser: () => authorized }, "@/app/lib/admin-session": { hasAdminSession: async () => authorized },
     "@supabase/supabase-js": { createClient: () => service },
     "@/app/lib/content-translations": { contentLocales, readRequiredTranslation },
     "@/app/lib/admin-audit": { writeAdminMutation: async (_client,event,ops) => {
@@ -115,7 +115,7 @@ function shareHarness({ role = "admin", authError = null, configured = true, lis
     "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({
       data: { user: role === null ? null : { id: adminId, app_metadata: { role }, user_metadata: { role: "admin" } } }, error: authError,
     }) } }) },
-    "@/app/lib/admin": { isAdminUser },
+    "@/app/lib/admin": { isAdminUser }, "@/app/lib/admin-session": { hasAdminSession: async (_client, user) => isAdminUser(user) },
     "@supabase/supabase-js": { createClient: () => service },
     "@/app/lib/content-translations": { contentLocales, readRequiredTranslation },
     "@/app/lib/admin-audit": { writeAdminMutation() { throw new Error("Share settings cannot use a generic table write"); } },
@@ -218,4 +218,105 @@ test("unconfigured, network and unknown database failures show only the safe sha
     await assert.rejects(app.run(shareForm()), shareResult("shares-error"));
     assert.equal(app.calls.length, options.configured === false ? 0 : 1);
   }
+});
+
+function saleHarness({ authorized = true, current = { price: "600000", share_price: null }, settings = null, listing } = {}) {
+  const writes = [];
+  const calls = [];
+  const service = {
+    from(table) {
+      const row = table === "properties" ? current : settings;
+      const query = { select: () => query, eq: () => query, maybeSingle: async () => ({ data: row, error: null }) };
+      return query;
+    },
+    async rpc(name, args) { calls.push({ name, args }); return { error: null }; },
+  };
+  const dependencies = {
+    "next/cache": { revalidatePath() {} },
+    "next/navigation": { redirect(location) { throw Object.assign(new Error("redirect"), { location }); } },
+    "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: authorized ? { id: adminId } : null }, error: null }) } }) },
+    "@/app/lib/admin": { isAdminUser: () => authorized }, "@/app/lib/admin-session": { hasAdminSession: async () => authorized },
+    "@supabase/supabase-js": { createClient: () => service },
+    "@/app/lib/content-translations": { contentLocales, readRequiredTranslation },
+    "@/app/lib/admin-audit": { writeAdminMutation: async (_client, event, ops) => { writes.push(...ops.map((op) => ({ ...op, action: event.action }))); return { error: null }; } },
+    "@/app/lib/external-properties": { getExternalPropertyBySlug: () => listing },
+    "@/app/api/properties/import/euro-amount": { parseEuroAmount },
+  };
+  const loadedModule = { exports: {} };
+  new Function("require", "module", "exports", "process", "console", compiled)(
+    (name) => { assert.ok(dependencies[name], name); return dependencies[name]; },
+    loadedModule, loadedModule.exports,
+    { env: { NEXT_PUBLIC_SUPABASE_URL: "https://test.invalid", SUPABASE_SERVICE_ROLE_KEY: "test-only" } },
+    { error() {} },
+  );
+  return { run: loadedModule.exports.updatePropertySale, runCatalogue: loadedModule.exports.updateCatalogueSaleStatus, writes, calls };
+}
+
+function saleForm(overrides = {}) {
+  const data = new FormData();
+  for (const [key, value] of Object.entries({ property_slug: "munich-loft", construction_status: "completed", status: "active", price: "600000", monthly_rent: "2500", monthly_expenses: "300", share_price: "250", ...overrides })) data.set(key, value);
+  return data;
+}
+
+const saleResult = (status) => (error) => error.location === `/admin/properties?status=${status}&property=munich-loft#sales-status`;
+
+test("an upcoming property is opened for purchase with its pricing and gets its shares", async () => {
+  const app = saleHarness();
+  await assert.rejects(app.run(saleForm()), saleResult("sale-saved"));
+  assert.deepEqual(app.writes, [{ action: "property.sale_settings", table: "properties", operation: "update", match: { slug: "munich-loft" },
+    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, construction_status: "completed", status: "active" } }]);
+  assert.deepEqual(app.calls.map((call) => [call.args.p_total_shares, call.args.p_expected_version, call.args.p_actor]), [[2400, -1, adminId]]);
+});
+
+test("a property can be set back to upcoming, and rent changes keep sold shares untouched", async () => {
+  const app = saleHarness({ current: { price: "600000", share_price: "250" }, settings: { blocked_shares: 40, availability_version: 4 } });
+  await assert.rejects(app.run(saleForm({ construction_status: "upcoming", monthly_rent: "2700" })), saleResult("sale-saved"));
+  assert.equal(app.writes[0].data.construction_status, "upcoming");
+  assert.equal(app.calls.length, 0);
+});
+
+test("price and share price are locked once shares are sold", async () => {
+  for (const change of [{ share_price: "300" }, { price: "650000" }]) {
+    const app = saleHarness({ current: { price: "600000", share_price: "250" }, settings: { blocked_shares: 40, availability_version: 4 } });
+    await assert.rejects(app.run(saleForm(change)), saleResult("sale-locked"));
+    assert.equal(app.writes.length + app.calls.length, 0, JSON.stringify(change));
+  }
+});
+
+test("invalid sales settings, catalogue listings and non-admins never write", async () => {
+  for (const invalid of [{ construction_status: "sold" }, { status: "archived" }, { share_price: "700000" }, { price: "" }, { monthly_rent: "-5" }]) {
+    const app = saleHarness();
+    await assert.rejects(app.run(saleForm(invalid)), saleResult("sale-invalid"));
+    assert.equal(app.writes.length + app.calls.length, 0, JSON.stringify(invalid));
+  }
+  const listing = saleHarness({ listing: { slug: "munich-loft" } });
+  await assert.rejects(listing.run(saleForm()), saleResult("sale-invalid"));
+  const outsider = saleHarness({ authorized: false });
+  await assert.rejects(outsider.run(saleForm()), (error) => error.location === "/admin");
+  assert.equal(listing.writes.length + outsider.writes.length, 0);
+});
+
+test("a catalogue listing on the website is marked Upcoming or reopened through one audited status write", async () => {
+  const app = saleHarness({ listing: { slug: "munich-loft", listed: true } });
+  const data = new FormData();
+  data.set("property_slug", "munich-loft");
+  data.set("construction_status", "upcoming");
+  await assert.rejects(app.runCatalogue(data), saleResult("sale-saved"));
+  assert.equal(app.writes.length, 1);
+  assert.deepEqual([app.writes[0].action, app.writes[0].table, app.writes[0].operation, app.writes[0].data.property_slug, app.writes[0].data.construction_status, app.writes[0].data.updated_by],
+    ["property.sale_status", "property_sale_status", "upsert", "munich-loft", "upcoming", adminId]);
+});
+
+test("hidden or unknown listings, invalid statuses and non-admins cannot change a catalogue sale status", async () => {
+  for (const [options, status] of [[{ listing: { slug: "munich-loft", listed: false } }, "completed"], [{}, "completed"], [{ listing: { slug: "munich-loft" } }, "sold"]]) {
+    const app = saleHarness(options);
+    const data = new FormData();
+    data.set("property_slug", "munich-loft");
+    data.set("construction_status", status);
+    await assert.rejects(app.runCatalogue(data), saleResult("sale-invalid"));
+    assert.equal(app.writes.length, 0);
+  }
+  const outsider = saleHarness({ authorized: false, listing: { slug: "munich-loft" } });
+  await assert.rejects(outsider.runCatalogue(new FormData()), (error) => error.location === "/admin");
+  assert.equal(outsider.writes.length, 0);
 });

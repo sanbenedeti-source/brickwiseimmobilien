@@ -9,11 +9,11 @@ export default async function RealEstateInvestingPage() {
   const text = guideCopy[locale];
   const steps = text.items.map(([title, value]) => ({ title, text: value.replace("{minimum}", formatMinimumInvestment(locale)) }));
   return (
-    <main className="bg-[#f4f4f2] text-[#0f172a]">
-      <section className="bg-[#0F172A] px-6 pb-20 pt-36 text-white">
+    <main className="bg-canvas text-ink">
+      <section className="bg-ink px-6 pb-20 pt-36 text-white">
         <div className="mx-auto max-w-7xl">
           <p className="text-lg font-bold text-emerald-300">BRICKWISE</p>
-          <h1 className="font-display mt-4 max-w-5xl text-6xl font-bold leading-tight md:text-7xl">
+          <h1 className="font-display mt-4 max-w-5xl text-4xl font-bold leading-tight sm:text-5xl md:text-7xl">
             {text.title}
           </h1>
           <p className="mt-8 max-w-3xl text-xl leading-relaxed text-white/75">
@@ -23,7 +23,7 @@ export default async function RealEstateInvestingPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
             <div key={step.title} className="rounded-2xl bg-white p-7 shadow-sm">
               <p className="text-4xl font-bold text-emerald-700">{index + 1}</p>
@@ -43,14 +43,14 @@ export default async function RealEstateInvestingPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-[#0F172A] p-8 text-white">
+          <div className="rounded-2xl bg-ink p-8 text-white">
             <h2 className="text-4xl font-bold">{text.start}</h2>
             <p className="mt-5 text-lg leading-relaxed text-white/75">
               {text.startText}
             </p>
             <Link
               href="/properties"
-              className="mt-8 inline-flex rounded-2xl bg-white px-8 py-4 text-lg font-bold text-[#0F172A]"
+              className="mt-8 inline-flex rounded-lg bg-white px-8 py-4 text-lg font-bold text-ink"
             >
               {text.properties}
             </Link>

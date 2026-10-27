@@ -1,26 +1,20 @@
-PRODUCTION STATUS
+﻿BRICKWISE HOW IT WORKS — DELIVERY
 
-Approved approach: render Kacper through HeyGen, then independently composite him in the corner over the demo UI.
-Submitted in order: English, German, French, Spanish, Italian.
-The inline HeyGen players track presenter rendering. No final video is claimed complete.
-Job IDs are persisted in jobs.json. Do not resubmit jobs to check status.
+Five local MP4 composites: output/brickwise-how-it-works-{en,de,fr,es,it}.mp4.
+English 65.81s; German 73.25s; French 68.98s; Spanish 75.34s; Italian 74.26s.
+1920x1080, H.264/AAC, 25 fps. Existing HeyGen presenter appears bottom right with synchronized captions.
 
-Prepared locally:
-- Five narration scripts and storyboard in brickwise-how-it-works.txt.
-- Forty clearly labeled illustrative UI screens and five contact sheets under frames/.
-- compose.py can combine a downloaded presenter MP4 with the screens.
-- Python dependencies are isolated in .tools/; no application dependencies changed.
+Backgrounds now use actual browser recordings, replacing the earlier still-image storyboard.
+Real application components: JoinForm, BrandLogo, InvestmentCalculator, WalletOverview, IncomeExperience, DailyIncome and existing translations/CSS.
+Components run in an isolated local fixture. Sidebar, property overview and funding instructions are demo scaffolding, not a full production Next.js session.
+Registration shows form entry/review and accepted terms; no registration request or email is submitted. Funding and purchase use synthetic state only. External browser requests are blocked.
 
-Still required:
-1. Obtain completed presenter MP4s and caption files from HeyGen.
-2. Check native pronunciation and actual audio durations.
-3. Derive eight scene start times from each recording/caption file: registration, wallet funding, confirmed funding, Properties, purchase review, purchase success, Assets, Income.
-4. Pass that JSON timing array and source MP4 to compose.py for each language.
-5. Add synchronized captions and cursor cues, inspect the actual presenter crop, and review final videos end to end before delivery.
+Production minimum is EUR 2,000. To preserve the existing narration, the illustrative offer uses a EUR 500 minimum, two EUR 250 shares and EUR 1,000 starting balance. The demo-only bundler changes the minimum label in memory; application source is unchanged. The demo is explicitly labeled as not live offer terms.
+Income shows a 14-day time jump and a fictional 6% annual assumption. It does not credit the wallet. Projection qualifications stay visible.
 
-Example after source download:
-python video-production/compose.py --language en --source video-production/sources/en.mp4 --timings video-production/sources/en-timings.json
+All browser runs finished with zero browser exceptions and zero external requests, with simulated funding and purchase completed. Full decoding checks and representative visual frames are used to review exports. Pronunciation has not had a native-speaker review.
 
-The automatic timing fallback only produces a review draft. Final exports must be checked against the actual spoken narration.
-The generated demo screens are illustrative reconstructions using local brand colors and assets, not captured live transactions. No production accounts, wallets or holdings were changed.
-No website code was changed or deployed. Local production materials are not live on the website.
+Reproduction: node video-production/record-site.mjs LANGUAGE; python video-production/finish-recording.py LANGUAGE.
+Browser dependencies currently reference installed local paths. FFmpeg is staged in the system temporary directory for the Windows recorder.
+
+Outputs are local. No website code, production data, domain deployment or GitHub push was changed by this video task.

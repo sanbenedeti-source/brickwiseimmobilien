@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,7 +17,8 @@ function load(filename) {
   }).outputText;
   const loaded = { exports: {} };
   modules.set(filename, loaded);
-  const require = (name) => name.startsWith(".") ? load(`${path.resolve(path.dirname(filename), name)}.ts`) : requirePackage(name);
+  const local = (name) => { const base = path.resolve(path.dirname(filename), name); return existsSync(`${base}.ts`) ? `${base}.ts` : `${base}.tsx`; };
+  const require = (name) => name.startsWith(".") ? load(local(name)) : requirePackage(name);
   new Function("require", "module", "exports", output)(require, loaded, loaded.exports);
   return loaded.exports;
 }
@@ -89,7 +90,7 @@ test("Income renders a localized daily timeline distinct from Assets with safe m
 
 const WalletOverview = load(fileURLToPath(new URL("./WalletOverview.tsx", import.meta.url))).default;
 const { walletOverviewCopy } = load(fileURLToPath(new URL("./wallet-overview-copy.ts", import.meta.url)));
-test("wallet separates unspent funds, accumulated profit and their rounded total in every language", () => {
+test("wallet shows credited funds and the rental projection separately, never added together", () => {
   const props = {
     baseBalance: 150,
     positions: [{slug: "sample", title: "Sample", shares: 10, rentalRate: 19}],
@@ -98,11 +99,13 @@ test("wallet separates unspent funds, accumulated profit and their rounded total
   };
   for (const locale of ["en", "de", "fr", "es", "it"]) {
     const html = renderToStaticMarkup(createElement(WalletOverview, {...props, locale}));
-    for (const key of ["base", "profit", "total", "note"]) assert.ok(html.includes(walletOverviewCopy[locale][key]));
+    for (const key of ["base", "profit", "note"]) assert.ok(html.includes(walletOverviewCopy[locale][key]));
     const decimal = locale === "en" ? "." : ",";
-    for (const amount of ["150"+decimal+"00", "1"+decimal+"56", "151"+decimal+"56"]) assert.ok(html.includes(amount), locale + amount);
+    for (const amount of ["150"+decimal+"00", "1"+decimal+"56"]) assert.ok(html.includes(amount), locale + amount);
+    // The projection is never added to the balance (150.00 + 1.56).
+    assert.ok(!html.includes("151"+decimal+"56"), locale);
     const empty = renderToStaticMarkup(createElement(WalletOverview, {...props, locale, positions: [], purchases: []}));
-    assert.equal((empty.match(new RegExp("150" + (locale === "en" ? "\\." : ",") + "00", "g")) || []).length, 2);
+    assert.equal((empty.match(new RegExp("150" + (locale === "en" ? "\\." : ",") + "00", "g")) || []).length, 1);
     const missing = renderToStaticMarkup(createElement(WalletOverview, {...props, locale, historyAvailable: false}));
     assert.ok(missing.includes(walletOverviewCopy[locale].unavailable));
     assert.ok(!missing.includes("151"+decimal+"56"));

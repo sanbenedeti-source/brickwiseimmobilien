@@ -10,9 +10,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import { createPaymentRequest, updatePaymentRequest } from "../actions";
 import { totalRecordedMoney } from "../../../dashboard/recorded-money";
+import { ChevronDown } from "lucide-react";
+import { AdminAlert, AdminCard, AdminDisclosure, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "../../ui";
 
 type AuthCustomer = {
   id: string;
@@ -155,7 +158,7 @@ async function getCustomers(adminSupabase: ReturnType<typeof getAdminSupabase>) 
 export default async function AdminPaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ method?: string | string[]; result?: string }>;
+  searchParams: Promise<{ method?: string | string[]; result?: string; form?: string }>;
 }) {
   const locale = await getCurrentLocale();
   const t = getAdminText(locale);
@@ -179,6 +182,7 @@ export default async function AdminPaymentsPage({
   if (!isAdminUser(user)) {
     redirect("/dashboard");
   }
+  if (!(await hasAdminSession(supabase, user))) redirect("/admin/security");
   const translations = await getPropertyTranslations(locale);
 
   const adminSupabase = getAdminSupabase();
@@ -227,275 +231,141 @@ export default async function AdminPaymentsPage({
         .order("created_at", { ascending: false })
     : { data: [], error: null };
 
-  const totals = totalRecordedMoney((payments as PaymentRequest[] | null | undefined || [])
-    .filter((payment) => payment.status === "paid" || payment.status === "verified"));
+  const paymentList = (payments as PaymentRequest[] | null | undefined) || [];
+  const totals = totalRecordedMoney(paymentList.filter((payment) => payment.status === "paid" || payment.status === "verified"));
+  const openCount = paymentList.filter((payment) => payment.status === "pending" || payment.status === "sent").length;
+  const createOpen = query.form === "new" || Boolean(methodFromQuery) || (Boolean(query.result) && query.result !== "saved");
 
   return (
     <main className="admin-workspace">
-      <Link href="/admin/payments/deposits" className="m-5 inline-block rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white">{depositText(locale)("queue")}</Link>
-      <section className="admin-hero">
-        <div className="mx-auto max-w-7xl">
-          <Link href="/admin" className="text-sm font-bold text-white/70">{t("Back to admin")}</Link>
+      <AdminPageHeader
+        back={{ href: "/admin/payments", label: t("Payment methods") }}
+        eyebrow={t("Payment operations")}
+        title={t("Manage payment requests")}
+        description={t("Manage bank and crypto payments from one place. All amounts are recorded in EUR.")}
+        actions={<>
+          <Link href="/admin/payments/deposits" className="admin-btn admin-btn-secondary">{depositText(locale)("queue")}</Link>
+          <a href="?form=new#create-payment" className="admin-btn">{t("Create payment request")}</a>
+        </>}
+      />
+      {query.result && <AdminAlert tone={query.result === "saved" ? "success" : "warning"}>{t(query.result === "saved" ? "Payment request created." : "Check the payment details and try again.")}</AdminAlert>}
+      {serviceRoleMissing && <AdminAlert tone="danger">{t("Add SUPABASE_SERVICE_ROLE_KEY in Vercel to manage payment requests.")}</AdminAlert>}
+      {paymentsError && <AdminAlert tone="warning">{t("Payment table is not ready. Run SUPABASE_PAYMENT_REQUESTS_SETUP.sql in Supabase SQL Editor.")}</AdminAlert>}
 
-          <p className="mt-10 text-lg font-bold text-emerald-300">{t("Payment operations")}</p>
-
-          <h1 className="font-display mt-4 max-w-5xl text-6xl font-bold leading-none">{t("Manage payment requests")}</h1>
-
-          <p className="mt-6 max-w-3xl text-xl leading-relaxed text-white/80">{t("Manage bank and crypto payments from one place. All amounts are recorded in EUR.")}</p>
-        </div>
+      <section className="admin-stats" aria-label={t("Key figures")}>
+        <AdminStat label={t("Payment requests")} value={paymentList.length} />
+        <AdminStat label={t("Pending")} value={openCount} attention={openCount > 0} />
+        <AdminStat label={t("Customers")} value={customers.length} />
+        <AdminStat label={t("Paid/verified volume by currency")} value={totals.length ? totals.map((total) => formatMoney(total.amount, total.currency, locale)).join(" / ") : formatMoney(0, "EUR", locale)} />
       </section>
 
-      <section className="admin-content-section">
-        {query.result && <div role="status" className={`mb-5 rounded-xl border p-4 ${query.result === "saved" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>{t(query.result === "saved" ? "Payment request created." : "Check the payment details and try again.")}</div>}
-        {serviceRoleMissing && (
-          <div className="mb-8 rounded-2xl bg-red-50 p-5 font-bold text-red-700">{t("Add SUPABASE_SERVICE_ROLE_KEY in Vercel to manage payment requests.")}</div>
-        )}
-
-        {paymentsError && (
-          <div className="mb-8 rounded-2xl bg-amber-50 p-5 font-bold text-amber-800">{t("Payment table is not ready. Run SUPABASE_PAYMENT_REQUESTS_SETUP.sql in Supabase SQL Editor.")}</div>
-        )}
-
-        <div className="admin-metrics grid md:grid-cols-3">
-          <AdminMetric title={t("Payment requests")} value={String(payments?.length || 0)} />
-          <AdminMetric title={t("Customers")} value={String(customers.length)} />
-          <AdminMetric title={t("Paid/verified volume by currency")} value={totals.length ? totals.map((total) => formatMoney(total.amount, total.currency, locale)).join(" / ") : formatMoney(0, "EUR", locale)} />
-        </div>
-
-        <div className="admin-panel">
-          <div className="grid gap-4 md:grid-cols-2">
-            <MethodCard
-              title={t("Bank transfer")}
-              label={t("SEPA/Wire")}
-              active={selectedMethod === "bank_transfer"}
-              href="/admin/payments/requests?method=bank_transfer"
-            />
-            <MethodCard
-              title={t("Cryptocurrency")}
-              label="BTC / ETH / USDT / USDC"
-              active={selectedMethod === "crypto"}
-              href="/admin/payments/requests?method=crypto"
-            />
+      <AdminCard title={t("Payment requests")} description={t("Bank and crypto payments requested from clients, newest first.")} flush>
+        {!paymentList.length ? <AdminEmpty>{t("No payment requests yet.")}</AdminEmpty> : <div className="admin-list">
+          <div className="admin-list-head" aria-hidden="true">
+            <span>{t("Date")}</span><span>{t("Payment")}</span><span>{t("Customer")}</span><span>{t("Method")}</span><span className="admin-num">{t("Amount")}</span><span>{t("Status")}</span><span />
           </div>
-        </div>
+          {paymentList.map((payment) => {
+            const property = getProperty(payment);
+            const refund = Array.isArray(payment.refunds) ? payment.refunds[0] : payment.refunds;
+            const propertyTitle = translations.get(property?.slug || "")?.title || property?.title;
+            const method = t(methodLabels[payment.method || "bank_transfer"] || payment.method || "-");
+            return (
+              <details key={payment.id} className="admin-list-row">
+                <summary>
+                  <span className="admin-list-date">{formatDate(payment.created_at, locale)}</span>
+                  <span className="admin-list-primary"><span className="admin-cell-main">{payment.title}</span><span className="admin-cell-sub">{propertyTitle || t("No property")}</span></span>
+                  <span className="admin-list-secondary"><span className="admin-cell-main">{payment.customer_name || t("Customer")}</span><span className="admin-cell-sub">{payment.customer_email}</span></span>
+                  <span className="admin-list-meta">{method}{payment.method === "crypto" && <span className="admin-cell-sub">{payment.crypto_asset || "-"} · {payment.crypto_network || "-"}</span>}</span>
+                  <span className="admin-list-amount admin-num">{formatMoney(payment.amount, payment.currency, locale)}</span>
+                  <span className="admin-list-status"><StatusBadge status={payment.status} label={t(statusLabels[payment.status || "draft"] || payment.status || "Unknown")} /></span>
+                  <ChevronDown size={16} aria-hidden="true" className="admin-disclosure-icon" />
+                </summary>
+                <div className="admin-list-detail">
+                  <dl className="admin-facts">
+                    <div><dt>{t("Property")}</dt><dd>{propertyTitle || t("No property")}</dd></div>
+                    <div><dt>{t("Verified")}</dt><dd>{formatDate(payment.verified_at, locale)}</dd></div>
+                    {payment.proof_url && <div><dt>{t("Proof URL")}</dt><dd><a href={payment.proof_url} target="_blank" rel="noopener noreferrer" className="admin-link break-all">{payment.proof_url}</a></dd></div>}
+                    {payment.instructions && <div className="admin-facts-wide"><dt>{t("Instructions")}</dt><dd className="whitespace-pre-line">{payment.instructions}</dd></div>}
+                  </dl>
+                  {refund && <div className="admin-note"><p className="font-semibold">{t("Refunded")} · {formatDate(refund.created_at, locale)}</p><p className="mt-1 break-all">{refundText(locale)("reference")}: {refund.external_reference}</p><p className="mt-1 whitespace-pre-line break-words">{refund.note}</p></div>}
+                  {payment.status !== "refunded" && <form action={updatePaymentRequest} className="admin-form-grid admin-form-grid-4">
+                    <input type="hidden" name="payment_id" value={payment.id} />
+                    <label className="admin-field">{t("Status")}
+                      <select name="status" disabled={Boolean(payment.credit_transaction_id)} defaultValue={payment.status || "draft"}>
+                        {Object.entries(statusLabels).filter(([value]) => value !== "refunded").map(([value, label]) => (
+                          <option key={value} value={value}>{t(label)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {payment.credit_transaction_id && <input type="hidden" name="status" value={payment.status || "verified"} />}
+                    <label className="admin-field">{t("Payment link")}<input name="payment_link" defaultValue={payment.payment_link || ""} /></label>
+                    <label className="admin-field">{t("Proof URL")}<input name="proof_url" defaultValue={payment.proof_url || ""} /></label>
+                    <label className="admin-field">{t("Admin note")}<input name="admin_note" defaultValue={payment.admin_note || ""} /></label>
+                    <div className="admin-field-wide"><button type="submit" className="admin-btn">{t("Save payment status")}</button></div>
+                  </form>}
+                  {["paid","verified"].includes(payment.status || "") && <RefundForm paymentId={payment.id} amount={Number(payment.amount)} wallet={Boolean(payment.credit_transaction_id)} locale={locale}/>}
+                </div>
+              </details>
+            );
+          })}
+        </div>}
+      </AdminCard>
 
-        <div className="admin-panel">
-          <h2 className="text-4xl font-bold">{t("Create payment request")}</h2>
-          <p className="mt-3 text-lg text-slate-600">{t("Choose the asset and network, then provide verified payment instructions.")}</p>
+      <AdminDisclosure id="create-payment" title={t("Create payment request")} description={t("Choose the asset and network, then provide verified payment instructions.")} open={createOpen}>
+        <nav className="admin-segmented" aria-label={t("Method")}>
+          <Link href="/admin/payments/requests?method=bank_transfer#create-payment" aria-current={selectedMethod === "bank_transfer" ? "page" : undefined}>{t("Bank transfer")} <span>{t("SEPA/Wire")}</span></Link>
+          <Link href="/admin/payments/requests?method=crypto#create-payment" aria-current={selectedMethod === "crypto" ? "page" : undefined}>{t("Cryptocurrency")} <span>BTC / ETH / USDT / USDC</span></Link>
+        </nav>
+        <form key={selectedMethod} action={createPaymentRequest} className="admin-form-grid mt-5">
+          <label className="admin-field">{t("Customer")}
+            <select name="user_id" defaultValue="">
+              <option value="">{t("No registered user / manual email")}</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name === "Customer" ? t("Customer") : customer.name} - {customer.email}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Field label={t("Customer email")} name="customer_email" type="email" required />
+          <Field label={t("Customer name")} name="customer_name" />
+          <label className="admin-field">{t("Property")}
+            <select name="property_id" defaultValue="">
+              <option value="">{t("No property selected")}</option>
+              {(properties as PropertyOption[] | null | undefined || []).map((property) => (
+                <option key={property.id} value={property.id}>
+                  {translations.get(property.slug)?.title || property.title} - {property.city} - {formatMoney(getExternalPropertyBySlug(property.slug)?.price || property.price, "EUR", locale)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Field label={t("Payment title")} name="title" required placeholder={t("Reservation deposit")} />
+          <Field label={t("Amount")} name="amount" type="number" required placeholder="5000" />
+          <label className="admin-field">{t("Currency")}
+            <select name="currency" defaultValue="EUR">
+              <option value="EUR">EUR</option>
+            </select>
+          </label>
+          <Field label={t("Payment link")} name="payment_link" placeholder="https://..." />
 
-          <form key={selectedMethod} action={createPaymentRequest} className="mt-8 grid gap-5 lg:grid-cols-2">
-            <div>
-              <label className="text-sm font-bold text-slate-600">{t("Customer")}</label>
-              <select
-                name="user_id"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base outline-none"
-                defaultValue=""
-              >
-                <option value="">{t("No registered user / manual email")}</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name === "Customer" ? t("Customer") : customer.name} - {customer.email}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <input type="hidden" name="method" value={selectedMethod} />
+          {selectedMethod === "crypto" && <fieldset className="admin-crypto-fields admin-field-wide">
+            <legend className="px-2 text-sm font-bold">{t("Crypto payment details")}</legend>
+            <Field label={t("Crypto asset")} name="crypto_asset" required placeholder="BTC, ETH, SOL, USDT, USDC..." />
+            <Field label={t("Blockchain network")} name="crypto_network" required placeholder="Bitcoin, Ethereum, Solana, TRON..." />
+            <p className="admin-help admin-field-wide">{t("Specify the exact asset and network. The payment amount remains in EUR.")}</p>
+          </fieldset>}
 
-            <Field label={t("Customer email")} name="customer_email" type="email" required />
-            <Field label={t("Customer name")} name="customer_name" />
-
-            <div>
-              <label className="text-sm font-bold text-slate-600">{t("Property")}</label>
-              <select
-                name="property_id"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base outline-none"
-                defaultValue=""
-              >
-                <option value="">{t("No property selected")}</option>
-                {(properties as PropertyOption[] | null | undefined || []).map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {translations.get(property.slug)?.title || property.title} - {property.city} - {formatMoney(getExternalPropertyBySlug(property.slug)?.price || property.price, "EUR", locale)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Field label={t("Payment title")} name="title" required placeholder={t("Reservation deposit")} />
-            <Field label={t("Amount")} name="amount" type="number" required placeholder="5000" />
-
-            <div>
-              <label className="text-sm font-bold text-slate-600">{t("Currency")}</label>
-              <select
-                name="currency"
-                defaultValue="EUR"
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base outline-none"
-              >
-                <option value="EUR">EUR</option>
-              </select>
-            </div>
-
-            <input type="hidden" name="method" value={selectedMethod} />
-            {selectedMethod === "crypto" && <fieldset className="admin-crypto-fields lg:col-span-2">
-              <legend className="px-2 text-sm font-bold">{t("Crypto payment details")}</legend>
-              <Field label={t("Crypto asset")} name="crypto_asset" required placeholder="BTC, ETH, SOL, USDT, USDC..." />
-              <Field label={t("Blockchain network")} name="crypto_network" required placeholder="Bitcoin, Ethereum, Solana, TRON..." />
-              <p className="text-xs text-slate-600 lg:col-span-2">{t("Specify the exact asset and network. The payment amount remains in EUR.")}</p>
-            </fieldset>}
-
-            <Field label={t("Payment link")} name="payment_link" placeholder="https://..." />
-
-            <div className="lg:col-span-2">
-              <label className="text-sm font-bold text-slate-600">{t("Instructions")}</label>
-              <textarea
-                name="instructions"
-                rows={5}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-base outline-none"
-                placeholder={t("Do not send funds before bank details are verified. Use reference BW-...")}
-              />
-            </div>
-
-            <div className="lg:col-span-2">
-              <label className="text-sm font-bold text-slate-600">{t("Admin note")}</label>
-              <textarea
-                name="admin_note"
-                rows={3}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-base outline-none"
-                placeholder={t("Internal note, visible only to admin.")}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={serviceRoleMissing}
-              className="rounded-2xl bg-[#0F172A] px-8 py-4 text-lg font-bold text-white disabled:opacity-60"
-            >{t("Create payment request")}</button>
-          </form>
-        </div>
-
-        <div className="admin-panel">
-          <h2 className="text-4xl font-bold">{t("Payment requests")}</h2>
-
-          {!payments || payments.length === 0 ? (
-            <div className="mt-8 rounded-2xl bg-slate-50 p-6 text-lg text-slate-600">{t("No payment requests yet.")}</div>
-          ) : (
-            <div className="mt-8 space-y-5">
-              {(payments as PaymentRequest[]).map((payment) => {
-                const property = getProperty(payment);
-                const refund = Array.isArray(payment.refunds) ? payment.refunds[0] : payment.refunds;
-
-                return (
-                  <div
-                    key={payment.id}
-                    className="rounded-2xl border border-slate-100 bg-slate-50 p-6"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                          {formatDate(payment.created_at, locale)}
-                        </p>
-                        <h3 className="mt-2 text-3xl font-bold">{payment.title}</h3>
-                        <p className="mt-2 text-lg text-slate-600">
-                          {payment.customer_name || t("Customer")} - {payment.customer_email}
-                        </p>
-                        <p className="mt-2 text-xl font-bold">
-                          {formatMoney(payment.amount, payment.currency, locale)}
-                        </p>
-                      </div>
-
-                      <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
-                        {t(statusLabels[payment.status || "draft"] || payment.status || "Unknown")}
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid gap-4 md:grid-cols-3">
-                      <Info label={t("Method")} value={t(methodLabels[payment.method || "bank_transfer"] || payment.method || "-")} />
-                      {payment.method === "crypto" && <><Info label={t("Crypto asset")} value={payment.crypto_asset || "-"} /><Info label={t("Blockchain network")} value={payment.crypto_network || "-"} /></>}
-                      <Info label={t("Property")} value={translations.get(property?.slug || "")?.title || property?.title || t("No property")} />
-                      <Info label={t("Verified")} value={formatDate(payment.verified_at, locale)} />
-                    </div>
-
-                    {payment.instructions && (
-                      <p className="mt-5 rounded-2xl bg-white p-5 text-base leading-relaxed text-slate-700">
-                        {payment.instructions}
-                      </p>
-                    )}
-
-                    {refund && <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm"><p className="font-bold">{t("Refunded")} ? {formatDate(refund.created_at, locale)}</p><p className="mt-2 break-all">{refundText(locale)("reference")}: {refund.external_reference}</p><p className="mt-2 whitespace-pre-line break-words">{refund.note}</p></div>}
-                    {payment.status !== "refunded" && <form action={updatePaymentRequest} className="mt-5 grid gap-4 lg:grid-cols-4">
-                      <input type="hidden" name="payment_id" value={payment.id} />
-
-                      <div>
-                        <label className="text-sm font-bold text-slate-600">{t("Status")}</label>
-                        <select
-                          name="status"
-                          disabled={Boolean(payment.credit_transaction_id)}
-                          defaultValue={payment.status || "draft"}
-                          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold outline-none"
-                        >
-                          {Object.entries(statusLabels).filter(([value]) => value !== "refunded").map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {t(label)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {payment.credit_transaction_id && <input type="hidden" name="status" value={payment.status || "verified"} />}
-                      <CompactField label={t("Payment link")} name="payment_link" defaultValue={payment.payment_link || ""} />
-                      <CompactField label={t("Proof URL")} name="proof_url" defaultValue={payment.proof_url || ""} />
-                      <CompactField label={t("Admin note")} name="admin_note" defaultValue={payment.admin_note || ""} />
-
-                      <button
-                        type="submit"
-                        className="rounded-2xl bg-[#0F172A] px-5 py-3 text-sm font-bold text-white lg:col-span-4"
-                      >{t("Save payment status")}</button>
-                    </form>}
-                    {["paid","verified"].includes(payment.status || "") && <RefundForm paymentId={payment.id} amount={Number(payment.amount)} wallet={Boolean(payment.credit_transaction_id)} locale={locale}/>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
+          <label className="admin-field admin-field-wide">{t("Instructions")}
+            <textarea name="instructions" rows={4} placeholder={t("Do not send funds before bank details are verified. Use reference BW-...")} />
+          </label>
+          <label className="admin-field admin-field-wide">{t("Admin note")}
+            <textarea name="admin_note" rows={2} placeholder={t("Internal note, visible only to admin.")} />
+          </label>
+          <div className="admin-field-wide"><button type="submit" disabled={serviceRoleMissing} className="admin-btn">{t("Create payment request")}</button></div>
+        </form>
+      </AdminDisclosure>
     </main>
-  );
-}
-
-function AdminMetric({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="admin-metric">
-      <div className="text-5xl font-bold">{value}</div>
-      <h2 className="mt-6 text-2xl font-bold">{title}</h2>
-    </div>
-  );
-}
-
-function MethodCard({
-  title,
-  label,
-  active,
-  href,
-}: {
-  title: string;
-  label: string;
-  active: boolean;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={[
-        "rounded-2xl border p-5 transition",
-        active
-          ? "border-[#0F172A] bg-[#0F172A] text-white"
-          : "border-slate-200 bg-slate-50 text-[#111111] hover:bg-white",
-      ].join(" ")}
-    >
-      <p className={active ? "text-sm font-bold text-emerald-300" : "text-sm font-bold text-emerald-700"}>
-        {label}
-      </p>
-      <h3 className="mt-3 text-2xl font-bold">{title}</h3>
-    </Link>
   );
 }
 
@@ -513,49 +383,14 @@ function Field({
   placeholder?: string;
 }) {
   return (
-    <div>
-      <label htmlFor={name} className="text-sm font-bold text-slate-600">{label}</label>
+    <label className="admin-field">{label}
       <input
-        id={name}
         name={name}
         type={type}
         required={required}
         step={type === "number" ? "0.01" : undefined}
-        className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-base outline-none"
         placeholder={placeholder}
       />
-    </div>
-  );
-}
-
-function CompactField({
-  label,
-  name,
-  defaultValue,
-}: {
-  label: string;
-  name: string;
-  defaultValue: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-bold text-slate-600">{label}</label>
-      <input
-        name={name}
-        defaultValue={defaultValue}
-        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-      />
-    </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className="rounded-2xl bg-white p-4">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
-      <p className="mt-2 font-bold text-slate-800">{value || "-"}</p>
-    </div>
+    </label>
   );
 }

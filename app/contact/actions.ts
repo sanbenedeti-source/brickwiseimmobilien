@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getExternalPropertyBySlug, isPropertyOpenForInvestment } from "../lib/external-properties";
+import { isPropertyOpenForInvestment } from "../lib/external-properties";
+import { findProperty } from "../lib/property-registry";
 import { canPurchaseShares, MINIMUM_INVESTMENT_EUR } from "../lib/investment-policy";
 import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 
@@ -39,7 +40,7 @@ export async function createContactRequest(formData: FormData) {
   const investmentSlug = String(formData.get("investment_slug") || "");
   let investmentSummary = "";
   if (investmentSlug || formData.has("investment_shares")) {
-    const property = getExternalPropertyBySlug(investmentSlug);
+    const property = await findProperty(investmentSlug);
     const shares = Number(formData.get("investment_shares"));
     if (!property || !isPropertyOpenForInvestment(property)) redirect("/contact?error=investment");
     const currency = getPropertyCurrency(property);
@@ -58,9 +59,9 @@ export async function createContactRequest(formData: FormData) {
       `Price per share: ${property.sharePrice.toFixed(2)} ${currency}`,
       `Total amount: ${(shares * property.sharePrice).toFixed(2)} ${currency}`,
       `Minimum: ${MINIMUM_INVESTMENT_EUR} EUR`,
-      `Target annual return: ${projection.annualRate.toFixed(2)}%`,
-      `Modelled annual return: ${projection.annual.toFixed(2)} ${currency}`,
-      `Modelled monthly return: ${projection.monthly.toFixed(2)} ${currency}`,
+      `Projected rental yield: ${projection.annualRate.toFixed(2)}%`,
+      `Projected net rent per year: ${projection.annual.toFixed(2)} ${currency}`,
+      `Projected net rent per month: ${projection.monthly.toFixed(2)} ${currency}`,
       ...(returnBreakdown ? [
         `Rental: ${returnBreakdown.rental.toFixed(2)}%`,
         `Vacation point: ${returnBreakdown.vacationPoint.toFixed(2)}%`,

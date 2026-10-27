@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { getCurrentLocale } from "./lib/server-locale";
 import type { Locale } from "./lib/i18n";
+import { utilityMetadata } from "@/app/lib/utility-metadata";
+
+export function generateMetadata() {
+  return utilityMetadata("notFound");
+}
 
 const copy: Record<Locale, { title: string; text: string; home: string; properties: string }> = {
   en: { title: "Page not found", text: "This page is unavailable. You can return home or browse the properties.", home: "Back to home", properties: "View properties" },
@@ -13,13 +18,13 @@ const copy: Record<Locale, { title: string; text: string; home: string; properti
 export default async function NotFound() {
   const text = copy[await getCurrentLocale()];
   return (
-    <main className="mx-auto min-h-[60vh] max-w-3xl px-6 pb-20 pt-36 text-center text-[#17233f]">
-      <p className="text-lg font-bold text-[#168bd3]">404</p>
+    <main className="mx-auto min-h-[60vh] max-w-3xl px-6 pb-20 pt-36 text-center text-ink">
+      <p className="text-lg font-bold text-brand">404</p>
       <h1 className="mt-3 text-4xl font-bold">{text.title}</h1>
-      <p className="mt-5 text-lg leading-8 text-[#687486]">{text.text}</p>
+      <p className="mt-5 text-lg leading-8 text-muted">{text.text}</p>
       <div className="mt-8 flex flex-wrap justify-center gap-4">
-        <Link href="/" className="rounded-lg bg-[#17233f] px-6 py-3 font-bold text-white">{text.home}</Link>
-        <Link href="/properties" className="rounded-lg border border-[#dfe5eb] px-6 py-3 font-bold">{text.properties}</Link>
+        <Link href="/" className="rounded-lg bg-brand px-6 py-3 font-bold text-white hover:bg-brand-strong">{text.home}</Link>
+        <Link href="/properties" className="rounded-lg border border-line px-6 py-3 font-bold">{text.properties}</Link>
       </div>
     </main>
   );

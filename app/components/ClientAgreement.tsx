@@ -1,9 +1,10 @@
 "use client";
 
-import { ExternalLink, FileCheck2, FileText, RefreshCw } from "lucide-react";
+import { Download, ExternalLink, FileCheck2, FileText, RefreshCw } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { agreementCopy, type AgreementCopy } from "../lib/agreement-copy";
 import type { Locale } from "../lib/i18n";
+import SignaturePad from "./SignaturePad";
 
 export type ClientAgreementData = {
   document: {
@@ -13,6 +14,7 @@ export type ClientAgreementData = {
     sha256: string;
     consentText: string;
     isDraft: boolean;
+    requiresSignature?: boolean;
   };
   acceptance: {
     id: string;
@@ -25,6 +27,7 @@ export type ClientAgreementData = {
     document_path: string;
     document_sha256: string;
     is_draft: boolean;
+    signed_pdf_sha256?: string | null;
   } | null;
   emailConfirmed: boolean;
 };
@@ -40,8 +43,8 @@ function responseError(status: number, copy: AgreementCopy, saving = false) {
   return saving ? copy.saveError : copy.loadError;
 }
 
-const linkStyle = "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#155ab6] hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-const buttonStyle = "inline-flex items-center justify-center gap-2 rounded-lg border border-[#d8e3ee] px-3 py-2 text-sm font-semibold text-[#17233f] hover:bg-[#f3f7fb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-50";
+const linkStyle = "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-brand hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
+const buttonStyle = "inline-flex items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-ink hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-50";
 
 type ClientAgreementProps = {
   locale: Locale;
@@ -67,6 +70,7 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState("");
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
   const submissionInFlight = useRef(false);
   const completionCallback = useRef(onCompletionChange);
   useEffect(() => { completionCallback.current = onCompletionChange; }, [onCompletionChange]);
@@ -128,8 +132,9 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
     ? "bg-emerald-50 text-emerald-800"
     : acceptance?.status === "rejected" || needsRefresh
       ? "bg-amber-50 text-amber-900"
-      : "bg-blue-50 text-[#155ab6]";
-  const canSubmit = Boolean(data && canAccept && data.emailConfirmed && canSign && signerName.trim().length >= 2 && signerName.trim().length <= 120 && !/[\u0000-\u001f\u007f]/.test(signerName) && !loading && !saving && !needsRefresh && !disabled);
+      : "bg-blue-50 text-brand";
+  const needsSignature = Boolean(data?.document.requiresSignature);
+  const canSubmit = Boolean(data && canAccept && data.emailConfirmed && canSign && (!needsSignature || signature) && signerName.trim().length >= 2 && signerName.trim().length <= 120 && !/[\u0000-\u001f\u007f]/.test(signerName) && !loading && !saving && !needsRefresh && !disabled);
 
   async function acceptDocument() {
     if (!canSubmit || !data || submissionInFlight.current) return;
@@ -145,7 +150,7 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
       const response = await fetch("/api/client-agreements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: data.document.version, locale, signerName: signerName.trim(), consent: true }),
+        body: JSON.stringify({ version: data.document.version, locale, signerName: signerName.trim(), consent: true, ...(needsSignature ? { signature } : {}) }),
       });
       if (!response.ok) throw new AgreementRequestError(responseError(response.status, copy, true));
       const payload: ClientAgreementData = await response.json();
@@ -167,10 +172,10 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
   }
 
   return (
-    <section aria-labelledby={`${id}-title`} aria-busy={loading || saving} className="min-w-0 border-t border-[#dce6f0] pt-5 text-[#17233f]">
+    <section aria-labelledby={`${id}-title`} aria-busy={loading || saving} className="min-w-0 border-t border-line pt-5 text-ink">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#edf4fd] text-[#155ab6]" aria-hidden="true">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand" aria-hidden="true">
             {complete ? <FileCheck2 size={21} /> : <FileText size={21} />}
           </span>
           <h3 id={`${id}-title`} className="text-base font-semibold sm:text-lg">{copy.title}</h3>
@@ -182,6 +187,9 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
         <a href={documentPath} target="_blank" rel="noopener noreferrer" className={linkStyle}>
           <ExternalLink size={16} aria-hidden="true" /> {copy.document}<span className="sr-only"> ({copy.newTab})</span>
         </a>
+        {acceptance?.signed_pdf_sha256 && <a href={`/api/client-agreements/${encodeURIComponent(acceptance.id)}/signed`} className={linkStyle}>
+          <Download size={16} aria-hidden="true" /> {copy.signedPdf}
+        </a>}
         {acceptance && <a href={`/api/client-agreements/${encodeURIComponent(acceptance.id)}/receipt`} target="_blank" rel="noopener noreferrer" className={linkStyle}>
           <FileCheck2 size={16} aria-hidden="true" /> {copy.receipt}<span className="sr-only"> ({copy.newTab})</span>
         </a>}
@@ -195,19 +203,21 @@ function AgreementPanel({ locale, signerName, canSign, beforeSign, onCompletionC
       </div>}
 
       <div className="mt-4 space-y-3">
-        {acceptance && <div className="space-y-2 rounded-xl bg-[#f4f7fb] p-4 text-sm">
-          <p><span className="text-[#526079]">{copy.acceptedBy}: </span><span className="break-words font-medium">{acceptance.signer_name}</span></p>
-          <p><span className="text-[#526079]">{copy.acceptedAt}: </span><time dateTime={acceptance.accepted_at}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(acceptance.accepted_at))}</time></p>
+        {acceptance && <div className="space-y-2 rounded-xl bg-canvas p-4 text-sm">
+          <p><span className="text-muted">{copy.acceptedBy}: </span><span className="break-words font-medium">{acceptance.signer_name}</span></p>
+          <p><span className="text-muted">{copy.acceptedAt}: </span><time dateTime={acceptance.accepted_at}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(acceptance.accepted_at))}</time></p>
           {acceptance.status === "rejected" && <p>{copy.rejectedDescription}</p>}
           {acceptance.review_note && <p className="whitespace-pre-wrap break-words"><span className="font-semibold">{copy.reviewNote}: </span>{acceptance.review_note}</p>}
         </div>}
 
         {data && canAccept && <div className="space-y-3">
-          {!data.emailConfirmed && <p role="status" className="rounded-lg bg-blue-50 p-3 text-sm leading-6 text-[#194b88]">{copy.emailRequired}</p>}
-          <p className="text-sm"><span className="text-[#526079]">{copy.signerName}: </span><span className="break-words font-semibold">{signerName.trim() || "—"}</span></p>
-          {!canSign && <p role="status" className="text-sm text-[#526079]">{copy.nameRequired}</p>}
-          <p id={`${id}-consent`} className="text-sm leading-6 text-[#526079]">{data.document.consentText}</p>
-          <button type="button" onClick={() => void acceptDocument()} disabled={!canSubmit} aria-describedby={`${id}-consent`} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#155ab6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#104b98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto">
+          {!data.emailConfirmed && <p role="status" className="rounded-lg bg-blue-50 p-3 text-sm leading-6 text-brand-strong">{copy.emailRequired}</p>}
+          <p className="text-sm"><span className="text-muted">{copy.signerName}: </span><span className="break-words font-semibold">{signerName.trim() || "—"}</span></p>
+          {!canSign && <p role="status" className="text-sm text-muted">{copy.nameRequired}</p>}
+          {needsSignature && <SignaturePad label={copy.signatureLabel} help={copy.signatureHelp} clearLabel={copy.clearSignature} typedLabel={copy.typedSignature} name={signerName} disabled={!data.emailConfirmed || saving || disabled} onChange={setSignature} />}
+          {needsSignature && canSign && !signature && <p role="status" className="text-sm text-muted">{copy.signatureRequired}</p>}
+          <p id={`${id}-consent`} className="text-sm leading-6 text-muted">{data.document.consentText}</p>
+          <button type="button" onClick={() => void acceptDocument()} disabled={!canSubmit} aria-describedby={`${id}-consent`} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto">
             <FileCheck2 size={17} aria-hidden="true" />{saving ? copy.accepting : copy.accept}
           </button>
         </div>}

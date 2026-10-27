@@ -36,6 +36,7 @@ const Calculator = load(path.join(root, "app/properties/[slug]/InvestmentCalcula
 const { externalProperties, getExternalPropertyBySlug } = load(path.join(root, "app/lib/external-properties.ts"));
 const { getPropertyReturnBreakdown, getPropertyShareSupply, getPropertyTargetReturn } = load(path.join(root, "app/lib/property-financials.ts"));
 const { targetReturnCopy } = load(path.join(root, "app/lib/target-return-copy.ts"));
+const { rentalModelCopy } = load(path.join(root, "app/lib/rental-model-copy.ts"));
 const { walletPurchaseCopy } = load(path.join(root, "app/lib/wallet-purchase-copy.ts"));
 const { formatPropertyMoney } = load(path.join(root, "app/lib/property-financials.ts"));
 const copy = {
@@ -129,9 +130,9 @@ test("an unavailable or invalid balance cannot be mistaken for spendable credits
   }
 });
 
-test("anonymous visitors sign in and receive no wallet action or balance", () => {
+test("anonymous visitors are sent to sign-up for this property and receive no wallet action or balance", () => {
   const { markup, text } = renderProperty(getExternalPropertyBySlug("calgary-beltline-rental"), { isAuthenticated: false });
-  assert.match(markup, /href="\/sign-in"/);
+  assert.match(markup, /href="\/join\?next=%2Fproperties%2Fcalgary-beltline-rental"/);
   assert.doesNotMatch(markup, /<form|wallet_balance|purchase_request_id|type="submit"/);
   assert.doesNotMatch(text, /Buy now|Balance \(credits\)|Available balance|25,000/);
 });
@@ -157,105 +158,97 @@ test("wallet purchase controls and balance messages are localized in all five la
   }
 });
 
-test("Calgary uses its annual 28% target for both annual and monthly EUR amounts", () => {
+test("Calgary shows its 3.93% net rental yield for annual and monthly EUR amounts", () => {
   const { text, markup } = renderProperty(getExternalPropertyBySlug("calgary-beltline-rental"));
-  assert.match(text, /Target annual return 28\.00%/);
+  // (2,050 rent - 650 costs) x 12 / 428,000 = 3.93 %; on EUR 2,000 that is EUR 78.60 a year.
+  assert.match(text, /Projected net rental yield p\.a\. 3\.93%/);
   assert.match(text, /Modelled shares 20/);
   assert.match(text, /Total amount €2,000\.00/);
-  assert.match(text, /Modelled annual return · 28\.00% €560\.00/);
-  assert.match(text, /Modelled monthly return €46\.67/);
-  assert.match(text, /Rental · 19\.00% €380\.00/);
-  assert.match(text, /Vacation point · 2\.50% €50\.00/);
-  assert.match(text, /Appreciation · 6\.50% €130\.00/);
-  assert.match(text, /Modelled monthly return \/ share €2\.33/);
-  assert.match(text, /Modelled annual return \/ share €28\.00/);
+  assert.match(text, /Projected rent \/ year · 3\.93% €78\.60/);
+  assert.match(text, /Projected rent \/ month €6\.55/);
+  assert.match(text, /Projected rent \/ share \/ month €0\.33/);
+  assert.match(text, /Projected rent \/ share \/ year €3\.93/);
+  assert.doesNotMatch(text, /Target annual return|Vacation|Appreciation|Annual return breakdown|28\.00%/);
   assert.doesNotMatch(text, /\bCAD\b|\bUSD\b|\$|Your monthly profit|No return period/);
   assert.match(markup, /name="property_slug" value="calgary-beltline-rental"/);
   assert.match(markup, /name="shares" value="20"/);
 });
 
-test("all supported languages retain correct EUR amounts and use localized decimal percentages", () => {
+test("all supported languages show the yield before costs when costs are not stated", () => {
   const property = getExternalPropertyBySlug("sal-rei-boa-vista-b1-residences-ap1");
   for (const locale of ["en", "de", "fr", "es", "it"]) {
     const { text } = renderProperty(property, { locale });
-    const annual = formatPropertyMoney((2000 * 0.26), "EUR", locale, 2).replace(/\s+/g, " ");
-    const monthly = formatPropertyMoney((2000 * 0.26) / 12, "EUR", locale, 2).replace(/\s+/g, " ");
+    // 4,000 x 12 / 265,366 = 18.09 % before costs; EUR 361.80 a year on EUR 2,000.
+    const annual = formatPropertyMoney(361.8, "EUR", locale, 2).replace(/\s+/g, " ");
+    const monthly = formatPropertyMoney(30.15, "EUR", locale, 2).replace(/\s+/g, " ");
+    assert.ok(text.includes(targetReturnCopy[locale].grossTargetTotalReturn), locale);
+    assert.ok(text.includes(targetReturnCopy[locale].costsMissingNote), locale);
     assert.ok(text.includes(targetReturnCopy[locale].annualTarget), locale);
     assert.ok(text.includes(targetReturnCopy[locale].monthlyTarget), locale);
     assert.ok(text.includes(annual), locale);
     assert.ok(text.includes(monthly), locale);
-    assert.ok(text.includes(locale === "en" ? "26.00%" : "26,00%"), locale);
-    if (locale !== "en") assert.doesNotMatch(text, /Target annual return|Modelled monthly return/);
+    // Intl decides the percent spacing per locale ("18,09 %" in de/fr/es, "18,09%" in it).
+    const tag = { en: "en-GB", de: "de-DE", fr: "fr-FR", es: "es-ES", it: "it-IT" }[locale];
+    assert.ok(text.includes(new Intl.NumberFormat(tag, { style: "percent", minimumFractionDigits: 2 }).format(0.1809).replace(/\s+/g, " ")), locale);
+    if (locale !== "en") assert.doesNotMatch(text, /Projected rent|Target annual return/);
   }
 });
 
-test("all seven EUR listings reconcile share, annual, monthly, and component amounts", () => {
-  const targets = {
-    "sal-rei-boa-vista-b1-residences-ap1": 26,
-    "edmonton-windsor-park-8712-120-st": 26.25,
-    "toronto-midtown-condo": 27,
-    "vancouver-kitsilano-suite": 27.5,
-    "calgary-beltline-rental": 28,
-    "ottawa-centretown-duplex": 27.25,
-    "montreal-plateau-triplex": 26.75,
+test("every EUR listing reconciles shares, annual and monthly net-rent amounts", () => {
+  const rates = {
+    "sal-rei-boa-vista-b1-residences-ap1": 18.09,
+    "edmonton-windsor-park-8712-120-st": 11,
+    "toronto-midtown-condo": 3.51,
+    "vancouver-kitsilano-suite": 3.02,
+    "calgary-beltline-rental": 3.93,
+    "ottawa-centretown-duplex": 3.91,
+    "montreal-plateau-triplex": 3.9,
   };
-  assert.equal(externalProperties.length, Object.keys(targets).length);
+  assert.equal(externalProperties.length, Object.keys(rates).length);
   const parseMoney = (value) => Number(value.replaceAll(",", ""));
   for (const property of externalProperties) {
     assert.equal(property.currency, "EUR", property.slug);
-    const breakdown = getPropertyReturnBreakdown(property);
-    assert.ok(breakdown, property.slug);
+    assert.equal(getPropertyReturnBreakdown(property), undefined, property.slug);
     for (const minimum of [2000, 5000, 10000]) {
       const { text } = renderProperty(property, { minInvestment: minimum });
-      assert.ok(text.includes("Target annual return " + targets[property.slug].toFixed(2) + "%"), property.slug);
-      assert.ok(text.includes("Annual return breakdown"), property.slug);
-      assert.doesNotMatch(text, /\bCAD\b|\bUSD\b|\$|No return period|Your monthly profit|Your annual profit/);
+      assert.ok(text.includes(rates[property.slug].toFixed(2) + "%"), property.slug);
+      assert.doesNotMatch(text, /Annual return breakdown|Vacation|Appreciation|\bCAD\b|\bUSD\b|\$|No return period|Your monthly profit|Your annual profit/);
       const investment = parseMoney(text.match(/Total amount €([\d,.]+)/)?.[1] ?? "NaN");
       const selectedShares = Number(text.match(/Modelled shares (\d+)/)?.[1]);
-      const annual = parseMoney(text.match(/Modelled annual return · [\d.]+% €([\d,.]+)/)?.[1] ?? "NaN");
-      const monthly = parseMoney(text.match(/Modelled monthly return €([\d,.]+)/)?.[1] ?? "NaN");
-      const monthlyPerShare = parseMoney(text.match(/Modelled monthly return \/ share €([\d,.]+)/)?.[1] ?? "NaN");
-      const annualPerShare = parseMoney(text.match(/Modelled annual return \/ share €([\d,.]+)/)?.[1] ?? "NaN");
-      const rows = [...text.matchAll(/(Rental|Vacation point|Appreciation) · ([\d.]+)% €([\d,.]+)/g)];
+      const annual = parseMoney(text.match(/Projected rent \/ year · [\d.]+% €([\d,.]+)/)?.[1] ?? "NaN");
+      const monthly = parseMoney(text.match(/Projected rent \/ month €([\d,.]+)/)?.[1] ?? "NaN");
+      const monthlyPerShare = parseMoney(text.match(/Projected rent \/ share \/ month €([\d,.]+)/)?.[1] ?? "NaN");
+      const annualPerShare = parseMoney(text.match(/Projected rent \/ share \/ year €([\d,.]+)/)?.[1] ?? "NaN");
       assert.equal(investment, selectedShares * property.sharePrice, property.slug);
       assert.equal(selectedShares, Math.ceil(minimum / property.sharePrice), property.slug);
-      assert.equal(rows.length, 3, property.slug);
-      const expectedComponents = { Rental: breakdown.rental, "Vacation point": breakdown.vacationPoint, Appreciation: breakdown.appreciation };
-      for (const [, label, percentage, amount] of rows) {
-        assert.equal(Number(percentage), Number(expectedComponents[label].toFixed(2)), property.slug + ": " + label);
-        assert.equal(Math.round(parseMoney(amount) * 100), Math.round(investment * expectedComponents[label]), property.slug + ": " + label);
-      }
-      assert.equal(Math.round(rows.reduce((sum, row) => sum + Number(row[2]), 0) * 100), Math.round(targets[property.slug] * 100), property.slug);
-      const componentCents = rows.reduce((sum, row) => sum + Math.round(parseMoney(row[3]) * 100), 0);
-      assert.ok(Math.abs(componentCents - Math.round(annual * 100)) <= 1, property.slug + ": rounded components reconcile within one cent");
-      assert.equal(Math.round(annual * 100), Math.round(investment * targets[property.slug]), property.slug);
+      assert.equal(Math.round(annual * 100), Math.round(investment * rates[property.slug]), property.slug);
       assert.equal(Math.round(monthly * 100), Math.round(annual * 100 / 12), property.slug);
-      assert.equal(Math.round(annualPerShare * 100), Math.round(property.sharePrice * targets[property.slug]), property.slug);
-      assert.equal(Math.round(monthlyPerShare * 100), Math.round(property.sharePrice * targets[property.slug] / 12), property.slug);
+      assert.equal(Math.round(annualPerShare * 100), Math.round(property.sharePrice * rates[property.slug]), property.slug);
+      assert.equal(Math.round(monthlyPerShare * 100), Math.round(property.sharePrice * rates[property.slug] / 12), property.slug);
     }
   }
 });
 
-test("a legacy cash-rate prop cannot override an explicit annual target", () => {
+test("a legacy cash-rate prop cannot override the published rental yield", () => {
   const property = getExternalPropertyBySlug("calgary-beltline-rental");
   const paused = renderProperty(property, { annualYield: 0 });
   const managed = renderProperty(property, { annualYield: 9 });
   assert.equal(paused.text, managed.text);
-  assert.match(paused.text, /Modelled annual return · 28\.00% €560\.00/);
-  assert.match(paused.text, /Modelled monthly return €46\.67/);
+  assert.match(paused.text, /Projected rent \/ year · 3\.93% €78\.60/);
+  assert.match(paused.text, /Projected rent \/ month €6\.55/);
 });
 
-test("listings without component data still use annual divided by twelve", () => {
+test("listings without a configured yield still use annual divided by twelve", () => {
   const { text } = renderProperty(getExternalPropertyBySlug("calgary-beltline-rental"), {
     annualYield: 12, targetTotalReturn: undefined, returnBreakdown: undefined,
   });
   assert.match(text, /Investment calculator/);
-  assert.match(text, /Modelled annual return · 12\.00% €240\.00/);
-  assert.match(text, /Modelled monthly return €20\.00/);
+  assert.match(text, /Projected rent \/ year · 12\.00% €240\.00/);
+  assert.match(text, /Projected rent \/ month €20\.00/);
   assert.doesNotMatch(text, /Annual return breakdown|CAD|\$/);
 });
 
-test("Edmonton rental scenario shows net monthly cash separately from the annual target", () => {
+test("Edmonton rental scenario shows its net monthly rent with the rental-model note", () => {
   const property = getExternalPropertyBySlug("edmonton-windsor-park-8712-120-st");
   for (const locale of ["en", "de", "fr", "es", "it"]) {
     const { text } = renderProperty(property, { rentalModel: property.rentalModel, locale });
@@ -264,6 +257,9 @@ test("Edmonton rental scenario shows net monthly cash separately from the annual
     assert.ok(text.includes(formatPropertyMoney(netPerShare * 2, "EUR", locale, 2).replace(/\s+/g, " ")));
     assert.ok(text.includes("660 EUR") || text.includes("EUR 660"));
     assert.doesNotMatch(text, /CAD|USD|1[.,]6015/);
-    assert.doesNotMatch(text, /Modelled monthly return/);
+    // One monthly rental figure only (the investor share of net rent), no target split.
+    assert.ok(!text.includes(targetReturnCopy[locale].monthlyTarget), locale);
+    assert.doesNotMatch(text, /Monthly rental target|Monatliches Mietziel|Objectif locatif mensuel|Objetivo mensual de alquiler|Obiettivo locativo mensile/);
+    assert.ok(text.includes(rentalModelCopy[locale].note.split(". ")[0].replace(/\s+/g, " ")), locale);
   }
 });

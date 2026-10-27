@@ -20,12 +20,13 @@ export function harness(locale, companyMethods = []) {
   ];
   const database = {
     auth: {
-      getUser: async () => ({ data: { user: { id: "test-admin", email: "admin@example.invalid", app_metadata: { role: "admin" } } } }),
+      getUser: async () => ({ data: { user: { id: "test-admin", email: "admin@example.invalid", app_metadata: { role: "admin" }, factors: [{ id: "factor", factor_type: "totp", status: "verified" }] } } }),
+      getClaims: async () => ({ data: { claims: { sub: "test-admin", aal: "aal2" } }, error: null }),
       admin: { listUsers: async () => ({ data: { users: [] }, error: null }) },
     },
     from(table) {
       const response = { data: table === "payment_requests" ? payments : table === "company_payment_methods" ? companyMethods : [], error: null, count: 0 };
-      const query = { select: () => query, order: () => query, limit: () => query, eq: () => query, then: (resolve, reject) => Promise.resolve(response).then(resolve, reject) };
+      const query = { select: () => query, order: () => query, limit: () => query, eq: () => query, or: () => query, then: (resolve, reject) => Promise.resolve(response).then(resolve, reject) };
       return query;
     },
   };
@@ -83,7 +84,7 @@ for (const locale of ["en", "de", "fr", "es", "it"]) {
     assert.doesNotMatch(cryptoForm + overview, /method=stripe_link|method=manual|value="stripe_link"|value="manual"|Stripe link|Crypto USDC/);
     const audit = await renderPage("app/admin/audit/page.tsx");
     const layout = renderToStaticMarkup(await app.load("app/admin/layout.tsx").default({ children: createElement("p", null, "child") }));
-    for (const [html, english] of [[properties, "Manage properties"], [profits, "Property returns"], [payments, "Manage payment requests"], [overview, "Manage customer requests"], [audit, "Admin audit logs"], [layout, "Client requests"]]) {
+    for (const [html, english] of [[properties, "Manage properties"], [profits, "Property returns"], [payments, "Manage payment requests"], [overview, "Client requests"], [overview, "Deposits to verify"], [audit, "Admin audit logs"], [layout, "Client requests"]]) {
       assert.ok(html.includes(t(english)), `${locale}: ${english}`);
       if (locale !== "en") assert.ok(!html.includes(`>${english}<`), `${locale}: untranslated ${english}`);
     }

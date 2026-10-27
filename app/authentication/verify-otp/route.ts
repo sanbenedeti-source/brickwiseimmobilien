@@ -6,6 +6,9 @@ import { createTranslator } from "@/app/lib/translate";
 
 export async function POST(request: Request) {
   const t = createTranslator(getRequestLocale(request));
+  // Only the sign-in form on this site may start a session (no cross-site login).
+  if (request.headers.get("origin") !== new URL(request.url).origin) return NextResponse.json({ error: t("This request could not be verified. Reload the page and try again.") }, { status: 403 });
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") return NextResponse.json({ error: t("This request could not be verified. Reload the page and try again.") }, { status: 415 });
   const { email, token } = await request.json().catch(() => ({}));
   const normalizedEmail =
     typeof email === "string" ? email.trim().toLowerCase() : "";

@@ -3,8 +3,9 @@ import { getCurrentLocale } from "@/app/lib/server-locale";
 import { localeHtmlLang } from "@/app/lib/i18n";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
+import { AdminAlert, AdminCard, AdminEmpty, AdminPageHeader, StatusBadge } from "../ui";
 
 type AuditLog = {
   id: string;
@@ -22,11 +23,12 @@ export default async function AdminAuditPage() {
   const t = getAdminText(locale);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isAdminUser(user)) redirect("/admin");
+  if (!(await hasAdminSession(supabase, user))) redirect("/admin");
 
+  const header = <AdminPageHeader eyebrow={t("Security")} title={t("Admin audit logs")} description={t("Immutable history of sensitive actions performed through the administrator panel. The newest 250 events are shown.")} />;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return <AuditMessage message={t("Audit service configuration is missing.")} />;
+  if (!url || !key) return <main className="admin-workspace">{header}<AdminAlert tone="danger">{t("Audit service configuration is missing.")}</AdminAlert></main>;
 
   const admin = createSupabaseClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
   const { data, error } = await admin
@@ -35,30 +37,28 @@ export default async function AdminAuditPage() {
     .order("created_at", { ascending: false })
     .limit(250);
 
-  if (error) return <AuditMessage message={t("Audit logs could not be loaded.")} />;
+  if (error) return <main className="admin-workspace">{header}<AdminAlert tone="danger">{t("Audit logs could not be loaded.")}</AdminAlert></main>;
   const logs = (data || []) as AuditLog[];
+  const time = new Intl.DateTimeFormat(localeHtmlLang[locale], { dateStyle: "medium", timeStyle: "medium", timeZone: "UTC" });
 
   return (
-    <main className="min-h-screen bg-[#060914] px-5 py-10 text-white sm:px-10">
-      <div className="mx-auto max-w-7xl">
-        <p className="font-bold uppercase tracking-[0.16em] text-[#45aee8]">{t("Security")}</p>
-        <h1 className="mt-3 text-4xl font-bold sm:text-6xl">{t("Admin audit logs")}</h1>
-        <p className="mt-4 max-w-3xl text-white/70">{t("Immutable history of sensitive actions performed through the administrator panel. The newest 250 events are shown.")}</p>
-
-        <div className="mt-10 overflow-x-auto rounded-2xl border border-white/15 bg-white text-[#17233f]">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[#eef3f7] text-xs uppercase tracking-wide text-[#667085]"><tr><th className="px-5 py-4">{t("Time")}</th><th className="px-5 py-4">{t("Administrator")}</th><th className="px-5 py-4">{t("Action")}</th><th className="px-5 py-4">{t("Target")}</th><th className="px-5 py-4">{t("Status")}</th><th className="px-5 py-4">{t("Details")}</th></tr></thead>
-            <tbody className="divide-y divide-slate-200">
-              {logs.map((log) => <tr key={log.id} className="align-top"><td className="whitespace-nowrap px-5 py-4">{new Intl.DateTimeFormat(localeHtmlLang[locale], { dateStyle: "medium", timeStyle: "medium", timeZone: "UTC" }).format(new Date(log.created_at))} UTC</td><td className="px-5 py-4">{log.actor_email || t("Unknown")}</td><td className="px-5 py-4 font-semibold">{log.action}</td><td className="px-5 py-4"><span className="block">{log.target_type}</span><span className="text-xs text-slate-500">{log.target_id || "—"}</span></td><td className="px-5 py-4"><span className={log.status === "success" ? "text-emerald-700" : "text-red-700"}>{t(log.status === "success" ? "Success" : "Failure")}</span></td><td className="max-w-sm px-5 py-4 font-mono text-xs text-slate-600">{JSON.stringify(log.details)}</td></tr>)}
-              {logs.length === 0 && <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500">{t("No administrative actions have been recorded yet.")}</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <main className="admin-workspace">
+      {header}
+      <AdminCard title={t("Admin audit logs")} flush>
+        {logs.length === 0 ? <AdminEmpty>{t("No administrative actions have been recorded yet.")}</AdminEmpty> : <table className="admin-table admin-table-stack">
+          <thead><tr><th scope="col">{t("Time")}</th><th scope="col">{t("Administrator")}</th><th scope="col">{t("Action")}</th><th scope="col">{t("Target")}</th><th scope="col">{t("Status")}</th><th scope="col">{t("Details")}</th></tr></thead>
+          <tbody>
+            {logs.map((log) => <tr key={log.id}>
+              <td data-label={t("Time")} className="whitespace-nowrap">{time.format(new Date(log.created_at))} UTC</td>
+              <td data-label={t("Administrator")} className="break-all">{log.actor_email || t("Unknown")}</td>
+              <td data-label={t("Action")}><code className="admin-code-inline">{log.action}</code></td>
+              <td data-label={t("Target")}><p>{log.target_type}</p><p className="admin-cell-sub break-all">{log.target_id || "—"}</p></td>
+              <td data-label={t("Status")}><StatusBadge status={log.status} label={t(log.status === "success" ? "Success" : "Failure")} /></td>
+              <td data-label={t("Details")} className="max-w-sm break-all font-mono text-[11.5px] text-[var(--admin-muted)]">{JSON.stringify(log.details)}</td>
+            </tr>)}
+          </tbody>
+        </table>}
+      </AdminCard>
     </main>
   );
-}
-
-function AuditMessage({ message }: { message: string }) {
-  return <main className="min-h-screen bg-[#060914] p-10 text-white"><div className="mx-auto max-w-4xl rounded-2xl border border-red-400/30 bg-red-500/10 p-6">{message}</div></main>;
 }

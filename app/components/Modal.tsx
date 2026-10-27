@@ -30,7 +30,7 @@ export default function Modal({ children, labelledBy, onClose }: { children: Rea
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }}
     onClick={event => { if (event.target === event.currentTarget) onClose(); }}
-    className="fixed inset-0 m-0 h-[100dvh] max-h-none w-screen max-w-none overflow-y-auto border-0 bg-transparent p-4 text-[#17233f] backdrop:bg-[#07152d]/65 open:flex open:items-center open:justify-center">
+    className="fixed inset-0 m-0 h-[100dvh] max-h-none w-screen max-w-none overflow-y-auto border-0 bg-transparent p-4 text-ink backdrop:bg-ink/65 open:flex open:items-center open:justify-center">
     {children}
   </dialog>;
 }

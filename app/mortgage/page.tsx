@@ -144,7 +144,7 @@ function Input({
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-bold text-slate-600">{label}</span>
-      <span className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0F172A]">
+      <span className="flex overflow-hidden rounded-xl border border-line-strong bg-white focus-within:border-ink">
         {prefix && (
           <span className="flex w-11 items-center justify-center bg-slate-50 font-bold text-slate-500">
             {prefix}
@@ -155,7 +155,7 @@ function Input({
           value={value}
           step={step}
           onChange={(event) => onChange(Number(event.target.value))}
-          className="min-w-0 flex-1 px-4 py-3 text-lg font-bold text-[#0F172A] outline-none"
+          className="w-0 min-w-0 flex-1 px-4 py-3 text-lg font-bold text-ink outline-none"
         />
         {suffix && (
           <span className="flex w-12 items-center justify-center bg-slate-50 font-bold text-slate-500">
@@ -236,19 +236,19 @@ export default function MortgageHubPage() {
   }, [currentRate, newRate, refiBalance]);
 
   return (
-    <main className="min-h-screen bg-[#f5f5f2] px-4 pb-16 pt-28 text-[#0F172A] sm:px-6 md:pt-36">
+    <main className="min-h-screen bg-canvas px-4 pb-16 pt-28 text-ink sm:px-6 md:pt-36">
       <section className="mx-auto max-w-7xl">
-        <section className="grid gap-8 lg:grid-cols-[1fr_0.75fr] lg:items-stretch">
-          <div className="rounded-[22px] bg-[#0F172A] p-5 text-white sm:p-6 md:rounded-[32px] md:p-10">
-            <p className="text-lg font-bold text-red-300">{t("Mortgage center")}</p>
-            <h1 className="font-display mt-3 text-[2.55rem] font-bold leading-[0.98] sm:mt-4 sm:text-5xl md:text-7xl">
+        <section className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_0.75fr] lg:items-stretch">
+          <div className="rounded-[22px] bg-ink p-5 text-white sm:p-6 md:rounded-[32px] md:p-10">
+            <p className="text-lg font-bold text-brand-light">{t("Mortgage center")}</p>
+            <h1 className="font-display mt-3 text-[2rem] font-bold leading-[1.05] sm:mt-4 sm:text-5xl md:text-7xl">
               {t("Get mortgage-ready before you choose a property")}</h1>
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-white/75 md:text-xl">
               {t("Explore payment estimates, Canadian rate scenarios, refinance savings, affordability, and document readiness in one focused mortgage hub.")}</p>
             <div className="mt-7 grid gap-3 sm:flex sm:flex-wrap">
               <Link
                 href="/mortgage-calculator"
-                className="rounded-xl bg-white px-6 py-3 text-center text-base font-bold text-[#0F172A]"
+                className="rounded-lg bg-white px-6 py-3 text-center text-base font-bold text-ink"
               >
                 {t("Calculate payment")}</Link>
               <a
@@ -287,7 +287,7 @@ export default function MortgageHubPage() {
             title={t("Mortgage tools")}
             text={t("Explore payment, affordability, and refinancing estimates to prepare your mortgage decisions.")}
           />
-          <div className="mt-6 grid gap-5 md:grid-cols-4">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {tools.map((tool) => (
               <Link
                 key={tool.title}
@@ -324,8 +324,8 @@ export default function MortgageHubPage() {
                 onClick={() => setActiveProduct(key)}
                 className={`rounded-xl px-5 py-3 text-base font-bold ${
                   activeProduct === key
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-slate-100 text-[#0F172A]"
+                    ? "bg-ink text-white"
+                    : "bg-slate-100 text-ink"
                 }`}
               >
                 {loanProducts[key].label}
@@ -357,7 +357,7 @@ export default function MortgageHubPage() {
                 <p className="mt-4 text-sm text-slate-500">{provider.note}</p>
                 <a
                   href="#pre-approval"
-                  className="mt-5 block rounded-xl bg-[#0F172A] px-4 py-3 text-center font-bold text-white"
+                  className="mt-5 block rounded-lg bg-brand px-4 py-3 text-center font-bold text-white hover:bg-brand-strong"
                 >
                   {t("Prepare quote")}</a>
               </div>
@@ -372,7 +372,7 @@ export default function MortgageHubPage() {
               <Input label={t("Annual income")} prefix="€" value={income} step={1000} onChange={setIncome} />
               <Input label={t("Monthly debt")} prefix="€" value={debts} step={50} onChange={setDebts} />
               <Input label={t("Down payment")} prefix="€" value={downPayment} step={1000} onChange={setDownPayment} />
-              <div className="rounded-2xl bg-[#0F172A] p-5 text-white">
+              <div className="rounded-2xl bg-ink p-5 text-white">
                 <p className="text-sm font-bold text-white/60">{t("Estimated budget")}</p>
                 <p className="mt-2 text-3xl font-bold sm:text-4xl">{euro.format(Math.round(affordability))}</p>
               </div>
@@ -395,7 +395,7 @@ export default function MortgageHubPage() {
                 <p className="text-sm font-bold text-slate-500">{t("New")}</p>
                 <p className="mt-2 text-2xl font-bold">{euro.format(Math.round(refinance.newPayment))}</p>
               </div>
-              <div className="rounded-2xl bg-[#0F172A] p-5 text-white">
+              <div className="rounded-2xl bg-ink p-5 text-white">
                 <p className="text-sm font-bold text-white/60">{t("Savings")}</p>
                 <p className="mt-2 text-2xl font-bold">{euro.format(Math.round(refinance.monthlySavings))}</p>
               </div>
@@ -409,7 +409,7 @@ export default function MortgageHubPage() {
             title={t("Home loan options")}
             text={t("A compact comparison table for common mortgage scenarios in Canada.")}
           />
-          <div className="mt-6 overflow-x-auto">
+          <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-brand mt-6 overflow-x-auto">
             <table className="w-full min-w-[820px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-sm uppercase tracking-wide text-slate-500">
@@ -448,7 +448,7 @@ export default function MortgageHubPage() {
                 t("Property tax, condo fee, and insurance assumptions"),
               ].map((item) => (
                 <label key={item} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                  <input type="checkbox" className="h-5 w-5 accent-[#0F172A]" />
+                  <input type="checkbox" className="h-5 w-5 accent-ink" />
                   <span className="font-bold text-slate-700">{item}</span>
                 </label>
               ))}
@@ -474,7 +474,7 @@ export default function MortgageHubPage() {
             <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
               {cityLinks.map((city) => (
                 <span key={city} className="rounded-full bg-slate-100 px-4 py-2 font-bold text-slate-700">
-                  {city} {t("mortgage rates")}</span>
+                  {t("Mortgage rates in {city}").replace("{city}", city)}</span>
               ))}
             </div>
           </section>

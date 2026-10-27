@@ -1,7 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
+import { getCatalogueProperties } from "@/app/lib/property-registry";
 import {
-  externalProperties,
   hiddenManualPropertyIds,
   hiddenManualPropertySlugs,
 } from "@/app/lib/external-properties";
@@ -10,6 +10,8 @@ import { getRequestLocale, localeHtmlLang } from "@/app/lib/i18n";
 import { apiCopy } from "@/app/lib/api-copy";
 import { getPropertyMapLinks } from "@/app/lib/property-location";
 import { getPropertyTranslations, localizeProperty } from "@/app/lib/property-localization";
+import { hasAdminSession } from "@/app/lib/admin-session";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -47,11 +49,19 @@ function getPublicSupabaseClient() {
   });
 }
 
+async function isAdminRequest() {
+  const client = await createClient();
+  const { data: { user } } = await client.auth.getUser();
+  return hasAdminSession(client, user);
+}
+
 export async function GET(request: NextRequest) {
   const locale = getRequestLocale(request);
   const copy = apiCopy[locale];
   const searchParams = request.nextUrl.searchParams;
-  const status = searchParams.get("status") || "active";
+  const requestedStatus = searchParams.get("status") || "active";
+  // Drafts and the unfiltered list are for admins only; everyone else sees published listings.
+  const status = ["active", "available"].includes(requestedStatus) || await isAdminRequest() ? requestedStatus : "active";
   const city = searchParams.get("city")?.trim() || null;
   const includeExternal = searchParams.get("includeExternal") !== "false";
 
@@ -94,7 +104,7 @@ export async function GET(request: NextRequest) {
 
   const settingsBySlug = new Map(shareSettings.map((setting) => [setting.property_slug, setting]));
   const translations = await getPropertyTranslations(locale);
-  const matchingExternal = externalProperties.filter(property =>
+  const matchingExternal = (await getCatalogueProperties()).filter(property => property.listed !== false &&
     (status === "all" || property.status === status || (status === "active" && property.status === "available"))
     && (!city || property.city.toLowerCase().includes(city.toLowerCase()))
   );

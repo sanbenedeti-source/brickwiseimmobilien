@@ -6,7 +6,7 @@ const code=ts.transpileModule(readFileSync(new URL('./refund-actions.ts',import.
 function harness({admin=true,error=null}={}){
  const calls=[],paths=[];const modules={
   'next/cache':{revalidatePath:p=>paths.push(p)},
-  '@/app/lib/admin':{isAdminUser:u=>u?.app_metadata?.role==='admin'},
+  '@/app/lib/admin':{isAdminUser:u=>u?.app_metadata?.role==='admin'},'@/app/lib/admin-session':{hasAdminSession:async(_c,u)=>u?.app_metadata?.role==='admin'},
   '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{app_metadata:{role:admin?'admin':'client'}}}})},rpc:async(name,args)=>{calls.push({name,args});return {data:'refund-id',error};}})},
  };const loaded={exports:{}};new Function('require','module','exports',code)(n=>{assert.ok(modules[n],n);return modules[n];},loaded,loaded.exports);
  return {run:f=>loaded.exports.refundPayment({result:''},f),calls,paths};

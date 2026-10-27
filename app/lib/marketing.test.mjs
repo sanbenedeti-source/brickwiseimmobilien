@@ -39,3 +39,12 @@ test('storage failure fails closed and unsafe navigation unloads initialized tag
  const active=setup('accepted');active.api.trackPage();active.win.location.href='https://www.brickwise-immo.de/dashboard';active.api.checkMarketingRoute();assert.equal(active.reloads(),1);
 });
 
+test('ad landing pages keep click identifiers for attribution but still reject personal values',()=>{
+ const h=setup('accepted','https://www.brickwise-immo.de/properties/toronto-midtown-condo?gclid=Cj0KCQ_abc-1&utm_source=google&lang=de');h.api.trackPage();assert.equal(h.scripts.length,2);
+ assert.equal(h.win.dataLayer.at(-1)[2].page_location,'https://www.brickwise-immo.de/properties/toronto-midtown-condo?gclid=Cj0KCQ_abc-1&utm_source=google');
+ for(const url of ['/?gclid=a&email=person@example.invalid','/?utm_source=person@example.invalid','/?fbclid='+'x'.repeat(201)]){const p=setup('accepted','https://www.brickwise-immo.de'+url);p.api.trackPage();assert.equal(p.scripts.length,0,url);}
+});
+test('leaving public pages unloads tags without deleting attribution cookies; a property enquiry stays tracked',()=>{
+ const h=setup('accepted');h.api.trackPage();h.win.location.href='https://www.brickwise-immo.de/contact?projekt=toronto-midtown-condo';h.api.checkMarketingRoute();assert.equal(h.reloads(),0);
+ h.win.location.href='https://www.brickwise-immo.de/dashboard';h.api.checkMarketingRoute();assert.equal(h.reloads(),1);assert.equal(h.cookies.length,0);
+});

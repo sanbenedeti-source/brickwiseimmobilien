@@ -7,7 +7,7 @@ import { creditCustomerWallet, type WalletCreditState } from "./actions";
 const messages = {
  en: { saved: "Wallet credited. This operation cannot be submitted again.", error: "Credit could not be completed. Retry this operation; do not create a new one until its status is checked.", pending: "Processing…", next: "Start a new credit" },
  de: { saved: "Wallet gutgeschrieben. Dieser Vorgang kann nicht erneut gesendet werden.", error: "Gutschrift nicht abgeschlossen. Wiederholen Sie diesen Vorgang; erstellen Sie keinen neuen, bevor der Status geprüft wurde.", pending: "Wird verarbeitet…", next: "Neue Gutschrift starten" },
- fr: { saved: "Portefeuille crédité. Cette opération ne peut plus être envoyée.", error: "Crédit non terminé. Réessayez cette opération ; n’en créez pas une nouvelle avant de vérifier son statut.", pending: "Traitement…", next: "Commencer un nouveau crédit" },
+ fr: { saved: "Portefeuille crédité. Cette opération ne peut plus être envoyée.", error: "Crédit non terminé. Réessayez cette opération ; n’en créez pas une nouvelle avant de vérifier son statut.", pending: "Traitement…", next: "Commencer un nouveau crédit" },
  es: { saved: "Saldo abonado. Esta operación no se puede enviar de nuevo.", error: "No se pudo completar el abono. Reintenta esta operación; no crees otra antes de comprobar su estado.", pending: "Procesando…", next: "Iniciar un nuevo abono" },
  it: { saved: "Wallet accreditato. Questa operazione non può essere inviata di nuovo.", error: "Accredito non completato. Riprova questa operazione; non crearne una nuova prima di verificarne lo stato.", pending: "Elaborazione…", next: "Avvia un nuovo accredito" },
 };

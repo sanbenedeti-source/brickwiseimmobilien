@@ -22,17 +22,19 @@ function load(filename) {
 const { externalProperties } = load(path.join(directory, "external-properties.ts"));
 const { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } = load(path.join(directory, "property-financials.ts"));
 const { minimumInvestmentShares, canPurchaseShares } = load(path.join(directory, "investment-policy.ts"));
+// [price, share price, published rental yield %, annual / monthly net rent on EUR 2000].
+// The yield is (monthly rent - stated monthly costs) x 12 / price, rounded to 0.01 %.
 const expected = {
-  "sal-rei-boa-vista-b1-residences-ap1": [265366, 250, 26, 520, 43.33],
-  "edmonton-windsor-park-8712-120-st": [1008000, 1000, 26.25, 525, 43.75],
-  "toronto-midtown-condo": [735000, 250, 27, 540, 45.00],
-  "vancouver-kitsilano-suite": [895000, 500, 27.5, 550, 45.83],
-  "calgary-beltline-rental": [428000, 100, 28, 560, 46.67],
-  "ottawa-centretown-duplex": [690000, 250, 27.25, 545, 45.42],
-  "montreal-plateau-triplex": [815000, 500, 26.75, 535, 44.58],
+  "sal-rei-boa-vista-b1-residences-ap1": [265366, 250, 18.09, 361.8, 30.15],
+  "edmonton-windsor-park-8712-120-st": [1008000, 1000, 11, 220, 18.33],
+  "toronto-midtown-condo": [735000, 250, 3.51, 70.2, 5.85],
+  "vancouver-kitsilano-suite": [895000, 500, 3.02, 60.4, 5.03],
+  "calgary-beltline-rental": [428000, 100, 3.93, 78.6, 6.55],
+  "ottawa-centretown-duplex": [690000, 250, 3.91, 78.2, 6.52],
+  "montreal-plateau-triplex": [815000, 500, 3.9, 78, 6.5],
 };
 
-test("every EUR listing reconciles property value, whole shares and the EUR 2000 annual/monthly model", () => {
+test("every EUR listing reconciles property value, whole shares and the EUR 2000 net-rent model", () => {
   assert.equal(externalProperties.length, Object.keys(expected).length);
   for (const property of externalProperties) {
     const [price, sharePrice, rate, annual, monthly] = expected[property.slug];
@@ -48,31 +50,29 @@ test("every EUR listing reconciles property value, whole shares and the EUR 2000
     assert.equal(canPurchaseShares(minimumShares, sharePrice, 2000, supply.available), true);
     assert.equal(canPurchaseShares(minimumShares - 1, sharePrice, 2000, supply.available), false);
     const projection = getPropertyProjection(property, minimumShares);
-    assert.equal(projection.annualRate, rate);
-    assert.ok(Math.abs(projection.annual - annual) < 1e-9);
+    assert.equal(projection.annualRate, rate, property.slug);
+    assert.ok(Math.abs(projection.annual - annual) < 1e-9, property.slug);
     assert.equal(projection.monthly, projection.annual / 12);
-    assert.equal(Number(projection.monthly.toFixed(2)), monthly);
+    assert.equal(Number(projection.monthly.toFixed(2)), monthly, property.slug);
     assert.equal(projection.propertyMonthly, projection.propertyAnnual / 12);
     assert.equal(projection.monthlyPerShare, projection.annualPerShare / 12);
-    const breakdown = getPropertyReturnBreakdown(property);
-    assert.ok(Math.abs(breakdown.rental + breakdown.vacationPoint + breakdown.appreciation - rate) < 1e-9);
-    assert.deepEqual(breakdown, { rental: 19, vacationPoint: 2.5, appreciation: rate - 21.5 });
-    assert.equal(property.appreciationYield, breakdown.appreciation);
     assert.equal(property.annualRent, property.monthlyRent * 12);
     assert.equal(property.annualYield, property.annualRent / property.price * 100);
   }
 });
 
-test("listing targets vary from 26 to 28 percent with appreciation above vacation benefits", () => {
-  const rates = externalProperties.map(property => getPropertyProjection(property).annualRate);
-  assert.equal(Math.min(...rates), 26);
-  assert.equal(Math.max(...rates), 28);
-  assert.equal(new Set(rates).size, externalProperties.length);
+test("listings publish only the rental yield their rent and stated costs support", () => {
   for (const property of externalProperties) {
-    const breakdown = getPropertyReturnBreakdown(property);
-    assert.equal(breakdown.rental, 19);
-    assert.ok(breakdown.appreciation > breakdown.vacationPoint);
+    // No 26-28 % targets and no rental / vacation / appreciation split any more.
+    assert.equal(getPropertyReturnBreakdown(property), undefined, property.slug);
+    assert.equal(property.appreciationYield, 0, property.slug);
+    const net = (property.monthlyRent - property.monthlyExpenses) * 12 / property.price * 100;
+    assert.ok(Math.abs(getPropertyProjection(property).annualRate - net) < 0.005, property.slug);
+    assert.ok(getPropertyProjection(property).annualRate < 20, property.slug);
+    assert.equal(property.costsStated, property.monthlyExpenses > 0, property.slug);
   }
+  // Sal Rei has no stated costs yet: its yield is before costs and must be labelled that way.
+  assert.equal(externalProperties.find((property) => property.slug.startsWith("sal-rei-")).costsStated, false);
 });
 
 test("reservation updates change availability without changing any income denominator", () => {
@@ -87,16 +87,16 @@ test("reservation updates change availability without changing any income denomi
   }
 });
 
- test("Edmonton nightly scenario distributes net rent across all shares", () => {
+test("Edmonton nightly scenario distributes net rent across all shares", () => {
   const p = externalProperties.find(p => p.slug === "edmonton-windsor-park-8712-120-st");
   assert.ok(Math.abs(p.monthlyRent - 13200) < 1e-9);
   assert.ok(Math.abs(p.monthlyExpenses - 3960) < 1e-9);
   const net = p.monthlyRent - p.monthlyExpenses;
-  assert.ok(Math.abs(net - 9240) < 1e-9);
-  assert.ok(Math.abs(net / p.totalShares * 1008 - net) < 1e-9);
-  assert.ok(Math.abs(p.targetReturnBreakdown.rental + p.targetReturnBreakdown.vacationPoint + p.appreciationYield - 26.25) < 1e-9);
   assert.equal(net, 9240);
-  assert.notEqual(net, getPropertyProjection(p).propertyMonthly);
-  assert.equal(getPropertyProjection(p, 20).annual, 5250);
-  assert.equal(getPropertyProjection(p).annualPerShare, 262.5);
+  assert.ok(Math.abs(net / p.totalShares * 1008 - net) < 1e-9);
+  // The published yield is the net rent itself: 9,240 x 12 / 1,008,000 = 11 %.
+  assert.equal(getPropertyProjection(p).annualRate, 11);
+  assert.ok(Math.abs(getPropertyProjection(p).propertyMonthly - net) < 1e-9);
+  assert.equal(getPropertyProjection(p, 20).annual, 2200);
+  assert.equal(getPropertyProjection(p).annualPerShare, 110);
 });

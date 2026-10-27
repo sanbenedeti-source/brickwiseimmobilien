@@ -1,17 +1,19 @@
 import { formatPropertyPercent, localizedPayment, propertyUiCopy } from "../properties/property-ui-copy";
 import { createTranslator } from "../lib/translate";
+import SubmitButton from "../components/SubmitButton";
 import { minimumInvestmentShares, MINIMUM_INVESTMENT_EUR } from "../lib/investment-policy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyTargetReturn } from "../lib/property-financials";
 import { investmentCopy } from "../lib/investment-copy";
-import { targetReturnCopy } from "../lib/target-return-copy";
+import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
 import { getPropertyTranslations } from "../lib/property-localization";
-import { company } from "@/app/lib/company";
+import { company, localizeCountry } from "@/app/lib/company";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import { isAdminUser } from "@/app/lib/admin";
 import ClientPortalSidebar from "@/app/components/ClientPortalSidebar";
 import { createContactRequest } from "./actions";
-import { getExternalPropertyBySlug } from "../lib/external-properties";
+import { findProperty } from "../lib/property-registry";
 import { type Locale } from "../lib/i18n";
 import { getCurrentLocale } from "@/app/lib/server-locale";
 
@@ -139,56 +141,17 @@ const contactCopy: Record<string, ContactCopy> = {
     company: "Unternehmen",
     emailLabel: "E-Mail",
     phoneLabel: "Telefon",
-    whatsapp: "WhatsApp Nachricht",
+    whatsapp: "WhatsApp-Nachricht",
     hours: "Zeiten",
-    hoursValue: "Montag bis Freitag\n09:00 - 18:00 Mitteleuropäische Zeit",
+    hoursValue: "Montag bis Freitag\n09:00–18:00 Uhr (MEZ)",
     fastAccess: "Schneller Immobilienzugang",
     fastAccessText:
       "Erstellen Sie ein Profil, um Projektinformationen und internationale Immobilienchancen zu prüfen.",
     createProfile: "Profil erstellen",
   },
-  fr: { ...({} as ContactCopy), backHome: "Retour à l'accueil", title: "Contacter BRICKWISE", intro: "Posez vos questions sur l'accès immobilier international, les modèles de participation locative ou les projets. Notre équipe vous indiquera les prochaines étapes.", sendMessage: "Envoyer un message", selectedProperty: "Bien sélectionné", locationMissing: "Emplacement non indiqué", requestedAmount: "Montant demandé", payout: "Versement", firstName: "Prénom", lastName: "Nom", email: "Adresse e-mail", phone: "Téléphone", topic: "Sujet", topics: ["Intérêt pour une part locative", "Informations sur un bien", "Demande d'investissement", "Connexion / compte", "Question générale"], message: "Message", messagePlaceholder: "Votre message...", defaultMessage: (title, amount, payout) => `Je souhaite obtenir plus d'informations sur la participation locative de « ${title} ».\n\nMontant demande : ${amount}\nVersement préféré : ${payout}`, open: "ouvert", send: "Envoyer le message", company: "Entreprise", emailLabel: "E-mail", phoneLabel: "Téléphone", whatsapp: "Message WhatsApp", hours: "Horaires", hoursValue: "Du lundi au vendredi\n09:00 - 18:00, heure d'Europe centrale", fastAccess: "Accès rapide aux biens", fastAccessText: "Créez un profil pour consulter les projets et les opportunités immobilières internationales.", createProfile: "Créer un profil" },
+  fr: { ...({} as ContactCopy), backHome: "Retour à l’accueil", title: "Contacter BRICKWISE", intro: "Posez vos questions sur l’accès immobilier international, les modèles de participation locative ou les projets. Notre équipe vous indiquera les prochaines étapes.", sendMessage: "Envoyer un message", selectedProperty: "Bien sélectionné", locationMissing: "Emplacement non indiqué", requestedAmount: "Montant demandé", payout: "Versement", firstName: "Prénom", lastName: "Nom", email: "Adresse e-mail", phone: "Téléphone", topic: "Sujet", topics: ["Intérêt pour une part locative", "Informations sur un bien", "Demande d’investissement", "Connexion / compte", "Question générale"], message: "Message", messagePlaceholder: "Votre message...", defaultMessage: (title, amount, payout) => `Je souhaite obtenir plus d'informations sur la participation locative de « ${title} ».\n\nMontant demandé : ${amount}\nVersement préféré : ${payout}`, open: "ouvert", send: "Envoyer le message", company: "Entreprise", emailLabel: "E-mail", phoneLabel: "Téléphone", whatsapp: "Message WhatsApp", hours: "Horaires", hoursValue: "Du lundi au vendredi\n09:00 - 18:00, heure d'Europe centrale", fastAccess: "Accès rapide aux biens", fastAccessText: "Créez un profil pour consulter les projets et les opportunités immobilières internationales.", createProfile: "Créer un profil" },
   es: { ...({} as ContactCopy), backHome: "Volver al inicio", title: "Contacta con BRICKWISE", intro: "Pregunta sobre acceso inmobiliario internacional, modelos de participación en alquiler o información de proyectos. El equipo responderá con los siguientes pasos.", sendMessage: "Enviar un mensaje", selectedProperty: "Propiedad seleccionada", locationMissing: "Ubicación no indicada", requestedAmount: "Importe solicitado", payout: "Pago", firstName: "Nombre", lastName: "Apellidos", email: "Correo electrónico", phone: "Teléfono", topic: "Asunto", topics: ["Interés en participación de alquiler", "Información de propiedad", "Solicitud de inversión", "Acceso / cuenta", "Pregunta general"], message: "Mensaje", messagePlaceholder: "Tu mensaje...", defaultMessage: (title, amount, payout) => `Me interesa la participación de alquiler de «${title}» y deseo más información.\n\nImporte solicitado: ${amount}\nPago preferido: ${payout}`, open: "abierto", send: "Enviar mensaje", company: "Empresa", emailLabel: "Correo", phoneLabel: "Teléfono", whatsapp: "Mensaje por WhatsApp", hours: "Horario", hoursValue: "Lunes a viernes\n09:00 - 18:00, hora central europea", fastAccess: "Acceso rápido a propiedades", fastAccessText: "Crea un perfil para consultar proyectos y oportunidades inmobiliarias internacionales.", createProfile: "Crear perfil" },
   it: { ...({} as ContactCopy), backHome: "Torna alla home", title: "Contatta BRICKWISE", intro: "Chiedi informazioni sull'accesso immobiliare internazionale, sui modelli di partecipazione locativa o sui progetti. Il team risponderà con i prossimi passi.", sendMessage: "Invia un messaggio", selectedProperty: "Immobile selezionato", locationMissing: "Posizione non indicata", requestedAmount: "Importo richiesto", payout: "Pagamento", firstName: "Nome", lastName: "Cognome", email: "Indirizzo e-mail", phone: "Telefono", topic: "Argomento", topics: ["Interesse per quota locativa", "Informazioni immobile", "Richiesta di investimento", "Accesso / account", "Domanda generale"], message: "Messaggio", messagePlaceholder: "Il tuo messaggio...", defaultMessage: (title, amount, payout) => `Sono interessato alla partecipazione locativa di «${title}» e desidero maggiori informazioni.\n\nImporto richiesto: ${amount}\nPagamento preferito: ${payout}`, open: "aperto", send: "Invia messaggio", company: "Società", emailLabel: "E-mail", phoneLabel: "Telefono", whatsapp: "Messaggio WhatsApp", hours: "Orari", hoursValue: "Da lunedì a venerdì\n09:00 - 18:00, ora dell'Europa centrale", fastAccess: "Accesso rapido agli immobili", fastAccessText: "Crea un profilo per consultare progetti e opportunità immobiliari internazionali.", createProfile: "Crea profilo" },
-  sq: {
-    backHome: "Kthehu ne kryefaqe",
-    title: "Kontakto BRICKWISE",
-    intro:
-      "Pyet per akses ne prona nderkombetare, modele pjesemarrjeje ne qira ose informacion projekti. Ekipi do te pergjigjet me hapat tjere.",
-    sendMessage: "Dergo mesazh",
-    selectedProperty: "Prona e zgjedhur",
-    locationMissing: "Lokacioni mungon",
-    requestedAmount: "Shuma e kerkuar",
-    payout: "Pagesa",
-    firstName: "Emri",
-    lastName: "Mbiemri",
-    email: "Email",
-    phone: "Telefoni",
-    topic: "Tema",
-    topics: [
-      "Interes per pjese qiraje",
-      "Informacion prone",
-      "Kerkese investimi",
-      "Login / llogari",
-      "Pyetje e pergjithshme",
-    ],
-    message: "Mesazhi",
-    messagePlaceholder: "Mesazhi yt...",
-    defaultMessage: (title, amount, payout) =>
-      `Jam i/e interesuar per pjesemarrje ne qira per "${title}" dhe dua me shume informacion.\n\nShuma e kerkuar: ${amount}\nPagesa e preferuar: ${payout}`,
-    open: "e hapur",
-    send: "Dergo mesazhin",
-    company: "Kompania",
-    emailLabel: "Email",
-    phoneLabel: "Telefon",
-    whatsapp: "Mesazh ne WhatsApp",
-    hours: "Orari",
-    hoursValue: "E hene deri te premten\n09:00 - 18:00 Koha e Evropes Qendrore",
-    fastAccess: "Akses i shpejte ne prona",
-    fastAccessText:
-      "Krijo profil per te pare informacion projektesh dhe mundesi pronash nderkombetare.",
-    createProfile: "Krijo profil",
-  },
 };
 
 
@@ -199,7 +162,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
   const ui = propertyUiCopy[locale];
   const t = createTranslator(locale);
   const { error: requestError, auszahlung, betrag, projekt, shares, payment } = await searchParams;
-  const externalProperty = projekt ? getExternalPropertyBySlug(projekt) : null;
+  const externalProperty = projekt ? await findProperty(projekt) ?? null : null;
   const returnBreakdown = externalProperty ? getPropertyReturnBreakdown(externalProperty) : undefined;
   const hasTargetReturn = externalProperty?.targetTotalReturn !== undefined || Boolean(returnBreakdown);
   const returnCopy = targetReturnCopy[locale];
@@ -216,7 +179,9 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
   const paymentLabel = localizedPayment(payment, locale, ui.bank);
 
   const supabase = await createClient();
-  const user = await getCurrentUser();
+  const signedIn = await getCurrentUser();
+  // Administrators see the public contact page, not the client portal.
+  const user = isAdminUser(signedIn) ? null : signedIn;
 
   const { data: databaseProperty } = projekt && !externalProperty
     ? await supabase
@@ -239,7 +204,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
           `${copy.selectedProperty}: ${property.title}`,
           `${copy.requestedAmount}: ${investmentAmount ? formatMoney(investmentAmount, currency, locale) : copy.open}`,
           ...(shareQuantity ? [`${investmentCopy[locale].shares}: ${shareQuantity}`] : []),
-          `${returnCopy.targetTotalReturn}: ${formatPropertyPercent(getPropertyTargetReturn(externalProperty), locale)}`,
+          `${rentalYieldLabel(locale, externalProperty.costsStated)}: ${formatPropertyPercent(getPropertyTargetReturn(externalProperty), locale)}`,
           ...(projection ? [
             `${returnCopy.annualTarget}: ${formatMoney(projection.annual, currency, locale)}`,
             `${returnCopy.monthlyTarget}: ${formatMoney(projection.monthly, currency, locale)}`,
@@ -261,14 +226,14 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
       {user?.email && (
         <ClientPortalSidebar active="contact" email={user.email} fullName={portalName} locale={locale} />
       )}
-      <main className={`min-h-screen bg-[#f5f5f2] text-[#111111] ${user?.email ? "pt-16 lg:ml-[282px] lg:pt-0" : ""}`}>
-      <section className="bg-[#0F172A] px-6 pb-20 pt-36 text-white">
+      <main className={`min-h-screen bg-canvas text-ink ${user?.email ? "pt-16 lg:ml-[282px] lg:pt-0" : ""}`}>
+      <section className="bg-ink px-6 pb-20 pt-36 text-white">
         <div className="mx-auto max-w-7xl">
-          <Link href="/" className="text-sm font-bold text-white/70">
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm font-bold text-white/80 hover:text-white">
             {copy.backHome}
           </Link>
 
-          <h1 className="font-display mt-10 max-w-4xl text-6xl font-bold leading-none md:text-7xl">
+          <h1 className="font-display mt-10 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl sm:leading-none md:text-7xl">
             {copy.title}
           </h1>
 
@@ -280,7 +245,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
 
       <section className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-[1fr_0.8fr]">
         <div className="rounded-[32px] bg-white p-8 shadow-xl">
-          <h2 className="text-5xl font-bold">{copy.sendMessage}</h2>
+          <h2 className="text-3xl font-bold sm:text-5xl">{copy.sendMessage}</h2>
 
           {property && (
             <div className="mt-8 rounded-2xl bg-emerald-50 p-5 text-emerald-900">
@@ -300,7 +265,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
                   {copy.requestedAmount}: {formatMoney(investmentAmount, currency, locale)}{!hasTargetReturn && <> - {copy.payout} {payoutLabel}</>}
                 </p>
               )}
-              {hasTargetReturn && externalProperty && <p className="mt-3 text-sm">{returnCopy.targetTotalReturn}: {formatPropertyPercent(getPropertyTargetReturn(externalProperty), locale)}. {returnNote}</p>}
+              {hasTargetReturn && externalProperty && <p className="mt-3 text-sm">{rentalYieldLabel(locale, externalProperty.costsStated)}: {formatPropertyPercent(getPropertyTargetReturn(externalProperty), locale)}. {returnNote}</p>}
               {projection && <div className="mt-3 grid gap-2 text-sm"><p>{returnCopy.annualTarget}: {formatMoney(projection.annual, currency, locale)}</p><p>{returnCopy.monthlyTarget}: {formatMoney(projection.monthly, currency, locale)}</p></div>}
               {returnBreakdown && <p className="mt-2 text-sm">{returnCopy.rental}: {formatPropertyPercent(returnBreakdown.rental, locale)} · {returnCopy.vacationPoint}: {formatPropertyPercent(returnBreakdown.vacationPoint, locale)} · {returnCopy.appreciation}: {formatPropertyPercent(returnBreakdown.appreciation, locale)}</p>}
             </div>
@@ -320,11 +285,11 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
             />
 
             <div className="grid gap-5 md:grid-cols-2">
-              <Field label={copy.firstName} name="first_name" placeholder="Alex" defaultValue={firstName} required />
-              <Field label={copy.lastName} name="last_name" placeholder="Morgan" defaultValue={lastName} required />
+              <Field label={copy.firstName} name="first_name" placeholder={namePlaceholders[locale][0]} defaultValue={firstName} required />
+              <Field label={copy.lastName} name="last_name" placeholder={namePlaceholders[locale][1]} defaultValue={lastName} required />
             </div>
 
-            <Field label={copy.email} name="email" type="email" placeholder="name@email.com" defaultValue={user?.email || ""} required />
+            <Field label={copy.email} name="email" type="email" placeholder={namePlaceholders[locale][2]} defaultValue={user?.email || ""} required />
             <Field label={copy.phone} name="phone" type="tel" placeholder="+49 30 123456" />
 
             <div>
@@ -332,7 +297,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
               <select
                 id="contact-topic" name="topic"
                 defaultValue={property ? copy.topics[0] : copy.topics[1]}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-lg outline-none focus:border-[#0F172A]"
+                className="mt-2 w-full rounded-2xl border border-line-strong px-5 py-4 text-lg outline-none focus:border-ink"
               >
                 {copy.topics.map((topic) => (
                   <option key={topic}>{topic}</option>
@@ -348,16 +313,13 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
                 defaultValue={defaultMessage}
                 placeholder={copy.messagePlaceholder}
                 rows={6}
-                className="mt-2 w-full resize-none rounded-2xl border border-slate-200 px-5 py-4 text-lg outline-none focus:border-[#0F172A]"
+                className="mt-2 w-full resize-none rounded-2xl border border-line-strong px-5 py-4 text-lg outline-none focus:border-ink"
               />
             </div>
 
-            <button
-              type="submit"
-              className="rounded-2xl bg-[#0F172A] py-4 text-lg font-bold text-white transition hover:bg-[#111827]"
-            >
+            <SubmitButton className="rounded-lg bg-brand py-4 text-lg font-bold text-white transition hover:bg-brand-strong disabled:opacity-60">
               {copy.send}
-            </button>
+            </SubmitButton>
           </form>
         </div>
 
@@ -367,23 +329,23 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
 
             <div className="mt-8 space-y-5 text-lg text-slate-600">
               <p>
-                <strong className="text-[#111111]">{copy.company}:</strong>
+                <strong className="text-ink">{copy.company}:</strong>
                 <br />
                 {company.legalName}
                 <br />
                 <a href={company.europeanMapUrl} target="_blank" rel="noreferrer" className="underline">
-                  {company.europeanStreet}<br />{company.europeanLocality}
+                  {company.europeanStreet}<br />{localizeCountry(company.europeanLocality, locale)}
                 </a>
               </p>
 
               <p>
-                <strong className="text-[#111111]">{copy.emailLabel}:</strong>
+                <strong className="text-ink">{copy.emailLabel}:</strong>
                 <br />
                 <a href={`mailto:${company.email}`}>{company.email}</a>
               </p>
 
               <p>
-                <strong className="text-[#111111]">{copy.phoneLabel}:</strong>
+                <strong className="text-ink">{copy.phoneLabel}:</strong>
                 <br />
                 <a href={`tel:${company.phone}`}>{company.phoneDisplay}</a>
               </p>
@@ -393,14 +355,14 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
                   href={`https://wa.me/${company.phone.slice(1)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex rounded-2xl bg-[#25D366] px-6 py-3 font-bold text-white"
+                  className="inline-flex rounded-2xl bg-[#25D366] px-6 py-3 font-bold text-ink"
                 >
                   {copy.whatsapp}
                 </a>
               </p>
 
               <p>
-                <strong className="text-[#111111]">{copy.hours}:</strong>
+                <strong className="text-ink">{copy.hours}:</strong>
                 <br />
                 {copy.hoursValue.split("\n").map((line) => (
                   <span key={line}>
@@ -412,7 +374,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
             </div>
           </div>
 
-          <div className="rounded-[32px] bg-[#0F172A] p-8 text-white">
+          <div className="rounded-[32px] bg-ink p-8 text-white">
             <h3 className="text-4xl font-bold">{copy.fastAccess}</h3>
 
             <p className="mt-5 text-lg leading-relaxed text-white/75">
@@ -421,7 +383,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
 
             <Link
               href="/join"
-              className="mt-8 inline-block rounded-2xl bg-white px-8 py-4 text-lg font-bold text-[#0F172A]"
+              className="mt-8 inline-block rounded-lg bg-white px-8 py-4 text-lg font-bold text-ink"
             >
               {copy.createProfile}
             </Link>
@@ -432,6 +394,16 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
     </>
   );
 }
+
+const namePlaceholders: Record<Locale, [string, string, string]> = {
+  en: ["Alex", "Morgan", "name@example.com"],
+  de: ["Max", "Mustermann", "max@beispiel.de"],
+  fr: ["Camille", "Martin", "camille@exemple.fr"],
+  es: ["Lucía", "García", "lucia@ejemplo.es"],
+  it: ["Giulia", "Rossi", "giulia@esempio.it"],
+};
+
+const fieldAutoComplete: Record<string, string> = { first_name: "given-name", last_name: "family-name", email: "email", phone: "tel" };
 
 function Field({
   label,
@@ -453,11 +425,12 @@ function Field({
       <label htmlFor={`contact-${name}`} className="text-sm font-bold text-slate-600">{label}</label>
       <input
         id={`contact-${name}`} name={name}
+        autoComplete={fieldAutoComplete[name]}
         type={type}
         required={required}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-lg outline-none focus:border-[#0F172A]"
+        className="mt-2 w-full rounded-2xl border border-line-strong px-5 py-4 text-lg outline-none focus:border-ink"
       />
     </div>
   );

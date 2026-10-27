@@ -82,6 +82,7 @@ function harness({
     cache.set(filename, loaded);
     const require = (name) => {
       if (name === "next/navigation") return { redirect: (destination) => { throw new Redirect(destination); } };
+      if (name === "react") return { cache: (fn) => fn };
       if (name === "next/cache") return { revalidatePath: (route) => revalidated.push(route) };
       if (name === "@/lib/supabase/server") return { createClient: async () => client };
       if (name === "@supabase/supabase-js") return { createClient: () => admin };
@@ -139,7 +140,11 @@ async function redirected(action, form, destination) {
 
 test("completed Sal Rei remains open for investment and explicit closure is respected", () => {
   const { listings } = harness();
-  assert.ok(listings.externalProperties.every(listings.isPropertyOpenForInvestment));
+  assert.ok(listings.listedProperties.length > 0 && listings.listedProperties.every(listings.isPropertyOpenForInvestment));
+  // Unlisted catalogue entries stay viewable for holders but accept no new investment.
+  for (const property of listings.externalProperties.filter((item) => item.listed === false)) {
+    assert.equal(listings.isPropertyOpenForInvestment(property), false, property.slug);
+  }
   assert.equal(listings.getExternalPropertyBySlug(salRei).status, "active");
   assert.equal(listings.getExternalPropertyBySlug(salRei).constructionStatus, "completed");
   assert.equal(listings.isPropertyOpenForInvestment({ status: "active", investmentOpen: false }), false);
@@ -160,22 +165,43 @@ test("both Server Actions reject closed listings before creating investment requ
   }
 });
 
-test("all seven listings accept the EUR 2000 minimum and use annual targets divided by 12", async () => {
+test("the admin account cannot buy shares and is sent back to the admin panel", async () => {
+  const app = harness({ user: { id: "test-admin", email: "admin@example.com", user_metadata: {}, app_metadata: { role: "admin" } } });
+  await redirected(app.purchase, walletForm(), "/admin");
+  assert.equal(app.walletCalls.length, 0);
+  assert.equal(app.saved.length, 0);
+});
+
+test("unlisted catalogue entries reject new contact and purchase requests", async () => {
+  const { listings } = harness();
+  const unlisted = listings.externalProperties.filter((item) => item.listed === false);
+  assert.ok(unlisted.length > 0);
+  for (const property of unlisted) {
+    const app = harness();
+    const shares = Math.ceil(2000 / property.sharePrice);
+    await redirected(app.contact, contactForm(shares, property.slug), "/contact?error=investment");
+    await redirected(app.purchase, purchaseForm(shares, "bank_transfer", property.slug), "/dashboard?request=invalid#properties");
+    assert.equal(app.saved.length, 0, property.slug);
+  }
+});
+
+test("every listed property accepts the EUR 2000 minimum and records its net rental yield", async () => {
+  // (monthly rent - stated costs) x 12 / price; Sal Rei has no stated costs yet.
   const expectedRates = {
-    [salRei]: 26,
-    "edmonton-windsor-park-8712-120-st": 26.25,
-    "toronto-midtown-condo": 27,
-    "vancouver-kitsilano-suite": 27.5,
-    [calgary]: 28,
-    "ottawa-centretown-duplex": 27.25,
-    "montreal-plateau-triplex": 26.75,
+    [salRei]: 18.09,
+    "edmonton-windsor-park-8712-120-st": 11,
+    "toronto-midtown-condo": 3.51,
+    "vancouver-kitsilano-suite": 3.02,
+    [calgary]: 3.93,
+    "ottawa-centretown-duplex": 3.91,
+    "montreal-plateau-triplex": 3.9,
   };
   const { listings } = harness();
   assert.equal(listings.externalProperties.length, Object.keys(expectedRates).length);
   const euro = (value) => new Intl.NumberFormat("en-CA", {
     style: "currency", currency: "EUR", currencyDisplay: "code", minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(value);
-  for (const property of listings.externalProperties) {
+  for (const property of listings.listedProperties) {
     const app = harness();
     const shares = Math.ceil(2000 / property.sharePrice);
     const annual = shares * property.sharePrice * expectedRates[property.slug] / 100;
@@ -186,18 +212,13 @@ test("all seven listings accept the EUR 2000 minimum and use annual targets divi
     assert.equal(app.rateRequests, 0, property.slug);
     assert.equal(app.saved.length, 2);
     assert.ok(app.saved[0].payload.message.includes("Total amount: 2000.00 EUR"));
-    assert.ok(app.saved[0].payload.message.includes(`Modelled annual return: ${annual.toFixed(2)} EUR`));
-    assert.ok(app.saved[0].payload.message.includes(`Modelled monthly return: ${monthly.toFixed(2)} EUR`));
-    assert.ok(app.saved[1].payload.message.includes(`Modelled annual return: ${euro(annual)}`));
-    assert.ok(app.saved[1].payload.message.includes(`Modelled monthly return: ${euro(monthly)}`));
-    const breakdown = property.targetReturnBreakdown ?? {
-      rental: property.annualYield, vacationPoint: property.vacationPointYield, appreciation: property.appreciationYield,
-    };
+    assert.ok(app.saved[0].payload.message.includes(`Projected net rent per year: ${annual.toFixed(2)} EUR`), property.slug);
+    assert.ok(app.saved[0].payload.message.includes(`Projected net rent per month: ${monthly.toFixed(2)} EUR`), property.slug);
+    assert.ok(app.saved[1].payload.message.includes(`Projected net rent per year: ${euro(annual)}`), property.slug);
+    assert.ok(app.saved[1].payload.message.includes(`Projected net rent per month: ${euro(monthly)}`), property.slug);
     for (const { payload } of app.saved) {
-      assert.ok(payload.message.includes(`Target annual return: ${expectedRates[property.slug].toFixed(2)}%`), property.slug);
-      assert.ok(payload.message.includes(`Rental: ${breakdown.rental.toFixed(2)}%`), property.slug);
-      assert.ok(payload.message.includes(`Vacation point: ${breakdown.vacationPoint.toFixed(2)}%`), property.slug);
-      assert.ok(payload.message.includes(`Appreciation: ${breakdown.appreciation.toFixed(2)}% (not a daily cash flow)`), property.slug);
+      assert.ok(payload.message.includes(`Projected rental yield: ${expectedRates[property.slug].toFixed(2)}%`), property.slug);
+      assert.doesNotMatch(payload.message, /Target annual return|Vacation point|Appreciation|Modelled/);
       assert.doesNotMatch(payload.message, /CAD|ECB|Projected annual cash return/);
       assert.equal(payload.status, "new");
     }
@@ -222,7 +243,7 @@ test("both Server Actions reject below-minimum, fractional, nonfinite and unavai
 
 test("EUR wallet purchases use trusted listing prices and the atomic EUR ledger", async () => {
   const { listings } = harness();
-  for (const property of listings.externalProperties) {
+  for (const property of listings.listedProperties) {
     const app = harness();
     const shares = Math.ceil(2000 / property.sharePrice);
     const form = walletForm(shares, property.slug);
@@ -398,7 +419,7 @@ test("bank and crypto requests remain available without a wallet intent", async 
   }
 });
 
-test("Sal Rei's annual model includes non-cash benefits without calling them rental cash income", async () => {
+test("Sal Rei requests record its rental yield without any non-cash target components", async () => {
   const app = harness();
   const form = contactForm(8);
   form.set("currency", "CAD");
@@ -406,16 +427,13 @@ test("Sal Rei's annual model includes non-cash benefits without calling them ren
   await redirected(app.contact, form, "/thank-you?conversion=lead");
   const message = app.saved[0].payload.message;
   assert.match(message, /Total amount: 2000\.00 EUR/);
-  assert.match(message, /Target annual return: 26\.00%/);
-  assert.match(message, /Modelled annual return: 520\.00 EUR/);
-  assert.match(message, /Modelled monthly return: 43\.33 EUR/);
-  assert.match(message, /Rental: 19\.00%/);
-  assert.match(message, /Vacation point: 2\.50%/);
-  assert.match(message, /Appreciation: 4\.50% \(not a daily cash flow\)/);
-  assert.match(message, /not a guaranteed rental payment/);
+  assert.match(message, /Projected rental yield: 18\.09%/);
+  assert.match(message, /Projected net rent per year: 361\.80 EUR/);
+  assert.match(message, /Projected net rent per month: 30\.15 EUR/);
+  assert.doesNotMatch(message, /Rental:|Vacation point|Appreciation|non-cash/);
 });
 
-test("legacy cash settings do not replace the configured annual listing model", async () => {
+test("legacy cash settings do not replace the published rental yield", async () => {
   for (const settings of [
     null, { projected_annual_return: 9, profit_active: true },
     { projected_annual_return: 0, profit_active: false },
@@ -423,9 +441,9 @@ test("legacy cash settings do not replace the configured annual listing model", 
     const app = harness({ settings });
     await redirected(app.purchase, purchaseForm(20, "crypto", calgary), "/dashboard/orders?request=sent");
     const message = app.saved[0].payload.message;
-    assert.match(message, /Target annual return: 28\.00%/);
-    assert.match(message, /Modelled annual return: EUR\s*560\.00/);
-    assert.match(message, /Modelled monthly return: EUR\s*46\.67/);
+    assert.match(message, /Projected rental yield: 3\.93%/);
+    assert.match(message, /Projected net rent per year: EUR\s*78\.60/);
+    assert.match(message, /Projected net rent per month: EUR\s*6\.55/);
     assert.match(message, /Payment method: Cryptocurrency/);
     assert.equal(app.rateRequests, 0);
   }

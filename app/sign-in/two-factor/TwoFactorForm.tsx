@@ -115,10 +115,10 @@ export default function TwoFactorForm({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f2] text-[#111111]">
+    <main className="min-h-screen bg-canvas text-ink">
       <section className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-32">
         <div className="w-full max-w-xl rounded-[32px] bg-white p-10 shadow-sm">
-          <h1 className="font-display text-5xl font-bold">{copy.title}</h1>
+          <h1 className="font-display text-4xl font-bold sm:text-5xl">{copy.title}</h1>
 
           <p className="mt-4 text-lg text-slate-600">{copy.intro}</p>
 
@@ -130,7 +130,7 @@ export default function TwoFactorForm({
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value.trim().toLowerCase())}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-lg outline-none focus:border-[#0F172A]"
+                className="mt-2 w-full rounded-2xl border border-line-strong px-5 py-4 text-lg outline-none focus:border-ink"
                 placeholder={copy.emailPlaceholder}
               />
             </div>
@@ -147,7 +147,7 @@ export default function TwoFactorForm({
                 pattern="[0-9]{6}"
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-center text-3xl tracking-[0.35em] outline-none focus:border-[#0F172A]"
+                className="mt-2 w-full rounded-2xl border border-line-strong px-5 py-4 text-center text-3xl tracking-[0.35em] outline-none focus:border-ink"
                 placeholder="000000"
               />
             </div>
@@ -157,7 +157,7 @@ export default function TwoFactorForm({
             <button
               type="submit"
               disabled={loading || !email.trim() || code.length !== 6}
-              className="w-full rounded-2xl bg-[#0F172A] py-4 text-lg font-bold text-white disabled:opacity-60"
+              className="w-full rounded-lg bg-brand py-4 text-lg font-bold text-white disabled:opacity-60 hover:bg-brand-strong"
             >
               {loading ? copy.checking : copy.confirm}
             </button>
@@ -168,7 +168,7 @@ export default function TwoFactorForm({
               type="button"
               onClick={handleResend}
               disabled={resending || !email.trim()}
-              className="font-bold text-[#0F172A] disabled:opacity-60"
+              className="font-bold text-ink disabled:opacity-60"
             >
               {resending ? copy.sending : copy.resend}
             </button>

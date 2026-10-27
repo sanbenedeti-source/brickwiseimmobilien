@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useLocale } from "./LocaleProvider";
-import { createTranslator } from "../lib/translate";
+import type { Locale } from "../lib/i18n";
+
+// Inline instead of the full UI translation table, which would ship with every page.
+const tagline: Record<Locale, string> = {
+  en: "Fractional Real Estate",
+  de: "Immobilienbeteiligung",
+  fr: "Immobilier fractionné",
+  es: "Inmuebles fraccionados",
+  it: "Immobili frazionati",
+};
 
 type BrandLogoProps = {
   className?: string;
@@ -31,9 +40,9 @@ function GlobalRealEstateMark() {
 }
 
 export default function BrandLogo({ className = "", inverted = false }: BrandLogoProps) {
-  const t = createTranslator(useLocale());
-  const primaryText = inverted ? "text-white" : "text-[#2f9bdb]";
-  const secondaryText = inverted ? "text-[#ffd166]" : "text-[#536071]";
+  const locale = useLocale();
+  const primaryText = inverted ? "text-white" : "text-ink";
+  const secondaryText = inverted ? "text-brand-light" : "text-muted";
 
   return (
     <Link href="/" className={`flex min-w-0 items-center gap-2 sm:gap-3 ${className}`}>
@@ -43,7 +52,7 @@ export default function BrandLogo({ className = "", inverted = false }: BrandLog
           BRICKWISE
         </span>
         <span className={`mt-1 block max-w-[8.8rem] truncate text-[9px] font-semibold uppercase sm:max-w-none sm:text-[10px] ${secondaryText}`}>
-          {t("Fractional Real Estate")}
+          {tagline[locale]}
         </span>
       </span>
     </Link>

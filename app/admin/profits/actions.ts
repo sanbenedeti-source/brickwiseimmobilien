@@ -3,19 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { isAdminUser } from "@/app/lib/admin";
+import { hasAdminSession } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import { writeAdminMutation } from "@/app/lib/admin-audit";
-import { getExternalPropertyBySlug } from "@/app/lib/external-properties";
+import { findProperty } from "@/app/lib/property-registry";
 import { getPropertyShareSupply } from "@/app/lib/property-financials";
 
 export async function updateProfitSettings(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isAdminUser(user)) redirect("/admin");
+  if (!(await hasAdminSession(supabase, user))) redirect("/admin");
 
   const propertySlug = String(formData.get("property_slug") || "").trim();
-  const property = getExternalPropertyBySlug(propertySlug);
+  const property = await findProperty(propertySlug);
   const profitStartDate = String(formData.get("profit_start_date") || "").trim();
   const profitActive = formData.get("profit_active") === "on";
   const validDate = !profitStartDate || (/^\d{4}-\d{2}-\d{2}$/.test(profitStartDate) && Number.isFinite(Date.parse(`${profitStartDate}T00:00:00Z`)) && new Date(`${profitStartDate}T00:00:00Z`).toISOString().slice(0, 10) === profitStartDate);

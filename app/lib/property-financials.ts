@@ -8,6 +8,16 @@ export type PropertyReturnBreakdown = {
   appreciation: number;
 };
 
+/** Allocation of a target, not a claim about observed rental income. */
+export function allocateTargetReturn(annualTarget: number): PropertyReturnBreakdown {
+  if (!Number.isFinite(annualTarget) || annualTarget < 0) throw new RangeError("Invalid annual target");
+  return {
+    rental: annualTarget * 70 / 100,
+    vacationPoint: annualTarget * 15 / 100,
+    appreciation: annualTarget * 15 / 100,
+  };
+}
+
 type PropertyFinancials = {
   currency?: PropertyCurrency;
   price?: number | null;
@@ -84,7 +94,7 @@ export function getPropertyShareSupply(
 }
 
 export function formatPropertyMoney(value: number, currency: PropertyCurrency, locale: Locale = "en", digits = 0) {
-  const locales = { en: "en-CA", de: "de-DE", fr: "fr-FR", es: "es-ES", it: "it-IT" };
+  const locales = { en: "en-GB", de: "de-DE", fr: "fr-FR", es: "es-ES", it: "it-IT" };
   return new Intl.NumberFormat(locales[locale], {
     style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits,
   }).format(value);

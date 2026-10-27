@@ -8,6 +8,11 @@ import {
   localeCookieName,
   normalizeLocale,
 } from "@/app/lib/i18n";
+import { utilityMetadata } from "@/app/lib/utility-metadata";
+
+export function generateMetadata() {
+  return utilityMetadata("updatePassword");
+}
 
 const en: UpdatePasswordCopy = {
   title: "Choose a new password",

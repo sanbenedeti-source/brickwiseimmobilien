@@ -1,5 +1,7 @@
 // Name and document number match the Sunbiz entity list. Address and manager
 // are owner-supplied and have not been checked against the detailed filing.
+import type { Locale } from "./i18n";
+
 export const company = {
   name: "BRICKWISE",
   legalName: "BRICKWISE LLC",
@@ -21,3 +23,13 @@ export const company = {
   europeanLocality: "54294 Trier, Germany",
   europeanMapUrl: "https://maps.google.com/?q=Bobineth%C3%B6fe+38,+54294+Trier,+Germany",
 } as const;
+
+const countryNames: Record<string, Record<Locale, string>> = {
+  Germany: { en: "Germany", de: "Deutschland", fr: "Allemagne", es: "Alemania", it: "Germania" },
+  "United States": { en: "United States", de: "Vereinigte Staaten", fr: "États-Unis", es: "Estados Unidos", it: "Stati Uniti" },
+};
+
+/** Address and registration strings are stored in English; show the country in the page language. */
+export function localizeCountry(text: string, locale: Locale) {
+  return text.replace(/Germany|United States/g, (name) => countryNames[name][locale]);
+}

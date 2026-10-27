@@ -21,10 +21,10 @@ function harness({ exists = true, adminUser = true } = {}) {
     "next/cache": { revalidatePath() {} },
     "next/navigation": { redirect(location) { throw Object.assign(new Error("redirect"), { location }); } },
     "@supabase/supabase-js": { createClient: () => database },
-    "@/app/lib/admin": { isAdminUser: () => adminUser },
+    "@/app/lib/admin": { isAdminUser: () => adminUser }, "@/app/lib/admin-session": { hasAdminSession: async () => adminUser },
     "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: "admin" } } }) } }) },
     "@/app/lib/admin-audit": { writeAdminMutation: async (_client,event,ops) => {assert.equal(event.action,"profit_status.update");for(const op of ops){writes.push({kind:op.operation,payload:op.data});Object.assign(current,op.data);}return {error:null};} },
-    "@/app/lib/external-properties": { getExternalPropertyBySlug: (slug) => slug === property.slug ? property : undefined },
+    "@/app/lib/property-registry": { findProperty: async (slug) => slug === property.slug ? property : undefined },
     "@/app/lib/property-financials": { getPropertyShareSupply },
   };
   const loadedModule = { exports: {} };

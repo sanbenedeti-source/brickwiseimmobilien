@@ -4,7 +4,7 @@ import { formatPropertyMoney, getPropertyProjection, type PropertyReturnBreakdow
 import { formatMinimumInvestment, minimumInvestmentShares } from "../../lib/investment-policy";
 import { formatPropertyPercent } from "../property-ui-copy";
 import { investmentCopy } from "../../lib/investment-copy";
-import { targetReturnCopy } from "../../lib/target-return-copy";
+import { targetReturnCopy, rentalYieldLabel } from "../../lib/target-return-copy";
 import { walletPurchaseCopy } from "../../lib/wallet-purchase-copy";
 
 import { rentalModelCopy } from "../../lib/rental-model-copy";
@@ -146,17 +146,17 @@ export default function InvestmentCalculator({
 
   return (
     <section className="mt-10 overflow-hidden rounded-lg bg-white shadow-sm">
-      <div className="border-b border-[#e5e9ef] bg-[#2f9bdb] px-5 py-7 text-white md:px-8">
+      <div className="border-b border-line bg-brand px-5 py-7 text-white md:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/80"><CircleDollarSign size={18} />{isAuthenticated ? copy.dashboardActive : copy.signInRequired}</div>
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/90"><CircleDollarSign size={18} />{isAuthenticated ? copy.dashboardActive : copy.signInRequired}</div>
             <h2 className="mt-3 text-3xl font-semibold md:text-4xl">{hasTargetReturn ? returnText.calculatorTitle : copy.title}</h2>
-            <p className="mt-3 max-w-3xl text-lg text-white/80">{returnBreakdown ? returnText.calculatorText : hasTargetReturn ? returnText.configuredCalculatorText : copy.text}</p>
+            <p className="mt-3 max-w-3xl text-lg text-white/90">{returnBreakdown ? returnText.calculatorText : hasTargetReturn ? returnText.configuredCalculatorText : copy.text}</p>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-4">
             <Metric label={copy.sharePrice} value={formatAmount(effectiveSharePrice)} />
             <Metric label={copy.propertyValue} value={propertyValue ? formatAmount(propertyValue) : copy.onRequest} />
-            <Metric label={returnText.targetTotalReturn} value={annualYield !== null || hasTargetReturn ? formatPercent(calculation.annualRate) : copy.onRequest} />
+            <Metric label={rentalYieldLabel(locale, monthlyExpenses > 0 || !monthlyRent)} value={annualYield !== null || hasTargetReturn ? formatPercent(calculation.annualRate) : copy.onRequest} />
             <Metric label={text.available} value={maxShares.toLocaleString(localeHtmlLang[locale])} />
           </div>
         </div>
@@ -165,61 +165,61 @@ export default function InvestmentCalculator({
       <div className="p-5 md:p-8">
         <p className="mb-2 font-semibold">{text.minimum}: {formatMinimumInvestment(locale)} · {minimumShares} {text.shares} = {formatAmount(minimumShares * effectiveSharePrice)}</p>
         {!canInvest && <p role="status" className="mb-4 rounded-md bg-amber-50 p-4 text-amber-900">{text.unavailable}</p>}
-        <div className="mb-7 grid gap-3 rounded-md border border-[#d7dde6] bg-[#f7f8fa] p-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-7 grid gap-3 rounded-md border border-line bg-canvas p-5 sm:grid-cols-2 lg:grid-cols-5">
           <FormulaItem label={text.propertyValue} value={propertyValue ? formatAmount(propertyValue) : copy.onRequest} />
           <FormulaItem label={text.totalShares} value={calculation.totalShares.toLocaleString(localeHtmlLang[locale])} />
           <FormulaItem label={text.sharePrice} value={formatAmount(effectiveSharePrice)} />
           <FormulaItem label={rentalModel ? rentalText.monthlyShare : returnText.monthlyPerShare} value={formatAmount(rentalModel ? calculation.rentalIncomePerShare : calculation.monthlyPerShare)} />
           <FormulaItem label={rentalModel ? rentalText.annualShare : returnText.annualPerShare} value={formatAmount(rentalModel ? calculation.rentalIncomePerShare * 12 : calculation.annualPerShare)} />
         </div>
-        <p className="mb-7 text-sm text-[#687486]">
-          {propertyValue ? `${formatAmount(propertyValue)} / ${calculation.totalShares.toLocaleString(localeHtmlLang[locale])} ${text.shares} = ${formatAmount(effectiveSharePrice)} / ${text.share}` : copy.onRequest}
+        <p className="mb-7 text-sm text-muted">
+              {propertyValue ? `${calculation.totalShares.toLocaleString(localeHtmlLang[locale])} ${text.shares} × ${formatAmount(effectiveSharePrice)} = ${formatAmount(calculation.totalShares * effectiveSharePrice)}` : copy.onRequest}
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#687486]">{text.quantity}</p>
+            <p className="text-sm font-semibold text-muted">{text.quantity}</p>
             <p className="mt-1 text-3xl font-semibold">{calculation.shares} {calculation.shares === 1 ? text.share : text.shares}</p>
           </div>
-          {!hasTargetReturn && <div className="inline-flex rounded-md border border-[#d7dde6] p-1" role="group" aria-label={copy.choosePayoutModel}>
-            <button type="button" onClick={() => setPayoutMode("monthly")} className={`px-4 py-2 text-sm font-semibold ${payoutMode === "monthly" ? "bg-[#152238] text-white" : "text-[#596579]"}`}>{copy.monthly}</button>
-            <button type="button" onClick={() => setPayoutMode("annual")} className={`px-4 py-2 text-sm font-semibold ${payoutMode === "annual" ? "bg-[#152238] text-white" : "text-[#596579]"}`}>{copy.annual}</button>
+          {!hasTargetReturn && <div className="inline-flex rounded-md border border-line p-1" role="group" aria-label={copy.choosePayoutModel}>
+            <button type="button" aria-pressed={payoutMode === "monthly"} onClick={() => setPayoutMode("monthly")} className={`px-4 py-2 text-sm font-semibold ${payoutMode === "monthly" ? "bg-ink text-white" : "text-muted"}`}>{copy.monthly}</button>
+            <button type="button" aria-pressed={payoutMode === "annual"} onClick={() => setPayoutMode("annual")} className={`px-4 py-2 text-sm font-semibold ${payoutMode === "annual" ? "bg-ink text-white" : "text-muted"}`}>{copy.annual}</button>
           </div>}
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {presets.map((quantity) => (
-            <button key={quantity} type="button" disabled={!canInvest || isSubmitting} onClick={() => updateShares(quantity)} className={`min-h-16 rounded-md border px-4 py-3 text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${validQuantity && requestedShares === quantity ? "border-[#2f9bdb] bg-[#2f9bdb] text-white" : "border-[#2f9bdb] text-[#237faf] hover:bg-[#eff8fd]"}`}>
+            <button key={quantity} type="button" disabled={!canInvest || isSubmitting} onClick={() => updateShares(quantity)} className={`min-h-16 rounded-md border px-4 py-3 text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${validQuantity && requestedShares === quantity ? "border-brand bg-brand text-white" : "border-brand text-brand hover:bg-brand-soft"}`}>
               <span className="block font-semibold">{quantity} {quantity === 1 ? text.share : text.shares}</span>
               <span className="mt-1 block text-sm">{formatAmount(quantity * effectiveSharePrice)}</span>
             </button>
           ))}
           <label className="block">
             <span className="sr-only">{text.custom}</span>
-            <input disabled={!canInvest || isSubmitting} type="number" min={minimumShares} max={maxShares} step={1} required value={shareQuantity} onChange={(event) => { if (!submitted.current) setShareQuantity(event.target.value); }} aria-invalid={!validQuantity} aria-describedby={!validQuantity && canInvest ? "share-quantity-error" : undefined} aria-label={`${text.custom} ${propertyTitle}`} className="h-16 w-full rounded-md border border-[#d7dde6] px-4 text-lg font-semibold outline-none focus:border-[#2f9bdb] disabled:opacity-60" />
-            <span className="mt-1 block text-sm text-[#687486]">{text.custom}</span>
+            <input disabled={!canInvest || isSubmitting} type="number" min={minimumShares} max={maxShares} step={1} required value={shareQuantity} onChange={(event) => { if (!submitted.current) setShareQuantity(event.target.value); }} aria-invalid={!validQuantity} aria-describedby={!validQuantity && canInvest ? "share-quantity-error" : undefined} aria-label={`${text.custom} ${propertyTitle}`} className="h-16 w-full rounded-md border border-line-strong px-4 text-lg font-semibold outline-none focus:border-brand disabled:opacity-60" />
+            <span className="mt-1 block text-sm text-muted">{text.custom}</span>
           </label>
         </div>
         {!validQuantity && canInvest && <p id="share-quantity-error" role="status" className="mt-3 text-sm text-amber-800">{walletText.invalidQuantity.replace("{min}", String(minimumShares)).replace("{max}", String(maxShares))}</p>}
 
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
-            <label className="block text-sm font-semibold text-[#596579]" htmlFor="payment-method">{text.payment}</label>
-            <select id="payment-method" disabled={isSubmitting} value={paymentMethod} onChange={(event) => { if (!submitted.current) setPaymentMethod(event.target.value); }} className="mt-2 min-h-12 w-full rounded-md border border-[#d7dde6] bg-white px-4 font-semibold outline-none focus:border-[#2f9bdb] disabled:opacity-60">
+            <label className="block text-sm font-semibold text-muted" htmlFor="payment-method">{text.payment}</label>
+            <select id="payment-method" disabled={isSubmitting} value={paymentMethod} onChange={(event) => { if (!submitted.current) setPaymentMethod(event.target.value); }} className="mt-2 min-h-12 w-full rounded-md border border-line-strong bg-white px-4 font-semibold outline-none focus:border-brand disabled:opacity-60">
               {isAuthenticated && <option value="wallet_balance">{walletText.balanceMethod}{balanceAvailable ? ` — ${formatAmount(walletBalance)}` : ""}</option>}
               <option value="bank_transfer">{text.bank}</option>
               <option value="crypto">{text.crypto}</option>
             </select>
-            {isWalletPayment && <div className="mt-4 grid gap-3 rounded-md bg-[#eef7fc] p-5" aria-live="polite">
+            {isWalletPayment && <div className="mt-4 grid gap-3 rounded-md bg-brand-soft p-5" aria-live="polite">
               {balanceAvailable ? <>
                 <SummaryRow label={walletText.availableBalance} value={formatAmount(walletBalance)} />
                 {enoughBalance && <SummaryRow label={walletText.balanceAfterPurchase} value={formatAmount((balanceCents - purchaseCents) / 100)} />}
                 {validQuantity && !enoughBalance && <p role="status" className="text-sm text-amber-800">{walletText.insufficientBalance}</p>}
               </> : <p role="status" className="text-sm text-amber-800">{walletText.balanceUnavailable}</p>}
             </div>}
-            <div className="mt-4 grid gap-3 rounded-md bg-[#f7f8fa] p-5">
+            <div className="mt-4 grid gap-3 rounded-md bg-canvas p-5">
               <SummaryRow label={text.grossMonthly} value={formatAmount(calculation.grossMonthlyIncome, 2)} />
-              <SummaryRow label={text.costs} value={`-${formatAmount(monthlyExpenses, 2)}`} />
+              <SummaryRow label={text.costs} value={monthlyExpenses > 0 ? `-${formatAmount(monthlyExpenses, 2)}` : "—"} />
               <SummaryRow label={text.netIncome} value={formatAmount(calculation.netMonthlyIncome, 2)} />
               <SummaryRow label={text.incomePerShare} value={formatAmount(calculation.rentalIncomePerShare, 2)} />
               <SummaryRow label={copy.sharePrice} value={formatAmount(effectiveSharePrice, 2)} />
@@ -232,9 +232,11 @@ export default function InvestmentCalculator({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <Result label={`${returnText.annualTarget} · ${formatPercent(calculation.annualRate)}`} value={formatAmount(calculation.annual)} />
             <Result label={rentalModel ? rentalText.monthlyInvestor : returnText.monthlyTarget} value={formatAmount(rentalModel ? calculation.rentalIncomePerShare * calculation.shares : calculation.monthly)} />
+            {/* A rental scenario already shows modelled net rent; a second monthly rental figure would contradict it. */}
+            {returnBreakdown && !rentalModel && <Result label={returnText.monthlyRentalTarget} value={formatAmount(calculation.amount * returnBreakdown.rental / 100 / 12)} />}
             {returnBreakdown ? (
-              <div className="grid gap-3 rounded-md bg-[#f7f8fa] p-5">
-                <h3 className="text-sm font-semibold text-[#152238]">{returnText.breakdownTitle}</h3>
+              <div className="grid gap-3 rounded-md bg-canvas p-5">
+                <h3 className="text-sm font-semibold text-ink">{returnText.breakdownTitle}</h3>
                 <SummaryRow label={`${returnText.rental} · ${formatPercent(returnBreakdown.rental)}`} value={formatAmount(calculation.amount * returnBreakdown.rental / 100, 2)} />
                 <SummaryRow label={`${returnText.vacationPoint} · ${formatPercent(returnBreakdown.vacationPoint)}`} value={formatAmount(calculation.amount * returnBreakdown.vacationPoint / 100, 2)} />
                 <SummaryRow label={`${returnText.appreciation} · ${formatPercent(returnBreakdown.appreciation)}`} value={formatAmount(calculation.amount * returnBreakdown.appreciation / 100, 2)} />
@@ -244,7 +246,7 @@ export default function InvestmentCalculator({
           </div>
         </div>
 
-        {calculation.fundedAfter !== null && <div className="mt-7"><div className="mb-2 flex justify-between text-sm font-semibold text-[#687486]"><span>{copy.fundingAfter}</span><span>{formatPercent(calculation.fundedAfter)}</span></div><div className="h-2 bg-[#e9edf2]"><div className="h-2 bg-[#2f9bdb]" style={{ width: `${calculation.fundedAfter}%` }} /></div></div>}
+        {calculation.fundedAfter !== null && <div className="mt-7"><div className="mb-2 flex justify-between text-sm font-semibold text-muted"><span>{copy.fundingAfter}</span><span>{formatPercent(calculation.fundedAfter)}</span></div><div className="h-2 bg-line"><div className="h-2 bg-brand" style={{ width: `${calculation.fundedAfter}%` }} /></div></div>}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           {isWalletPayment ? <form action={purchaseAction} onSubmit={(event) => {
@@ -259,30 +261,30 @@ export default function InvestmentCalculator({
             <input type="hidden" name="shares" value={shareQuantity} />
             <input type="hidden" name="payment_method" value="wallet_balance" />
             <input type="hidden" name="purchase_request_id" value={purchaseRequestId ?? ""} />
-            <button type="submit" disabled={!canBuy || isSubmitting} className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-[#2f9bdb] px-7 font-semibold text-white hover:bg-[#152238] disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? walletText.buying : walletText.buyNow}</button>
-          </form> : <Link aria-disabled={!canRequest || isSubmitting} tabIndex={canRequest && !isSubmitting ? undefined : -1} onClick={(event) => { if (!canRequest || submitted.current) event.preventDefault(); }} href={canRequest ? (isAuthenticated ? contactHref : "/sign-in") : "#"} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-md bg-[#2f9bdb] px-7 font-semibold text-white hover:bg-[#152238]">{isAuthenticated ? walletText.requestReview : copy.signInToRequest}</Link>}
-          {isWalletPayment && <Link href={canRequest ? contactHref : "#"} aria-disabled={!canRequest || isSubmitting} tabIndex={canRequest && !isSubmitting ? undefined : -1} onClick={event => { if (!canRequest || submitted.current) event.preventDefault(); }} className="inline-flex min-h-12 items-center justify-center rounded-md border border-[#2f9bdb] px-7 font-semibold text-[#237faf]">{walletText.requestReview}</Link>}
-          {isAuthenticated && <Link href="/funding" className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-[#2f9bdb] px-7 font-semibold text-[#237faf] sm:w-auto"><WalletCards className="mr-2" size={19} />{copy.prepareFunding}</Link>}
+            <button type="submit" disabled={!canBuy || isSubmitting} className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-brand px-7 font-semibold text-white hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? walletText.buying : walletText.buyNow}</button>
+          </form> : <Link aria-disabled={!canRequest || isSubmitting} tabIndex={canRequest && !isSubmitting ? undefined : -1} onClick={(event) => { if (!canRequest || submitted.current) event.preventDefault(); }} href={canRequest ? (isAuthenticated ? contactHref : `/join?next=${encodeURIComponent(`/properties/${propertySlug}`)}`) : "#"} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-md bg-brand px-7 font-semibold text-white hover:bg-ink">{isAuthenticated ? walletText.requestReview : copy.signInToRequest}</Link>}
+          {isWalletPayment && <Link href={canRequest ? contactHref : "#"} aria-disabled={!canRequest || isSubmitting} tabIndex={canRequest && !isSubmitting ? undefined : -1} onClick={event => { if (!canRequest || submitted.current) event.preventDefault(); }} className="inline-flex min-h-12 items-center justify-center rounded-md border border-brand px-7 font-semibold text-brand">{walletText.requestReview}</Link>}
+          {isAuthenticated && <Link href="/funding" className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-brand px-7 font-semibold text-brand sm:w-auto"><WalletCards className="mr-2" size={19} />{copy.prepareFunding}</Link>}
         </div>
 
-        <p className="mt-6 flex gap-2 text-sm leading-6 text-[#687486]"><Info className="mt-0.5 shrink-0" size={17} /><span>{rentalModel ? rentalText.note : returnBreakdown ? `${returnText.modelNote} ${returnText.calculatorNote}` : hasTargetReturn ? returnText.configuredTargetNote : copy.note}</span></p>
+        <p className="mt-6 flex gap-2 text-sm leading-6 text-muted"><Info className="mt-0.5 shrink-0" size={17} /><span>{rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? `${returnText.modelNote} ${returnText.calculatorNote}` : hasTargetReturn ? `${returnText.configuredTargetNote}${monthlyRent && !monthlyExpenses ? ` ${returnText.costsMissingNote}` : ""}` : copy.note}</span></p>
       </div>
     </section>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
-  return <div><p className="text-xs text-white/65">{label}</p><p className="mt-1 text-lg font-semibold">{value}</p></div>;
+  return <div><p className="text-xs text-white/90">{label}</p><p className="mt-1 text-lg font-semibold">{value}</p></div>;
 }
 
 function Result({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-md bg-[#eef7fc] p-5"><p className="text-sm font-semibold text-[#687486]">{label}</p><p className="mt-2 text-2xl font-semibold text-[#152238]">{value}</p></div>;
+  return <div className="rounded-md bg-brand-soft p-5"><p className="text-sm font-semibold text-muted">{label}</p><p className="mt-2 text-2xl font-semibold text-ink">{value}</p></div>;
 }
 
 function SummaryRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
-  return <div className={`flex items-center justify-between gap-4 ${strong ? "border-t border-[#d7dde6] pt-3 text-lg font-semibold" : "text-sm"}`}><span className="text-[#687486]">{label}</span><span className="font-semibold text-[#152238]">{value}</span></div>;
+  return <div className={`flex items-center justify-between gap-4 ${strong ? "border-t border-line pt-3 text-lg font-semibold" : "text-sm"}`}><span className="text-muted">{label}</span><span className="font-semibold text-ink">{value}</span></div>;
 }
 
 function FormulaItem({ label, value }: { label: string; value: string }) {
-  return <div><p className="text-xs text-[#687486]">{label}</p><p className="mt-1 text-lg font-semibold text-[#152238]">{value}</p></div>;
+  return <div><p className="text-xs text-muted">{label}</p><p className="mt-1 text-lg font-semibold text-ink">{value}</p></div>;
 }
