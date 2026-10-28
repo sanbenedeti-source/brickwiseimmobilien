@@ -61,6 +61,7 @@ export async function createProperty(formData: FormData) {
   const monthlyRent = formData.get("monthly_rent") ? parseEuroAmount(formData.get("monthly_rent")) : null;
   const monthlyExpenses = formData.get("monthly_expenses") ? parseEuroAmount(formData.get("monthly_expenses")) : 0;
   const sharePrice = formData.get("share_price") ? parseEuroAmount(formData.get("share_price")) : null;
+  const monthlyValueGrowth = formData.get("monthly_value_growth") ? parseEuroAmount(formData.get("monthly_value_growth")) : null;
   const constructionStatus = String(formData.get("construction_status") || "completed");
   const imageUrls = String(formData.get("image_urls") || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const httpsUrl = (value: string) => { try { return new URL(value).protocol === "https:"; } catch { return false; } };
@@ -68,6 +69,7 @@ export async function createProperty(formData: FormData) {
   if (!title || !city || !address || price === null || price <= 0 || !Number.isFinite(area) || area < 0 || !Number.isFinite(rooms) || rooms < 0 || !["active", "draft"].includes(status)
     || (formData.get("monthly_rent") && (monthlyRent === null || monthlyRent < 0)) || monthlyExpenses === null || monthlyExpenses < 0
     || (formData.get("share_price") && (sharePrice === null || sharePrice <= 0 || sharePrice > price))
+    || (formData.get("monthly_value_growth") && (monthlyValueGrowth === null || monthlyValueGrowth < 0))
     || !["completed", "under_construction", "upcoming"].includes(constructionStatus)
     || (image_url && !httpsUrl(image_url) && !image_url.startsWith("/")) || imageUrls.length > 12 || imageUrls.some((url) => !httpsUrl(url))) {
     redirect("/admin/properties?status=invalid");
@@ -82,7 +84,7 @@ export async function createProperty(formData: FormData) {
 
   const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.create", targetType: "property", targetId: slug, details: { title, city, price, currency: "EUR", status } }, [
     { table: "properties", operation: "insert", data: { title, slug, city, address, price, area, rooms, description, image_url: image_url || imageUrls[0] || "", status: "draft",
-      monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, image_urls: imageUrls, construction_status: constructionStatus } },
+      monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, image_urls: imageUrls, construction_status: constructionStatus } },
     ...translations.map(translation => ({ table: "property_translations", operation: "upsert" as const, data: { property_slug: slug, ...translation } })),
     ...(status === "active" ? [{ table: "properties", operation: "update" as const, data: { status }, match: { slug } }] : []),
   ]);
@@ -117,11 +119,13 @@ export async function updatePropertySale(formData: FormData) {
   const monthlyRent = formData.get("monthly_rent") ? parseEuroAmount(formData.get("monthly_rent")) : null;
   const monthlyExpenses = formData.get("monthly_expenses") ? parseEuroAmount(formData.get("monthly_expenses")) : 0;
   const sharePrice = formData.get("share_price") ? parseEuroAmount(formData.get("share_price")) : null;
+  const monthlyValueGrowth = formData.get("monthly_value_growth") ? parseEuroAmount(formData.get("monthly_value_growth")) : null;
   const constructionStatus = String(formData.get("construction_status") || "");
   const status = String(formData.get("status") || "");
   if (!propertySlug || getExternalPropertyBySlug(propertySlug) || price === null || price <= 0
     || (formData.get("monthly_rent") && (monthlyRent === null || monthlyRent < 0)) || monthlyExpenses === null || monthlyExpenses < 0
     || (formData.get("share_price") && (sharePrice === null || sharePrice <= 0 || sharePrice > price))
+    || (formData.get("monthly_value_growth") && (monthlyValueGrowth === null || monthlyValueGrowth < 0))
     || !["completed", "under_construction", "upcoming"].includes(constructionStatus) || !["active", "draft"].includes(status)) {
     redirect(resultPath("sale-invalid"));
   }
@@ -140,7 +144,7 @@ export async function updatePropertySale(formData: FormData) {
   if (pricingChanged && Number(settings?.blocked_shares || 0) > 0) redirect(resultPath("sale-locked"));
 
   const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_settings", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, status, price, currency: "EUR", monthly_rent: monthlyRent, share_price: sharePrice } }, [
-    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, construction_status: constructionStatus, status }, match: { slug: propertySlug } },
+    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, construction_status: constructionStatus, status }, match: { slug: propertySlug } },
   ]);
   if (error) redirect(resultPath("sale-error"));
 

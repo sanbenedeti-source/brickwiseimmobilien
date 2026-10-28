@@ -5,6 +5,7 @@ import { formatMinimumInvestment, minimumInvestmentShares } from "../../lib/inve
 import { formatPropertyPercent } from "../property-ui-copy";
 import { investmentCopy } from "../../lib/investment-copy";
 import { targetReturnCopy, rentalYieldLabel } from "../../lib/target-return-copy";
+import { valueGrowthCopy } from "../../lib/value-growth-copy";
 import { walletPurchaseCopy } from "../../lib/wallet-purchase-copy";
 
 import { rentalModelCopy } from "../../lib/rental-model-copy";
@@ -32,6 +33,8 @@ type InvestmentCalculatorProps = {
   sharePrice: number;
   totalShares?: number | null;
   returnBreakdown?: PropertyReturnBreakdown;
+  /** Projected annual value growth (%), shown separately and never part of the rent projection. */
+  valueGrowthRate?: number;
   walletBalance?: number | null;
   purchaseRequestId?: string;
   purchaseAction?: (formData: FormData) => Promise<void>;
@@ -84,6 +87,7 @@ export default function InvestmentCalculator({
   sharePrice,
   totalShares: declaredTotalShares,
   returnBreakdown,
+  valueGrowthRate = 0,
   walletBalance = null,
   purchaseRequestId: initialPurchaseRequestId,
   purchaseAction,
@@ -93,6 +97,7 @@ export default function InvestmentCalculator({
   const walletText = walletPurchaseCopy[locale];
   const formatPercent = (value: number, maximumFractionDigits = 2) => formatPropertyPercent(value, locale, maximumFractionDigits);
   const returnText = targetReturnCopy[locale];
+  const growthText = valueGrowthCopy[locale];
   const hasTargetReturn = targetTotalReturn !== undefined || Boolean(returnBreakdown);
   const effectiveSharePrice = Math.max(1, sharePrice || minInvestment || 100);
   const maxShares = Math.max(0, Math.floor(availableShares ?? declaredTotalShares ?? (propertyValue || 0) / effectiveSharePrice));
@@ -234,6 +239,11 @@ export default function InvestmentCalculator({
             <Result label={rentalModel ? rentalText.monthlyInvestor : returnText.monthlyTarget} value={formatAmount(rentalModel ? calculation.rentalIncomePerShare * calculation.shares : calculation.monthly)} />
             {/* A rental scenario already shows modelled net rent; a second monthly rental figure would contradict it. */}
             {returnBreakdown && !rentalModel && <Result label={returnText.monthlyRentalTarget} value={formatAmount(calculation.amount * returnBreakdown.rental / 100 / 12)} />}
+            {valueGrowthRate > 0 && <>
+              <Result label={`${growthText.growthYear} · ${formatPercent(valueGrowthRate)}`} value={formatAmount(calculation.amount * valueGrowthRate / 100)} />
+              <Result label={`${growthText.totalYear} · ${formatPercent(calculation.annualRate + valueGrowthRate)}`} value={formatAmount(calculation.annual + calculation.amount * valueGrowthRate / 100)} />
+              <Result label={growthText.totalMonth} value={formatAmount((calculation.annual + calculation.amount * valueGrowthRate / 100) / 12)} />
+            </>}
             {returnBreakdown ? (
               <div className="grid gap-3 rounded-md bg-canvas p-5">
                 <h3 className="text-sm font-semibold text-ink">{returnText.breakdownTitle}</h3>
@@ -267,7 +277,7 @@ export default function InvestmentCalculator({
           {isAuthenticated && <Link href="/funding" className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-brand px-7 font-semibold text-brand sm:w-auto"><WalletCards className="mr-2" size={19} />{copy.prepareFunding}</Link>}
         </div>
 
-        <p className="mt-6 flex gap-2 text-sm leading-6 text-muted"><Info className="mt-0.5 shrink-0" size={17} /><span>{rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? `${returnText.modelNote} ${returnText.calculatorNote}` : hasTargetReturn ? `${returnText.configuredTargetNote}${monthlyRent && !monthlyExpenses ? ` ${returnText.costsMissingNote}` : ""}` : copy.note}</span></p>
+        <p className="mt-6 flex gap-2 text-sm leading-6 text-muted"><Info className="mt-0.5 shrink-0" size={17} /><span>{rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? `${returnText.modelNote} ${returnText.calculatorNote}` : hasTargetReturn ? `${returnText.configuredTargetNote}${monthlyRent && !monthlyExpenses ? ` ${returnText.costsMissingNote}` : ""}` : copy.note}{valueGrowthRate > 0 ? ` ${growthText.note}` : ""}</span></p>
       </div>
     </section>
   );

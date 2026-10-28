@@ -9,7 +9,7 @@ export type DatabasePropertyRow = {
   property_type: string | null; bedrooms: number | null; bathrooms: number | null; area: number | string | null; rooms: number | string | null;
   image_url: string | null; status: string | null; created_at: string | null;
   monthly_rent?: number | string | null; monthly_expenses?: number | string | null; share_price?: number | string | null;
-  image_urls?: string[] | null; construction_status?: string | null;
+  image_urls?: string[] | null; construction_status?: string | null; monthly_value_growth?: number | string | null;
 };
 
 const number = (value: unknown) => { const parsed = Number(value); return value === null || value === undefined || value === "" || !Number.isFinite(parsed) ? null : parsed; };
@@ -21,6 +21,7 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
   const monthlyRent = number(row.monthly_rent) ?? 0;
   const monthlyExpenses = number(row.monthly_expenses) ?? 0;
   const sharePrice = number(row.share_price);
+  const monthlyValueGrowth = number(row.monthly_value_growth) ?? 0;
   const constructionStatus = row.construction_status === "under_construction" || row.construction_status === "upcoming" ? row.construction_status : "completed";
   const investable = row.status === "active" && constructionStatus !== "upcoming" && monthlyRent > 0 && sharePrice !== null && sharePrice > 0 && price > 0;
   const annualRent = monthlyRent * 12;
@@ -36,7 +37,8 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
     investmentOpen: investable, listed: true, costsStated: monthlyExpenses > 0,
     created_at: row.created_at || new Date(0).toISOString(), sourceName: "Brickwise", sourceUrl: "",
     monthlyRent, monthlyExpenses, annualRent, annualYield: price > 0 ? annualRent / price * 100 : 0,
-    targetTotalReturn: rentalYield, appreciationYield: 0, sharePrice: sharePrice ?? 1000, currency: "EUR",
+    targetTotalReturn: rentalYield, appreciationYield: 0,
+    valueGrowthYield: price > 0 && monthlyValueGrowth > 0 ? Math.round(monthlyValueGrowth * 12 / price * 10000) / 100 : undefined, sharePrice: sharePrice ?? 1000, currency: "EUR",
     minInvestmentEur: MINIMUM_INVESTMENT_EUR, fundedPercent: 0,
     payoutModel: "Projected rental yield = (monthly rent - stated monthly costs) x 12 / property value. No appreciation or other non-cash benefit is included.",
   };

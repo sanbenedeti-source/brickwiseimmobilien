@@ -141,7 +141,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
           {visibleProperties.map((property) => {
             const open = mapDatabaseProperty(property).investmentOpen;
             const locked = Number(settingsBySlug.get(property.slug)?.blocked_shares || 0) > 0;
-            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price].join("|");
+            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth].join("|");
             return <details key={`sale-${property.slug}-${values}`} open={changedSlug === property.slug} className="admin-subsection">
               <summary>
                 <span className="inline-flex flex-wrap items-center gap-2">
@@ -171,6 +171,8 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                     <label className="admin-field">{t("Share price (EUR)")}<input name="share_price" type="number" min="0.01" step="0.01" defaultValue={property.share_price ?? ""} readOnly={locked} /></label>
                     <label className="admin-field">{t("Monthly rent (EUR)")}<input name="monthly_rent" type="number" min="0" step="0.01" defaultValue={property.monthly_rent ?? ""} /></label>
                     <label className="admin-field">{t("Monthly costs (EUR)")}<input name="monthly_expenses" type="number" min="0" step="0.01" defaultValue={property.monthly_expenses ?? 0} /></label>
+                    <label className="admin-field">{t("Projected value growth / month (EUR)")}<input name="monthly_value_growth" type="number" min="0" step="0.01" defaultValue={property.monthly_value_growth ?? ""} /></label>
+                    <p className="admin-help admin-field-wide">{t("Value growth is shown separately from the rental yield and is never paid out monthly.")}</p>
                     {locked && <p className="admin-help admin-field-wide">{t("Price and share price are locked because shares have already been sold.")}</p>}
                   </div>
                   <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>
@@ -248,6 +250,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
             <label className="admin-field">{t("Monthly rent (EUR)")}<input name="monthly_rent" type="number" min="0" step="0.01" placeholder="2400" /></label>
             <label className="admin-field">{t("Monthly costs (EUR)")}<input name="monthly_expenses" type="number" min="0" step="0.01" placeholder="350" /></label>
             <label className="admin-field">{t("Share price (EUR)")}<input name="share_price" type="number" min="0.01" step="0.01" placeholder="250" /></label>
+            <label className="admin-field">{t("Projected value growth / month (EUR)")}<input name="monthly_value_growth" type="number" min="0" step="0.01" placeholder="2100" /></label>
             <label className="admin-field">{t("Construction status")}
               <select name="construction_status" defaultValue="completed">
                 <option value="completed">{t("Completed")}</option>

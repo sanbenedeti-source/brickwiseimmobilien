@@ -3,6 +3,7 @@ import { formatMinimumInvestment } from "../lib/investment-policy";
 import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
+import { valueGrowthCopy } from "../lib/value-growth-copy";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
 import { getPropertyTranslations, localizeProperty } from "../lib/property-localization";
 import Link from "next/link";
@@ -28,6 +29,7 @@ type Property = {
   image_url: string | null;
   status: string | null;
   constructionStatus?: "completed" | "under_construction" | "upcoming";
+  valueGrowthYield?: number;
   created_at: string | null;
   sourceName?: string;
   sourceUrl?: string;
@@ -166,6 +168,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
   const locale = await getCurrentLocale();
   const copy = propertiesCopy[locale];
   const returnText = targetReturnCopy[locale];
+  const growthText = valueGrowthCopy[locale];
   const [params, listed, translations, shareSettings] = await Promise.all([
     searchParams, getListedProperties(), getPropertyTranslations(locale), getShareSettings(),
   ]);
@@ -255,6 +258,10 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                   <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
                   <InfoBox label={returnText.annualPerShare} value={formatPropertyMoney(projection.annualPerShare, projection.currency, locale, 2)} />
                   <InfoBox label={rentalYieldLabel(locale, "costsStated" in property ? property.costsStated !== false : undefined)} value={formatPercent(projection.annualRate, copy, locale)} />
+                  {property.valueGrowthYield ? <>
+                    <InfoBox label={growthText.shortGrowth} value={formatPercent(property.valueGrowthYield, copy, locale)} />
+                    <InfoBox label={growthText.shortTotal} value={formatPercent(projection.annualRate + property.valueGrowthYield, copy, locale)} />
+                  </> : null}
                 </div>
 
                 {fundedPercent > 0 && (

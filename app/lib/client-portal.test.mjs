@@ -323,6 +323,9 @@ test("admin-added properties become investable listings only with an active stat
   assert.equal(listing.sharePrice, 250);
   assert.equal(listing.image_url, "https://images.example/a.jpg");
   assert.equal(listing.costsStated, true);
+  assert.equal(listing.valueGrowthYield, undefined);
+  const growing = registry.mapDatabaseProperty({ ...base, monthly_value_growth: "500" });
+  assert.deepEqual([growing.valueGrowthYield, growing.targetTotalReturn], [2, 8], "value growth (500 x 12 / 300000 = 2%) stays outside the rental yield");
   assert.equal(registry.mapDatabaseProperty({ ...base, construction_status: "upcoming" }).constructionStatus, "upcoming");
   for (const patch of [{ status: "draft" }, { status: "available" }, { share_price: null }, { monthly_rent: null }, { monthly_rent: "0" }, { construction_status: "upcoming" }]) {
     assert.equal(registry.mapDatabaseProperty({ ...base, ...patch }).investmentOpen, false, JSON.stringify(patch));

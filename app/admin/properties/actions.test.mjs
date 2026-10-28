@@ -264,7 +264,7 @@ test("an upcoming property is opened for purchase with its pricing and gets its 
   const app = saleHarness();
   await assert.rejects(app.run(saleForm()), saleResult("sale-saved"));
   assert.deepEqual(app.writes, [{ action: "property.sale_settings", table: "properties", operation: "update", match: { slug: "munich-loft" },
-    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, construction_status: "completed", status: "active" } }]);
+    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, monthly_value_growth: null, construction_status: "completed", status: "active" } }]);
   assert.deepEqual(app.calls.map((call) => [call.args.p_total_shares, call.args.p_expected_version, call.args.p_actor]), [[2400, -1, adminId]]);
 });
 

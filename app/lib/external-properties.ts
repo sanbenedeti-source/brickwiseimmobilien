@@ -44,6 +44,8 @@ export type ListingProperty = {
   targetTotalReturn?: number;
   targetReturnBreakdown?: PropertyReturnBreakdown;
   appreciationYield: number;
+  /** Projected annual value growth (% of value), shown next to the rental yield and never paid out monthly. */
+  valueGrowthYield?: number;
   vacationPointYield?: number;
   currentReturn?: number;
   sharePrice: number;

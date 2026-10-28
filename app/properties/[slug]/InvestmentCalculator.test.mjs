@@ -174,6 +174,18 @@ test("Calgary shows its 3.93% net rental yield for annual and monthly EUR amount
   assert.match(markup, /name="shares" value="20"/);
 });
 
+test("projected value growth is shown beside the rent for the chosen shares and never changes the rent projection", () => {
+  const calgary = getExternalPropertyBySlug("calgary-beltline-rental");
+  const { text } = renderProperty(calgary, { valueGrowthRate: 2 });
+  // EUR 2,000 at 3.93% rent = EUR 78.60; 2% value growth = EUR 40.00; total 5.93% = EUR 118.60 a year, EUR 9.88 a month.
+  assert.match(text, /Projected rent \/ year · 3\.93% €78\.60/);
+  assert.match(text, /Projected value growth \/ year · 2\.00% €40\.00/);
+  assert.match(text, /Total incl\. value growth \/ year · 5\.93% €118\.60/);
+  assert.match(text, /Total incl\. value growth \/ month €9\.88/);
+  assert.match(text, /only realised when the property or the shares are sold/);
+  assert.doesNotMatch(renderProperty(calgary).text, /value growth/i);
+});
+
 test("all supported languages show the yield before costs when costs are not stated", () => {
   const property = getExternalPropertyBySlug("sal-rei-boa-vista-b1-residences-ap1");
   for (const locale of ["en", "de", "fr", "es", "it"]) {

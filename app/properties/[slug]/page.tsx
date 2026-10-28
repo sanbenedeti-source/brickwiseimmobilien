@@ -8,6 +8,7 @@ import { createTranslator } from "../../lib/translate";
 import { formatMinimumInvestment, MINIMUM_INVESTMENT_EUR, minimumInvestmentShares } from "../../lib/investment-policy";
 import { formatPropertyMoney, getPropertyProjection, getPropertyCurrency, getPropertyReturnBreakdown, getPropertyShareSupply } from "../../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../../lib/target-return-copy";
+import { valueGrowthCopy } from "../../lib/value-growth-copy";
 import { getPropertyTranslations, localizeProperty } from "../../lib/property-localization";
 import { createClient } from "@/lib/supabase/server";
 import { findCatalogueProperty, mapDatabaseProperty, type DatabasePropertyRow } from "@/app/lib/property-registry";
@@ -401,6 +402,10 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   const rentalText = rentalModelCopy[locale];
   const netMonthlyRent = Math.max(0, (monthlyRent ?? 0) - monthlyExpenses);
   const targetReturnLabel = rentalYieldLabel(locale, (externalProperty ?? baseProperty).costsStated);
+  // Value growth is shown beside the rental yield; rent projections and payouts never include it.
+  const valueGrowth = baseProperty.valueGrowthYield ?? 0;
+  const growthText = valueGrowthCopy[locale];
+  const growthPerShare = sharePrice * valueGrowth / 100;
   const financialSummary = (
     <div className="grid gap-4 xl:grid-cols-3">
       <PortalMetricCard primary title={copy.calculator.sharePrice} value={formatPortalMoney(sharePrice)} rows={[
@@ -423,6 +428,18 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         [returnText.propertyMonthly, formatPortalMoney(projection.propertyMonthly, 2)],
         [returnText.propertyAnnual, formatPortalMoney(projection.propertyAnnual, 2)],
       ]} />}
+      {valueGrowth > 0 && <>
+        <PortalMetricCard title={growthText.growthTitle} value={formatPortalPercent(valueGrowth)} rows={[
+          [growthText.growthPerShareYear, formatPortalMoney(growthPerShare, 2)],
+          [growthText.growthPerShareMonth, formatPortalMoney(growthPerShare / 12, 2)],
+          [growthText.growthProperty, formatPortalMoney((propertyValue ?? 0) * valueGrowth / 100, 2)],
+        ]} />
+        <PortalMetricCard title={growthText.totalTitle} value={formatPortalPercent(targetReturn + valueGrowth)} rows={[
+          [growthText.totalPerShareYear, formatPortalMoney(projection.annualPerShare + growthPerShare, 2)],
+          [growthText.totalPerShareMonth, formatPortalMoney((projection.annualPerShare + growthPerShare) / 12, 2)],
+        ]} />
+        <p className="text-sm leading-6 text-muted xl:col-span-3">{growthText.note}</p>
+      </>}
       <p className="text-sm leading-6 text-muted xl:col-span-3">{rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? returnText.modelNote : returnText.configuredTargetNote}</p>
       {property.slug === "sal-rei-boa-vista-b1-residences-ap1" && <p className="text-sm leading-6 text-muted xl:col-span-3">{salReiModelCopy[locale]}</p>}
     </div>
@@ -503,7 +520,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
             </aside>
           </div>
           {locationSection}
-          {hasTargetReturn && <InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} />}
+          {hasTargetReturn && <InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} />}
         </section>
         {/* Phones: the reservation box sits ~2,600px down, so keep a way to reach it on screen. The right side stays free for the chat button. */}
         {openForInvestment && <div className="fixed inset-x-0 bottom-0 z-[75] flex items-center gap-3 border-t border-line bg-white/95 py-3 pl-4 pr-20 shadow-[0_-8px_24px_rgba(20,33,61,0.08)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
@@ -559,7 +576,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
               <div className="mt-8 grid gap-4 md:grid-cols-3"><PortalInfo title={copy.location} text={`${property.city || "-"}, ${property.address || "-"}`} /><PortalInfo title={copy.homeFacts} text={`${displayRooms}, ${displayBathrooms}, ${displayArea}`} /><PortalInfo title={copy.status} text={property.status === "active" ? copy.available : localizedStatus(property.status, locale, copy.onRequest)} /></div>
             </section>
 
-            <div id="buy-shares" className="scroll-mt-8 border-t border-line pb-12 pt-2"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>
+            <div id="buy-shares" className="scroll-mt-8 border-t border-line pb-12 pt-2"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>
           </section>
         </div>
       </main>
