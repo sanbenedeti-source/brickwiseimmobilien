@@ -3,7 +3,7 @@ import { salReiModelCopy } from "../../lib/sal-rei-model-copy";
 import { cache } from "react";
 import { randomUUID } from "node:crypto";
 import { publicMetadata } from "../../lib/seo";
-import { countLabel, formatPropertyPercent, localizedStatus, propertyUiCopy } from "../property-ui-copy";
+import { countLabel, formatPropertyPercent, propertyUiCopy } from "../property-ui-copy";
 import { createTranslator } from "../../lib/translate";
 import { formatMinimumInvestment, minimumInvestmentShares } from "../../lib/investment-policy";
 import { formatPropertyMoney, getPropertyProjection, getPropertyCurrency, getPropertyReturnBreakdown, getPropertyShareSupply } from "../../lib/property-financials";
@@ -23,13 +23,17 @@ import InvestmentCalculator from "./InvestmentCalculator";
 import type { InvestmentCalculatorCopy } from "./InvestmentCalculator";
 import PropertyGallery from "./PropertyGallery";
 import PropertyLocation from "./PropertyLocation";
+import PropertyOverview, { type OverviewFact } from "./PropertyOverview";
+import { overviewCopy } from "./overview-copy";
+import { listingBadgeCopy } from "../../lib/listing-badges";
+import { portalNavCopy } from "../../lib/portal-nav-copy";
+import type { ReactNode } from "react";
 import PropertyConstructionBadge from "../../components/PropertyConstructionBadge";
 import PropertyTierBadge from "../../components/PropertyTierBadge";
 import { OccupancyBadge, StrategyBadge } from "../../components/PropertyListingBadges";
 import PortalPropertyGallery from "./PortalPropertyGallery";
 import ClientPortalSidebar from "@/app/components/ClientPortalSidebar";
 import Link from "next/link";
-import { Bath, BedDouble, Info } from "lucide-react";
 import { notFound } from "next/navigation";
 import { localeHtmlLang, type Locale } from "@/app/lib/i18n";
 import { getCurrentLocale } from "@/app/lib/server-locale";
@@ -339,9 +343,6 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
   const property = localizeProperty(baseProperty, await getPropertyTranslations(locale));
   const currency = getPropertyCurrency(property);
-  function formatMoney(value: number | null | undefined, text: DetailCopy, digits = 0) {
-    return value == null || !Number.isFinite(value) ? text.onRequest : formatPropertyMoney(value, currency, locale, digits);
-  }
   function formatPortalMoney(value: number | null | undefined, digits = 0) {
     return value == null || !Number.isFinite(value) ? copy.onRequest : formatPropertyMoney(value, currency, locale, digits);
   }
@@ -408,45 +409,6 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   // Value growth is shown beside the rental yield; rent projections and payouts never include it.
   const valueGrowth = baseProperty.valueGrowthYield ?? 0;
   const growthText = valueGrowthCopy[locale];
-  const growthPerShare = sharePrice * valueGrowth / 100;
-  const financialSummary = (
-    <div className="grid gap-4 xl:grid-cols-3">
-      <PortalMetricCard primary title={copy.calculator.sharePrice} value={formatPortalMoney(sharePrice)} rows={[
-        [copy.calculator.propertyValue, formatPortalMoney(propertyValue)],
-        [labels.availableShares, availableShares.toLocaleString(localeHtmlLang[locale])],
-        [labels.soldBlocked, blockedShares.toLocaleString(localeHtmlLang[locale])],
-        [labels.totalShares, totalShares.toLocaleString(localeHtmlLang[locale])],
-      ]} />
-      <PortalMetricCard title={targetReturnLabel} value={formatPortalPercent(targetReturn)} rows={returnBreakdown ? [
-        [returnText.rental, formatPortalPercent(returnBreakdown.rental)],
-        [returnText.vacationPoint, formatPortalPercent(returnBreakdown.vacationPoint)],
-        [returnText.appreciation, formatPortalPercent(returnBreakdown.appreciation)],
-      ] : [[returnText.annualPerShare, formatPortalMoney(projection.annualPerShare, 2)]]} />
-      {rentalModel ? <PortalMetricCard title={rentalText.monthlyShare} value={formatPortalMoney(netMonthlyRent / totalShares, 2)} rows={[
-        [rentalText.annualShare, formatPortalMoney(netMonthlyRent * 12 / totalShares, 2)],
-        [rentalText.monthlyProperty, formatPortalMoney(netMonthlyRent, 2)],
-        [rentalText.annualProperty, formatPortalMoney(netMonthlyRent * 12, 2)],
-      ]} /> : <PortalMetricCard title={returnText.monthlyPerShare} value={formatPortalMoney(projection.monthlyPerShare, 2)} rows={[
-        [returnText.annualPerShare, formatPortalMoney(projection.annualPerShare, 2)],
-        [returnText.propertyMonthly, formatPortalMoney(projection.propertyMonthly, 2)],
-        [returnText.propertyAnnual, formatPortalMoney(projection.propertyAnnual, 2)],
-      ]} />}
-      {valueGrowth > 0 && <>
-        <PortalMetricCard title={growthText.growthTitle} value={formatPortalPercent(valueGrowth)} rows={[
-          [growthText.growthPerShareYear, formatPortalMoney(growthPerShare, 2)],
-          [growthText.growthPerShareMonth, formatPortalMoney(growthPerShare / 12, 2)],
-          [growthText.growthProperty, formatPortalMoney((propertyValue ?? 0) * valueGrowth / 100, 2)],
-        ]} />
-        <PortalMetricCard title={growthText.totalTitle} value={formatPortalPercent(targetReturn + valueGrowth)} rows={[
-          [growthText.totalPerShareYear, formatPortalMoney(projection.annualPerShare + growthPerShare, 2)],
-          [growthText.totalPerShareMonth, formatPortalMoney((projection.annualPerShare + growthPerShare) / 12, 2)],
-        ]} />
-        <p className="text-sm leading-6 text-muted xl:col-span-3">{growthText.note}</p>
-      </>}
-      <p className="text-sm leading-6 text-muted xl:col-span-3">{rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? returnText.modelNote : returnText.configuredTargetNote}</p>
-      {property.slug === "sal-rei-boa-vista-b1-residences-ap1" && <p className="text-sm leading-6 text-muted xl:col-span-3">{salReiModelCopy[locale]}</p>}
-    </div>
-  );
   const galleryImages: string[] =
     "image_urls" in property && Array.isArray(property.image_urls)
       ? property.image_urls.filter(Boolean)
@@ -482,57 +444,74 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       <StrategyBadge strategy={strategy} locale={locale} className="py-1.5 text-sm" />
     </div>
   ) : null;
+  const overview = overviewCopy[locale];
+  const badgeText = listingBadgeCopy[locale];
+  const lang = localeHtmlLang[locale];
+  const costsStated = (externalProperty ?? baseProperty).costsStated !== false;
+  const yearlyReturn = targetReturn + valueGrowth;
+  const facts: OverviewFact[] = [
+    { kind: "location", title: property.city || property.address || copy.locationMissing, text: property.address || property.city || copy.locationMissing },
+    ...(monthlyRent ? [{ kind: "rent" as const, title: overview.currentRent.replace("{amount}", formatPortalMoney(monthlyRent)),
+      text: showOccupancy && occupancyStatus ? `${badgeText.occupancy[occupancyStatus]} · ${overview.rentShared}` : overview.rentShared }] : []),
+    ...(hasTargetReturn ? [{ kind: "yield" as const, title: overview.yieldLine.replace("{rate}", formatPortalPercent(targetReturn)), text: costsStated ? overview.afterCosts : overview.beforeCosts }] : []),
+    ...(valueGrowth > 0 ? [{ kind: "growth" as const, title: overview.growthLine.replace("{rate}", formatPortalPercent(valueGrowth)), text: overview.growthEstimate }] : []),
+  ];
+  const financials: { title: string; rows: [string, string][] }[] = [
+    { title: overview.propertyColumn, rows: [
+      [copy.calculator.propertyValue, formatPortalMoney(propertyValue)],
+      [copy.calculator.sharePrice, formatPortalMoney(sharePrice)],
+      [labels.totalShares, totalShares.toLocaleString(lang)],
+      [labels.availableShares, availableShares.toLocaleString(lang)],
+    ] },
+    ...(hasTargetReturn && monthlyRent ? [{ title: overview.rentalColumn, rows: [
+      [overview.grossRent, formatPortalMoney(monthlyRent * 12)],
+      [overview.costs, formatPortalMoney(monthlyExpenses * 12)],
+      [overview.netRent, formatPortalMoney(netMonthlyRent * 12)],
+      [returnText.monthlyPerShare, formatPortalMoney(projection.monthlyPerShare, 2)],
+    ] as [string, string][] }] : []),
+  ];
+  // A five-year figure only on a net yield: multiplying a before-costs yield would overstate it.
+  const metrics: [string, string][] = hasTargetReturn ? [
+    ...(costsStated ? [[badgeText.fiveYearReturn, formatPortalPercent(yearlyReturn * 5)] as [string, string]] : []),
+    ...(valueGrowth > 0 ? [[badgeText.yearlyReturn, formatPortalPercent(yearlyReturn)] as [string, string]] : []),
+    [targetReturnLabel, formatPortalPercent(targetReturn)],
+  ] : [];
+  const minimumText = `${formatMinimumInvestment(locale, tierMinimum)}${minInvestment !== null ? ` · ${minimumInvestmentShares(sharePrice, minInvestment)} ${t("Shares")}` : ""}`;
+  const investCard = (cta: ReactNode, note?: string) => ({
+    valueLabel: copy.calculator.propertyValue, value: formatPortalMoney(propertyValue), fundedPercent,
+    fundedText: `${Math.round(fundedPercent).toLocaleString(lang)}% ${badgeText.funded}`,
+    availableText: overview.available.replace("{amount}", formatPortalMoney(availableShares * sharePrice)),
+    perSqm: propertyValue && Number(property.area) > 0 ? `${formatPortalMoney(propertyValue / Number(property.area))} / m²` : undefined,
+    metrics, minimumLabel: copy.calculator.minimum, minimum: minimumText, cta, note,
+  });
+  const chips = [displayRooms, displayBathrooms, displayArea].filter((value) => value && value !== "-");
+  const modelNote = rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? returnText.modelNote : returnText.configuredTargetNote;
+  const notes = <div className="mt-10 grid gap-2 text-xs leading-5 text-muted">
+    {valueGrowth > 0 && <p>{growthText.note}</p>}
+    {hasTargetReturn && <p>{modelNote}</p>}
+    {property.slug === "sal-rei-boa-vista-b1-residences-ap1" && <p>{salReiModelCopy[locale]}</p>}
+  </div>;
+  const primaryCta = "rounded-xl bg-brand px-5 py-3.5 text-center font-bold text-white transition hover:bg-brand-strong";
+  const secondaryCta = "rounded-xl border border-line px-5 py-3.5 text-center font-bold text-ink transition hover:bg-canvas";
+
   if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-canvas text-ink">
-        <section className="border-b border-line bg-white px-5 pb-8 pt-28 sm:px-6 md:pt-32">
-          <div className="mx-auto max-w-6xl">
-            <Link href="/properties" className="inline-flex min-h-11 items-center text-sm font-bold text-brand">{copy.backToProperties}</Link>
-            <h1 className="mt-6 text-4xl font-bold leading-tight md:text-6xl">{property.title}</h1>
-            {constructionBadge}
-            <p className="mt-3 text-lg text-muted">{property.address || property.city || copy.locationMissing}</p>
-          </div>
+        <section className="px-5 pb-16 pt-24 sm:px-6 md:pt-28">
+          <PropertyOverview locale={locale} back={{ href: "/properties", label: copy.backToProperties }}
+            gallery={<PropertyGallery images={galleryImages} title={property.title} locale={locale} />}
+            title={property.title} chips={chips} badges={constructionBadge} facts={facts} description={property.description || labels.infoAvailable}
+            strategy={strategy} financials={financials} stickyTop="lg:top-28"
+            card={investCard(<>
+              <Link href={`/join?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className={primaryCta}>{t("Create client account")}</Link>
+              <Link href={`/sign-in?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className={secondaryCta}>{labels.reserveLogin}</Link>
+            </>, labels.reserveText)}>
+            <div className="mt-10">{locationSection}</div>
+            {hasTargetReturn && <div className="mt-10"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} /></div>}
+            {notes}
+          </PropertyOverview>
         </section>
-
-        <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6 md:py-12">
-          {/* Photos first: on phones the financial fine print used to push the gallery ~900px down. */}
-          <PropertyGallery images={galleryImages} title={property.title} locale={locale} />
-          {hasTargetReturn && <div className="mt-6">{financialSummary}</div>}
-
-          {!hasTargetReturn && <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <PublicFact label={labels.totalShares} value={totalShares?.toLocaleString(localeHtmlLang[locale]) || copy.onRequest} />
-            <PublicFact label={labels.soldBlocked} value={blockedShares?.toLocaleString(localeHtmlLang[locale]) || "0"} />
-            <PublicFact label={labels.availableShares} value={availableShares?.toLocaleString(localeHtmlLang[locale]) || copy.onRequest} accent />
-            <PublicFact label={copy.calculator.sharePrice} value={formatMoney(sharePrice, copy)} />
-          </div>}
-
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-            <article className="bg-white p-6 shadow-sm md:p-8">
-              <h2 className="text-2xl font-bold">{copy.aboutHome}</h2>
-              <p className="mt-4 leading-7 text-muted">{property.description || labels.infoAvailable}</p>
-              <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                <PublicDetail label={copy.location} value={property.address || property.city || "-"} />
-                <PublicDetail label={copy.propertyType} value={property.property_type || copy.property} />
-                <PublicDetail label={copy.bedroomsRooms} value={displayRooms} />
-                <PublicDetail label={copy.bathrooms} value={displayBathrooms} />
-                <PublicDetail label={copy.area} value={displayArea} />
-                <PublicDetail label={copy.calculator.propertyValue} value={formatMoney(propertyValue, copy)} />
-              </div>
-            </article>
-
-            <aside id="reserve" className="h-fit scroll-mt-28 bg-ink p-6 text-white shadow-sm md:p-8">
-              <p className="text-sm font-bold uppercase tracking-wide text-[#7dd3fc]">{labels.reservation}</p>
-              <h2 className="mt-3 text-3xl font-bold">{availableShares?.toLocaleString(localeHtmlLang[locale]) || "0"} {copy.available}</h2>
-              <p className="mt-4 leading-7 text-white/70">{labels.reserveText}</p>
-              {hasTargetReturn && <p className="mt-4 font-bold">{copy.calculator.minimum}: {formatMinimumInvestment(locale, tierMinimum)}{minInvestment !== null && <> / {minimumInvestmentShares(sharePrice, minInvestment)} {t("Shares")}</>}</p>}
-              <Link href={`/join?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className="mt-7 block rounded-lg bg-brand px-5 py-4 text-center font-bold text-white hover:bg-white hover:text-ink">{t("Create client account")}</Link>
-              <Link href={`/sign-in?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className="mt-3 block rounded-lg border border-white/30 px-5 py-4 text-center font-bold text-white hover:bg-white/10">{labels.reserveLogin}</Link>
-            </aside>
-          </div>
-          {locationSection}
-          {hasTargetReturn && <InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} />}
-        </section>
-        {/* Phones: the reservation box sits ~2,600px down, so keep a way to reach it on screen. The right side stays free for the chat button. */}
+        {/* Phones: the investment card sits below the story, so keep a way to reach it on screen. The right side stays free for the chat button. */}
         {openForInvestment && <div className="fixed inset-x-0 bottom-0 z-[75] flex items-center gap-3 border-t border-line bg-white/95 py-3 pl-4 pr-20 shadow-[0_-8px_24px_rgba(20,33,61,0.08)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
           <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.minimum}</span><strong className="block truncate text-sm text-ink">{formatMinimumInvestment(locale, tierMinimum)}</strong></p>
           <a href="#reserve" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{stickyReserveCopy[locale]}</a>
@@ -551,42 +530,22 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       : claimEmail.split("@")[0];
 
     return (
-      <main className="min-h-screen bg-white text-ink">
+      <main className="min-h-screen bg-canvas text-ink">
         <ClientPortalSidebar active="property" email={claimEmail} fullName={fullName} locale={locale} />
         <div className="pt-16 lg:ml-[282px] lg:pt-0">
-          <section className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            {financialSummary}
-
-            <div className="mt-6">
-              <h1 className="text-xl font-bold text-ink">{property.title}</h1>
-              {constructionBadge}
-              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted"><span className="inline-flex items-center gap-1"><BedDouble size={17} />{displayRooms}</span><span className="inline-flex items-center gap-1"><Bath size={17} />{displayBathrooms}</span><span>{displayArea}</span></p>
-            </div>
-
-            <div className="mt-4"><PortalPropertyGallery images={galleryImages} title={property.title} locale={locale} /></div>
-            <p className="mt-4 text-muted">{property.address || property.city || copy.locationMissing}</p>
-
-            <div className="mt-5 grid gap-5 border-b border-line pb-7 xl:grid-cols-[1fr_auto] xl:items-end">
-              <div className="text-left xl:text-right">
-                <div className="flex gap-3 xl:justify-end"><a href="#buy-shares" className="inline-flex min-h-12 items-center bg-brand px-8 font-bold text-white hover:bg-brand-strong rounded-lg">{labels.buy}</a><Link href={`/contact?projekt=${encodeURIComponent(property.slug)}`} className="inline-flex min-h-12 items-center border-2 border-ink bg-white px-8 font-bold text-ink hover:bg-canvas rounded-lg">{labels.sell}</Link></div>
-                <p className="mt-4 font-bold text-muted">{targetReturnLabel} <span className="text-brand">{formatPortalPercent(targetReturn)}</span></p>
-              </div>
-            </div>
-
-            <nav className="flex gap-6 overflow-x-auto border-b border-line py-3 text-sm font-bold text-muted">
-              <a href="#details" className="inline-flex min-h-11 shrink-0 items-center text-brand">{t("Details")}</a><a href="#location" className="inline-flex min-h-11 shrink-0 items-center hover:text-ink">{copy.location}</a><a href="#buy-shares" className="inline-flex min-h-11 shrink-0 items-center hover:text-ink">{t("Financial")}</a><Link href="/dashboard#requests" className="inline-flex min-h-11 shrink-0 items-center hover:text-ink">{t("Orders")}</Link>
-            </nav>
-
-            {locationSection}
-            <section id="details" className="scroll-mt-8 py-8">
-              <h2 className="text-2xl font-bold">{copy.status}</h2>
-              <p className="mt-4 text-muted"><strong>{t("Status:")}</strong> {property.status === "active" ? copy.available : localizedStatus(property.status, locale, copy.onRequest)}</p>
-              <h2 className="mt-8 text-3xl font-bold">{copy.aboutHome}</h2>
-              <p className="mt-5 max-w-6xl text-lg leading-8 text-muted">{property.description || t("Property information is available from the Brickwise agent.")}</p>
-              <div className="mt-8 grid gap-4 md:grid-cols-3"><PortalInfo title={copy.location} text={`${property.city || "-"}, ${property.address || "-"}`} /><PortalInfo title={copy.homeFacts} text={`${displayRooms}, ${displayBathrooms}, ${displayArea}`} /><PortalInfo title={copy.status} text={property.status === "active" ? copy.available : localizedStatus(property.status, locale, copy.onRequest)} /></div>
-            </section>
-
-            <div id="buy-shares" className="scroll-mt-8 border-t border-line pb-12 pt-2"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>
+          <section className="px-4 py-6 sm:px-6 lg:px-8">
+            <PropertyOverview locale={locale} back={{ href: "/dashboard/marketplace", label: portalNavCopy[locale].marketplace }}
+              gallery={<PortalPropertyGallery images={galleryImages} title={property.title} locale={locale} />}
+              title={property.title} chips={chips} badges={constructionBadge} facts={facts} description={property.description || t("Property information is available from the Brickwise agent.")}
+              strategy={strategy} financials={financials} stickyTop="lg:top-6"
+              card={investCard(<>
+                {openForInvestment && <a href="#buy-shares" className={primaryCta}>{overview.investNow}</a>}
+                <Link href={`/contact?projekt=${encodeURIComponent(property.slug)}`} className={secondaryCta}>{labels.sell}</Link>
+              </>)}>
+              <div className="mt-10">{locationSection}</div>
+              <div id="buy-shares" className="mt-10 scroll-mt-8"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>
+              {notes}
+            </PropertyOverview>
           </section>
         </div>
       </main>
@@ -595,21 +554,3 @@ export default async function PropertyDetailPage({ params }: PageProps) {
 
   return null;
 }
-
-function PublicFact({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-  return <div className={`border p-5 ${accent ? "border-brand bg-brand-soft" : "border-line bg-white"}`}><p className="text-sm font-bold text-muted">{label}</p><p className={`mt-2 text-2xl font-bold ${accent ? "text-brand" : "text-ink"}`}>{value}</p></div>;
-}
-
-function PublicDetail({ label, value }: { label: string; value: string }) {
-  return <div className="border-b border-line py-3"><p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p><p className="mt-1 font-bold text-ink">{value}</p></div>;
-}
-
-function PortalMetricCard({ title, value, rows, primary = false }: { title: string; value: string; rows: string[][]; primary?: boolean }) {
-  return <div className={`rounded-xl border p-5 shadow-[0_5px_16px_rgba(23,35,63,0.1)] ${primary ? "border-brand bg-brand text-white" : "border-line bg-white"}`}><div className="flex items-center justify-between gap-4"><p className={`flex items-center gap-2 text-xl font-bold ${primary ? "text-white" : "text-brand"}`}><Info size={17} />{title}</p><p className={`text-xl font-bold ${primary ? "text-white" : "text-brand"}`}>{value}</p></div><div className="mt-4 grid gap-1.5 text-sm">{rows.map(([label, rowValue]) => <div key={label} className="flex items-center justify-between gap-4"><span className={primary ? "text-white/90" : "text-ink"}>{label}</span><span className={primary ? "font-bold text-white" : "text-brand"}>{rowValue}</span></div>)}</div></div>;
-}
-
-
-function PortalInfo({ title, text }: { title: string; text: string }) {
-  return <div className="bg-canvas p-5"><h3 className="font-bold">{title}</h3><p className="mt-2 leading-6 text-muted">{text}</p></div>;
-}
-
