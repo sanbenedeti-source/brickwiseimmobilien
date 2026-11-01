@@ -1,14 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, Building2, Crown, Gem } from "lucide-react";
+import { ArrowRight, Building2, Crown, Gem, LayoutGrid } from "lucide-react";
 import { formatMinimumInvestment, INVESTMENT_TIERS, TIER_MINIMUM_EUR, type InvestmentTier } from "../lib/investment-policy";
 import { tierCopy } from "../lib/tier-copy";
 import type { Locale } from "../lib/i18n";
 
 export const tierIcons: Record<InvestmentTier, typeof Gem> = { standard: Building2, premium: Gem, super_premium: Crown };
 export const tierCardStyles: Record<InvestmentTier, string> = {
-  standard: "border-line bg-white text-ink",
+  standard: "border-[#c5dcef] bg-brand-soft text-ink",
   premium: "border-[#e8d9b8] bg-[#fbf6ec] text-ink",
   super_premium: "border-[#14213d] bg-[#14213d] text-white",
+};
+
+/** Level filter pills: each level has its own colour and icon; the selected one is filled. */
+export const tierPillStyles: Record<InvestmentTier | "all", { icon: typeof Gem; idle: string; active: string }> = {
+  all: { icon: LayoutGrid, idle: "border-line bg-white text-ink hover:border-ink", active: "border-ink bg-ink text-white" },
+  standard: { icon: Building2, idle: "border-[#c5dcef] bg-brand-soft text-brand hover:border-brand", active: "border-brand bg-brand text-white" },
+  premium: { icon: Gem, idle: "border-[#e8d9b8] bg-[#fbf6ec] text-[#7a5a1e] hover:border-[#8a6a2b]", active: "border-[#8a6a2b] bg-[#8a6a2b] text-white" },
+  super_premium: { icon: Crown, idle: "border-[#c9d1e3] bg-[#eef1f7] text-ink hover:border-ink", active: "border-ink bg-ink text-[#f1d48a]" },
 };
 
 /** The three investment levels with their minimum investment, each linking to its section of the property list. */

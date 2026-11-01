@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { formatMinimumInvestment, INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "../lib/investment-policy";
 import { tierCopy } from "../lib/tier-copy";
-import { tierCardStyles, tierIcons } from "../components/InvestmentTierCards";
+import { tierCardStyles, tierIcons, tierPillStyles } from "../components/InvestmentTierCards";
 import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
@@ -228,9 +228,12 @@ export default async function ProjektePage({ searchParams }: PageProps) {
         <nav aria-label={tiers.kicker} className="mb-10 flex flex-wrap gap-3">
           {[null, ...INVESTMENT_TIERS].map((tier) => {
             const active = tier === selectedTier;
+            const pill = tierPillStyles[tier ?? "all"];
+            const PillIcon = pill.icon;
             return <Link key={tier ?? "all"} href={tierHref(tier)} aria-current={active ? "page" : undefined}
-              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-bold transition ${active ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}`}>
-              {tier ? <>{tiers.names[tier]}<span className={active ? "text-white/70" : "text-muted"}>· {formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</span></> : tiers.all}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border-2 px-5 text-sm font-bold transition ${active ? `${pill.active} shadow-md` : pill.idle}`}>
+              <PillIcon size={17} aria-hidden="true" />
+              {tier ? <>{tiers.names[tier]}<span className="font-semibold opacity-80">· {formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</span></> : tiers.all}
             </Link>;
           })}
         </nav>
