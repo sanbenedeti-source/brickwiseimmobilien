@@ -21,7 +21,7 @@ function load(filename) {
 }
 const { externalProperties } = load(path.join(directory, "external-properties.ts"));
 const { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } = load(path.join(directory, "property-financials.ts"));
-const { minimumInvestmentShares, canPurchaseShares } = load(path.join(directory, "investment-policy.ts"));
+const { minimumInvestmentShares, canPurchaseShares, TIER_MINIMUM_EUR, toInvestmentTier, formatMinimumInvestment } = load(path.join(directory, "investment-policy.ts"));
 // [price, share price, published rental yield %, annual / monthly net rent on EUR 2000].
 // The yield is (monthly rent - stated monthly costs) x 12 / price, rounded to 0.01 %.
 const expected = {
@@ -99,4 +99,20 @@ test("Edmonton nightly scenario distributes net rent across all shares", () => {
   assert.ok(Math.abs(getPropertyProjection(p).propertyMonthly - net) < 1e-9);
   assert.equal(getPropertyProjection(p, 20).annual, 2200);
   assert.equal(getPropertyProjection(p).annualPerShare, 110);
+});
+
+test("each investment tier enforces its own minimum: standard EUR 2,000, premium EUR 20,000, super premium EUR 50,000", () => {
+  assert.deepEqual({ ...TIER_MINIMUM_EUR }, { standard: 2000, premium: 20000, super_premium: 50000 });
+  assert.deepEqual(["premium", "super_premium", "standard", "gold", null, undefined].map(toInvestmentTier), ["premium", "super_premium", "standard", "standard", "standard", "standard"]);
+  // Share price EUR 2,000: premium needs 10 shares, super premium 25.
+  assert.equal(minimumInvestmentShares(2000, TIER_MINIMUM_EUR.premium), 10);
+  assert.equal(minimumInvestmentShares(2000, TIER_MINIMUM_EUR.super_premium), 25);
+  assert.equal(canPurchaseShares(9, 2000, TIER_MINIMUM_EUR.premium, 600), false);
+  assert.equal(canPurchaseShares(10, 2000, TIER_MINIMUM_EUR.premium, 600), true);
+  assert.equal(canPurchaseShares(24, 2000, TIER_MINIMUM_EUR.super_premium, 600), false);
+  // Share price EUR 20,000: one share meets premium; super premium rounds up to 3 shares (EUR 60,000).
+  assert.equal(minimumInvestmentShares(20000, TIER_MINIMUM_EUR.premium), 1);
+  assert.equal(minimumInvestmentShares(20000, TIER_MINIMUM_EUR.super_premium), 3);
+  assert.equal(formatMinimumInvestment("en", TIER_MINIMUM_EUR.super_premium), "€50,000");
+  assert.equal(formatMinimumInvestment("en"), "€2,000");
 });

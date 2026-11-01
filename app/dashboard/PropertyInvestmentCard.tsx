@@ -2,13 +2,14 @@ import { formatPropertyPercent, propertyUiCopy } from "../properties/property-ui
 import { localeHtmlLang, type Locale } from "../lib/i18n";
 import { investmentCopy } from "../lib/investment-copy";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
-import { formatMinimumInvestment, MINIMUM_INVESTMENT_EUR, minimumInvestmentShares } from "../lib/investment-policy";
+import { formatMinimumInvestment, minimumInvestmentShares } from "../lib/investment-policy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 import { ArrowRight, BedDouble, Bath, MapPin } from "lucide-react";
 import Link from "next/link";
 import type { ListingProperty } from "@/app/lib/external-properties";
 import { createSharePurchaseRequest } from "./actions";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
+import PropertyTierBadge from "../components/PropertyTierBadge";
 import { randomUUID } from "node:crypto";
 import SharePurchaseForm from "./SharePurchaseForm";
 
@@ -40,7 +41,7 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
   const hasReturnBreakdown = Boolean(getPropertyReturnBreakdown(property));
   const hasTargetReturn = property.targetTotalReturn !== undefined || hasReturnBreakdown;
   const currency = getPropertyCurrency(property);
-  const minimumShares = minimumInvestmentShares(property.sharePrice, MINIMUM_INVESTMENT_EUR);
+  const minimumShares = minimumInvestmentShares(property.sharePrice, property.minInvestmentEur);
   const { available: availableShares } = getPropertyShareSupply(property, {
     total_shares: shareAvailability?.total,
     blocked_shares: shareAvailability?.blocked,
@@ -60,13 +61,13 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
       <div className="flex flex-1 flex-col p-5">
         <h2 className="truncate text-base font-semibold text-ink"><Link href={`/properties/${property.slug}`} className="hover:text-brand">{property.title}</Link></h2>
         <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted"><MapPin size={14} aria-hidden="true" className="shrink-0" />{property.address}</p>
-        {property.constructionStatus && <div className="mt-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /></div>}
+        {(property.constructionStatus || (property.investmentTier && property.investmentTier !== "standard")) && <div className="mt-2 flex flex-wrap gap-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /><PropertyTierBadge tier={property.investmentTier} locale={locale} /></div>}
 
         <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
           <CardMetric label={hasTargetReturn ? rentalYieldLabel(locale, "costsStated" in property ? property.costsStated : undefined) : copy.targetReturn} value={formatPropertyPercent(targetReturn, locale)} accent />
           <CardMetric label={copy.perShare} value={money(property.sharePrice)} />
           <CardMetric label={copy.available} value={availableShares.toLocaleString(localeHtmlLang[locale])} />
-          <CardMetric label={text.minimum} value={`${formatMinimumInvestment(locale)}${minimumShares !== null ? ` / ${minimumShares} ${text.shares}` : ""}`} />
+          <CardMetric label={text.minimum} value={`${formatMinimumInvestment(locale, property.minInvestmentEur)}${minimumShares !== null ? ` / ${minimumShares} ${text.shares}` : ""}`} />
         </dl>
         {hasTargetReturn && <p className="mt-2.5 text-xs leading-5 text-muted">{hasReturnBreakdown ? returnText.modelNote : returnText.configuredTargetNote}</p>}
 

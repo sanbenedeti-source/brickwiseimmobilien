@@ -7,6 +7,7 @@ import { formatPropertyMoney, getPropertyProjection, getPropertyReturnBreakdown,
 import { createClient } from "@/lib/supabase/server";
 import { targetReturnCopy, rentalYieldLabel } from "./lib/target-return-copy";
 import PropertyConstructionBadge from "./components/PropertyConstructionBadge";
+import PropertyTierBadge from "./components/PropertyTierBadge";
 import { cookies } from "next/headers";
 import { formatPropertyPercent } from "./properties/property-ui-copy";
 import Link from "next/link";
@@ -330,7 +331,7 @@ export default async function Home() {
                   <div className="p-3">
                     <div className="flex items-center justify-center gap-5 py-2 text-xs text-muted"><span className="flex items-center gap-1"><BedDouble size={16} />{property.bedrooms}</span><span className="flex items-center gap-1"><Bath size={16} />{property.bathrooms}</span><span className="flex items-center gap-1"><Maximize2 size={15} />{property.area} m²</span></div>
                     <h3 className="truncate text-lg font-semibold">{property.title}</h3>
-                    {property.constructionStatus && <div className="mt-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /></div>}
+                    {(property.constructionStatus || (property.investmentTier && property.investmentTier !== "standard")) && <div className="mt-2 flex flex-wrap gap-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /><PropertyTierBadge tier={property.investmentTier} locale={locale} /></div>}
                     <p className="mt-2 flex items-center gap-1 truncate text-sm text-muted"><MapPin size={15} />{property.city}, {property.address.split(",").at(-1)}</p>
                     <div className="mt-5 grid gap-2 text-sm"><div className="flex justify-between gap-4"><span>{text.available}</span><strong className="whitespace-nowrap text-brand">{shares.toLocaleString(locale)}</strong></div><div className="flex justify-between gap-4"><span>{rentalYieldLabel(locale, property.costsStated)}</span><strong className="whitespace-nowrap text-brand">{formatPropertyPercent(projection.annualRate, locale)}</strong></div><div className="flex justify-between gap-4"><span>{returnText.monthlyPerShare}</span><strong className="whitespace-nowrap text-brand">{formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)}</strong></div><div className="flex justify-between gap-4"><span>{returnText.annualPerShare}</span><strong className="whitespace-nowrap text-brand">{formatPropertyMoney(projection.annualPerShare, projection.currency, locale, 2)}</strong></div></div>
                   </div>

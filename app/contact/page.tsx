@@ -1,7 +1,7 @@
 import { formatPropertyPercent, localizedPayment, propertyUiCopy } from "../properties/property-ui-copy";
 import { createTranslator } from "../lib/translate";
 import SubmitButton from "../components/SubmitButton";
-import { minimumInvestmentShares, MINIMUM_INVESTMENT_EUR } from "../lib/investment-policy";
+import { minimumInvestmentShares } from "../lib/investment-policy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyTargetReturn } from "../lib/property-financials";
 import { investmentCopy } from "../lib/investment-copy";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
@@ -168,7 +168,7 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
   const returnCopy = targetReturnCopy[locale];
   const returnNote = returnBreakdown ? returnCopy.modelNote : returnCopy.configuredTargetNote;
   const currency = externalProperty ? getPropertyCurrency(externalProperty) : "EUR";
-  const minimumShares = externalProperty ? minimumInvestmentShares(externalProperty.sharePrice, MINIMUM_INVESTMENT_EUR) : null;
+  const minimumShares = externalProperty ? minimumInvestmentShares(externalProperty.sharePrice, externalProperty.minInvestmentEur) : null;
   const requestedAmount = getInvestmentAmount(betrag);
   const payoutLabel = auszahlung === "annual" ? ui.annual : ui.monthly;
   const parsedShares = Number(shares);

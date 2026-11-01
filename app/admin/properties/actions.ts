@@ -8,6 +8,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { contentLocales, readRequiredTranslation } from "@/app/lib/content-translations";
 import { writeAdminMutation } from "@/app/lib/admin-audit";
 import { getExternalPropertyBySlug } from "@/app/lib/external-properties";
+import { INVESTMENT_TIERS } from "@/app/lib/investment-policy";
 import { parseEuroAmount } from "@/app/api/properties/import/euro-amount";
 
 function createSlug(title: string) {
@@ -122,11 +123,13 @@ export async function updatePropertySale(formData: FormData) {
   const monthlyValueGrowth = formData.get("monthly_value_growth") ? parseEuroAmount(formData.get("monthly_value_growth")) : null;
   const constructionStatus = String(formData.get("construction_status") || "");
   const status = String(formData.get("status") || "");
+  const investmentTier = String(formData.get("investment_tier") || "standard");
   if (!propertySlug || getExternalPropertyBySlug(propertySlug) || price === null || price <= 0
     || (formData.get("monthly_rent") && (monthlyRent === null || monthlyRent < 0)) || monthlyExpenses === null || monthlyExpenses < 0
     || (formData.get("share_price") && (sharePrice === null || sharePrice <= 0 || sharePrice > price))
     || (formData.get("monthly_value_growth") && (monthlyValueGrowth === null || monthlyValueGrowth < 0))
-    || !["completed", "under_construction", "upcoming"].includes(constructionStatus) || !["active", "draft"].includes(status)) {
+    || !["completed", "under_construction", "upcoming"].includes(constructionStatus) || !["active", "draft"].includes(status)
+    || !(INVESTMENT_TIERS as readonly string[]).includes(investmentTier)) {
     redirect(resultPath("sale-invalid"));
   }
 
@@ -143,8 +146,8 @@ export async function updatePropertySale(formData: FormData) {
   const pricingChanged = Number(current.price) !== price || (current.share_price === null ? null : Number(current.share_price)) !== sharePrice;
   if (pricingChanged && Number(settings?.blocked_shares || 0) > 0) redirect(resultPath("sale-locked"));
 
-  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_settings", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, status, price, currency: "EUR", monthly_rent: monthlyRent, share_price: sharePrice } }, [
-    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, construction_status: constructionStatus, status }, match: { slug: propertySlug } },
+  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_settings", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, status, price, currency: "EUR", monthly_rent: monthlyRent, share_price: sharePrice, investment_tier: investmentTier } }, [
+    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, construction_status: constructionStatus, status, investment_tier: investmentTier }, match: { slug: propertySlug } },
   ]);
   if (error) redirect(resultPath("sale-error"));
 
@@ -178,16 +181,18 @@ export async function updateCatalogueSaleStatus(formData: FormData) {
 
   const propertySlug = String(formData.get("property_slug") || "").trim();
   const constructionStatus = String(formData.get("construction_status") || "");
+  const investmentTier = String(formData.get("investment_tier") || "standard");
   const resultPath = (status: string) => `/admin/properties?status=${status}&property=${encodeURIComponent(propertySlug)}#sales-status`;
   const listing = getExternalPropertyBySlug(propertySlug);
-  if (!listing || listing.listed === false || !["completed", "under_construction", "upcoming"].includes(constructionStatus)) redirect(resultPath("sale-invalid"));
+  if (!listing || listing.listed === false || !["completed", "under_construction", "upcoming"].includes(constructionStatus)
+    || !(INVESTMENT_TIERS as readonly string[]).includes(investmentTier)) redirect(resultPath("sale-invalid"));
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !url) redirect(resultPath("sale-error"));
   const admin = createServiceClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_status", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus } }, [
-    { table: "property_sale_status", operation: "upsert", data: { property_slug: propertySlug, construction_status: constructionStatus, updated_at: new Date().toISOString(), updated_by: user!.id } },
+  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_status", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, investment_tier: investmentTier } }, [
+    { table: "property_sale_status", operation: "upsert", data: { property_slug: propertySlug, construction_status: constructionStatus, investment_tier: investmentTier, updated_at: new Date().toISOString(), updated_by: user!.id } },
   ]);
   if (error) redirect(resultPath("sale-error"));
 

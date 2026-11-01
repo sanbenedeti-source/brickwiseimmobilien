@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isPropertyOpenForInvestment } from "../lib/external-properties";
 import { findProperty } from "../lib/property-registry";
-import { canPurchaseShares, MINIMUM_INVESTMENT_EUR } from "../lib/investment-policy";
+import { canPurchaseShares } from "../lib/investment-policy";
 import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 
 
@@ -44,7 +44,7 @@ export async function createContactRequest(formData: FormData) {
     const shares = Number(formData.get("investment_shares"));
     if (!property || !isPropertyOpenForInvestment(property)) redirect("/contact?error=investment");
     const currency = getPropertyCurrency(property);
-    const minimumAmount = MINIMUM_INVESTMENT_EUR;
+    const minimumAmount = property.minInvestmentEur;
     const { data: settings } = await supabase.from("property_share_settings")
       .select("total_shares,blocked_shares").eq("property_slug", investmentSlug).maybeSingle();
     const { available } = getPropertyShareSupply(property, settings ?? undefined);
@@ -58,7 +58,7 @@ export async function createContactRequest(formData: FormData) {
       `Shares: ${shares}`,
       `Price per share: ${property.sharePrice.toFixed(2)} ${currency}`,
       `Total amount: ${(shares * property.sharePrice).toFixed(2)} ${currency}`,
-      `Minimum: ${MINIMUM_INVESTMENT_EUR} EUR`,
+      `Minimum: ${minimumAmount} EUR`,
       `Projected rental yield: ${projection.annualRate.toFixed(2)}%`,
       `Projected net rent per year: ${projection.annual.toFixed(2)} ${currency}`,
       `Projected net rent per month: ${projection.monthly.toFixed(2)} ${currency}`,

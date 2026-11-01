@@ -1,10 +1,11 @@
 import Image from "next/image";
-import { formatMinimumInvestment } from "../lib/investment-policy";
+import { formatMinimumInvestment, type InvestmentTier } from "../lib/investment-policy";
 import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
 import { valueGrowthCopy } from "../lib/value-growth-copy";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
+import PropertyTierBadge from "../components/PropertyTierBadge";
 import { getPropertyTranslations, localizeProperty } from "../lib/property-localization";
 import Link from "next/link";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
@@ -45,6 +46,8 @@ type Property = {
   blockedShares?: number;
   currency?: PropertyCurrency;
   minInvestment?: number;
+  minInvestmentEur?: number;
+  investmentTier?: InvestmentTier;
   fundedPercent?: number;
   payoutModel?: string;
 };
@@ -238,6 +241,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                     {property.property_type || copy.property}
                   </span>
                   <PropertyConstructionBadge status={property.constructionStatus} locale={locale} />
+                  <PropertyTierBadge tier={property.investmentTier} locale={locale} />
                 </div>
 
                 <h2 className="text-2xl font-bold leading-tight md:text-3xl">
@@ -254,7 +258,7 @@ export default async function ProjektePage({ searchParams }: PageProps) {
 
                 <div className="mt-8 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr))]">
                   <InfoBox label={copy.propertyValue} value={formatMoney(property.price, copy, getPropertyCurrency(property), locale)} />
-                  <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale)} />
+                  <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale, property.minInvestmentEur)} />
                   <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
                   <InfoBox label={returnText.annualPerShare} value={formatPropertyMoney(projection.annualPerShare, projection.currency, locale, 2)} />
                   <InfoBox label={rentalYieldLabel(locale, "costsStated" in property ? property.costsStated !== false : undefined)} value={formatPercent(projection.annualRate, copy, locale)} />

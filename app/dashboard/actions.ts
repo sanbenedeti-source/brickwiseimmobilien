@@ -1,6 +1,6 @@
 "use server";
 
-import { canPurchaseShares, MINIMUM_INVESTMENT_EUR } from "../lib/investment-policy";
+import { canPurchaseShares } from "../lib/investment-policy";
 import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 
 import { revalidatePath } from "next/cache";
@@ -62,7 +62,8 @@ export async function createSharePurchaseRequest(formData: FormData) {
   }
 
   const currency = getPropertyCurrency(property);
-  const minimumAmount = MINIMUM_INVESTMENT_EUR;
+  // The property tier sets the minimum (standard €2,000, premium €20,000, super premium €50,000).
+  const minimumAmount = property.minInvestmentEur;
   if (!canPurchaseShares(requestedShares, property.sharePrice, minimumAmount, Number.MAX_SAFE_INTEGER)) {
     redirect("/dashboard?request=invalid#properties");
   }

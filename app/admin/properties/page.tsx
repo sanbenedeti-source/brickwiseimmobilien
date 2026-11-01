@@ -18,6 +18,8 @@ import ImportPropertiesForm from "./ImportPropertiesForm";
 import { contentLocaleLabels, contentLocales } from "@/app/lib/content-translations";
 import { getPropertyShareSupply } from "@/app/lib/property-financials";
 import PropertyConstructionBadge from "@/app/components/PropertyConstructionBadge";
+import PropertyTierBadge from "@/app/components/PropertyTierBadge";
+import { INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "@/app/lib/investment-policy";
 import { getCatalogueProperties, mapDatabaseProperty } from "@/app/lib/property-registry";
 import { AdminAlert, AdminCard, AdminDisclosure, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "../ui";
 
@@ -86,6 +88,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
   const rows = allProperties.map((property) => ({ property, saved: settingsBySlug.get(property.slug), ...getPropertyShareSupply(property, settingsBySlug.get(property.slug)) }));
   const totals = rows.reduce((sum, row) => ({ total: sum.total + row.total, blocked: sum.blocked + row.blocked, available: sum.available + row.available }), { total: 0, blocked: 0, available: 0 });
   const number = (value: number) => value.toLocaleString(localeHtmlLang[locale]);
+  const tierName = (tier: InvestmentTier) => tier === "premium" ? "Premium" : tier === "super_premium" ? "Super Premium" : t("Standard");
 
   return (
     <main className="admin-workspace">
@@ -112,11 +115,12 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
         <div className="grid gap-3">
           {listedCatalogue.map((listing) => {
             const open = isPropertyOpenForInvestment(listing);
-            return <details key={`sale-${listing.slug}-${listing.constructionStatus ?? ""}`} open={changedSlug === listing.slug} className="admin-subsection">
+            return <details key={`sale-${listing.slug}-${listing.constructionStatus ?? ""}-${listing.investmentTier ?? ""}`} open={changedSlug === listing.slug} className="admin-subsection">
               <summary>
                 <span className="inline-flex flex-wrap items-center gap-2">
                   {translations.get(listing.slug)?.title || listing.title}
                   <PropertyConstructionBadge status={listing.constructionStatus} locale={locale} />
+                  <PropertyTierBadge tier={listing.investmentTier} locale={locale} />
                   <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
                 </span>
               </summary>
@@ -131,6 +135,12 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                         <option value="upcoming">{t("Upcoming")}</option>
                       </select>
                     </label>
+                    <label className="admin-field">{t("Investment tier")}
+                      <select name="investment_tier" defaultValue={toInvestmentTier(listing.investmentTier)}>
+                        {INVESTMENT_TIERS.map((tier) => <option key={tier} value={tier}>{`${tierName(tier)} · ${t("Minimum investment")} ${formatEuro(TIER_MINIMUM_EUR[tier], locale)}`}</option>)}
+                      </select>
+                    </label>
+                    <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
                     <p className="admin-help admin-field-wide">{t("The price, rent and share price of this property come from its documents and do not change here.")}</p>
                   </div>
                   <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>
@@ -141,12 +151,13 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
           {visibleProperties.map((property) => {
             const open = mapDatabaseProperty(property).investmentOpen;
             const locked = Number(settingsBySlug.get(property.slug)?.blocked_shares || 0) > 0;
-            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth].join("|");
+            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth, property.investment_tier].join("|");
             return <details key={`sale-${property.slug}-${values}`} open={changedSlug === property.slug} className="admin-subsection">
               <summary>
                 <span className="inline-flex flex-wrap items-center gap-2">
                   {translations.get(property.slug)?.title || property.title}
                   <PropertyConstructionBadge status={property.construction_status} locale={locale} />
+                  <PropertyTierBadge tier={toInvestmentTier(property.investment_tier)} locale={locale} />
                   <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
                 </span>
               </summary>
@@ -173,6 +184,12 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                     <label className="admin-field">{t("Monthly costs (EUR)")}<input name="monthly_expenses" type="number" min="0" step="0.01" defaultValue={property.monthly_expenses ?? 0} /></label>
                     <label className="admin-field">{t("Projected value growth / month (EUR)")}<input name="monthly_value_growth" type="number" min="0" step="0.01" defaultValue={property.monthly_value_growth ?? ""} /></label>
                     <p className="admin-help admin-field-wide">{t("Value growth is shown separately from the rental yield and is never paid out monthly.")}</p>
+                    <label className="admin-field">{t("Investment tier")}
+                      <select name="investment_tier" defaultValue={toInvestmentTier(property.investment_tier)}>
+                        {INVESTMENT_TIERS.map((tier) => <option key={tier} value={tier}>{`${tierName(tier)} · ${t("Minimum investment")} ${formatEuro(TIER_MINIMUM_EUR[tier], locale)}`}</option>)}
+                      </select>
+                    </label>
+                    <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
                     {locked && <p className="admin-help admin-field-wide">{t("Price and share price are locked because shares have already been sold.")}</p>}
                   </div>
                   <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>

@@ -1,4 +1,4 @@
-import { MINIMUM_INVESTMENT_EUR } from "./investment-policy";
+import { MINIMUM_INVESTMENT_EUR, type InvestmentTier } from "./investment-policy";
 import type { PropertyReturnBreakdown } from "./property-financials";
 export type PropertyMapLocation = ({
   latitude: number;
@@ -53,6 +53,8 @@ export type ListingProperty = {
   totalShares?: number;
   blockedShares?: number;
   minInvestmentEur: number;
+  /** Standard when not set; the tier decides minInvestmentEur. */
+  investmentTier?: InvestmentTier;
   fundedPercent: number;
   payoutModel: string;
 };

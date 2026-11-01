@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { MINIMUM_INVESTMENT_EUR } from "./investment-policy";
+import { TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "./investment-policy";
 import { externalProperties, getExternalPropertyBySlug, hiddenManualPropertyIds, hiddenManualPropertySlugs, isPropertyOpenForInvestment, type ListingProperty } from "./external-properties";
 
 /** A row of the properties table (admin panel or import API). */
@@ -10,6 +10,7 @@ export type DatabasePropertyRow = {
   image_url: string | null; status: string | null; created_at: string | null;
   monthly_rent?: number | string | null; monthly_expenses?: number | string | null; share_price?: number | string | null;
   image_urls?: string[] | null; construction_status?: string | null; monthly_value_growth?: number | string | null;
+  investment_tier?: string | null;
 };
 
 const number = (value: unknown) => { const parsed = Number(value); return value === null || value === undefined || value === "" || !Number.isFinite(parsed) ? null : parsed; };
@@ -22,6 +23,7 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
   const monthlyExpenses = number(row.monthly_expenses) ?? 0;
   const sharePrice = number(row.share_price);
   const monthlyValueGrowth = number(row.monthly_value_growth) ?? 0;
+  const investmentTier = toInvestmentTier(row.investment_tier);
   const constructionStatus = row.construction_status === "under_construction" || row.construction_status === "upcoming" ? row.construction_status : "completed";
   const investable = row.status === "active" && constructionStatus !== "upcoming" && monthlyRent > 0 && sharePrice !== null && sharePrice > 0 && price > 0;
   const annualRent = monthlyRent * 12;
@@ -39,7 +41,7 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
     monthlyRent, monthlyExpenses, annualRent, annualYield: price > 0 ? annualRent / price * 100 : 0,
     targetTotalReturn: rentalYield, appreciationYield: 0,
     valueGrowthYield: price > 0 && monthlyValueGrowth > 0 ? Math.round(monthlyValueGrowth * 12 / price * 10000) / 100 : undefined, sharePrice: sharePrice ?? 1000, currency: "EUR",
-    minInvestmentEur: MINIMUM_INVESTMENT_EUR, fundedPercent: 0,
+    minInvestmentEur: TIER_MINIMUM_EUR[investmentTier], investmentTier, fundedPercent: 0,
     payoutModel: "Projected rental yield = (monthly rent - stated monthly costs) x 12 / property value. No appreciation or other non-cash benefit is included.",
   };
 }
@@ -62,27 +64,32 @@ export const getDatabaseProperties = cache(async (): Promise<ListingProperty[]> 
 const constructionStatuses = ["completed", "under_construction", "upcoming"] as const;
 type ConstructionStatus = (typeof constructionStatuses)[number];
 
-/** Construction status the admin set for catalogue listings (slug to status). Null when it cannot be read. */
-const getCatalogueSaleStatus = cache(async (): Promise<Map<string, ConstructionStatus> | null> => {
+type CatalogueSaleSettings = { constructionStatus: ConstructionStatus; investmentTier: InvestmentTier };
+
+/** Construction status and tier the admin set for catalogue listings (by slug). Null when they cannot be read. */
+const getCatalogueSaleStatus = cache(async (): Promise<Map<string, CatalogueSaleSettings> | null> => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return new Map();
   try {
     const client = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-    const { data, error } = await client.from("property_sale_status").select("property_slug,construction_status").abortSignal(AbortSignal.timeout(3000));
+    const { data, error } = await client.from("property_sale_status").select("property_slug,construction_status,investment_tier").abortSignal(AbortSignal.timeout(3000));
     if (error) return null;
-    return new Map(((data || []) as { property_slug: string; construction_status: string }[])
+    return new Map(((data || []) as { property_slug: string; construction_status: string; investment_tier?: string | null }[])
       .filter((row) => (constructionStatuses as readonly string[]).includes(row.construction_status))
-      .map((row) => [row.property_slug, row.construction_status as ConstructionStatus]));
+      .map((row) => [row.property_slug, { constructionStatus: row.construction_status as ConstructionStatus, investmentTier: toInvestmentTier(row.investment_tier) }]));
   } catch { return null; }
 });
 
-/** Catalogue listings with the sale status set in the admin panel. Upcoming closes a listing for purchase,
+/** Catalogue listings with the sale status and tier set in the admin panel. Upcoming closes a listing for purchase,
  * and when the status cannot be read no catalogue listing is open for purchase. */
 export const getCatalogueProperties = cache(async (): Promise<ListingProperty[]> => {
   const statuses = await getCatalogueSaleStatus();
   return externalProperties.map((property) => {
-    const constructionStatus = statuses?.get(property.slug) ?? property.constructionStatus;
-    return { ...property, constructionStatus, investmentOpen: statuses !== null && constructionStatus !== "upcoming" && isPropertyOpenForInvestment(property) };
+    const saved = statuses?.get(property.slug);
+    const constructionStatus = saved?.constructionStatus ?? property.constructionStatus;
+    const investmentTier = saved?.investmentTier ?? toInvestmentTier(property.investmentTier);
+    return { ...property, constructionStatus, investmentTier, minInvestmentEur: TIER_MINIMUM_EUR[investmentTier],
+      investmentOpen: statuses !== null && constructionStatus !== "upcoming" && isPropertyOpenForInvestment(property) };
   });
 });
 

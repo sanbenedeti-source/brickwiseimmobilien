@@ -168,7 +168,7 @@ export default function InvestmentCalculator({
       </div>
 
       <div className="p-5 md:p-8">
-        <p className="mb-2 font-semibold">{text.minimum}: {formatMinimumInvestment(locale)} · {minimumShares} {text.shares} = {formatAmount(minimumShares * effectiveSharePrice)}</p>
+        <p className="mb-2 font-semibold">{text.minimum}: {formatMinimumInvestment(locale, minInvestment ?? undefined)} · {minimumShares} {text.shares} = {formatAmount(minimumShares * effectiveSharePrice)}</p>
         {!canInvest && <p role="status" className="mb-4 rounded-md bg-amber-50 p-4 text-amber-900">{text.unavailable}</p>}
         <div className="mb-7 grid gap-3 rounded-md border border-line bg-canvas p-5 sm:grid-cols-2 lg:grid-cols-5">
           <FormulaItem label={text.propertyValue} value={propertyValue ? formatAmount(propertyValue) : copy.onRequest} />

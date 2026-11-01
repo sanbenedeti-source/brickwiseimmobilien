@@ -311,7 +311,7 @@ test("admin-added properties become investable listings only with an active stat
     "@supabase/supabase-js": { createClient: () => ({ from: (table) => table === "property_sale_status"
       ? { select: () => ({ abortSignal: async () => saleStatus }) }
       : { select: () => ({ in: () => ({ order: () => ({ abortSignal: async () => ({ data: rows, error: null }) }) }) }) } }) },
-    "./investment-policy": { MINIMUM_INVESTMENT_EUR: 500 },
+    "./investment-policy": { TIER_MINIMUM_EUR: { standard: 500, premium: 20000, super_premium: 50000 }, toInvestmentTier: (value) => ["standard", "premium", "super_premium"].includes(value) ? value : "standard" },
     "./external-properties": { externalProperties: [{ slug: "sal-rei", status: "active", investmentOpen: true, constructionStatus: "completed" }], getExternalPropertyBySlug: (slug) => slug === "sal-rei" ? { slug } : undefined,
       hiddenManualPropertyIds: ["hidden-id"], hiddenManualPropertySlugs: [], isPropertyOpenForInvestment: (property) => property.investmentOpen ?? property.status === "active" },
   });
@@ -327,6 +327,11 @@ test("admin-added properties become investable listings only with an active stat
   const growing = registry.mapDatabaseProperty({ ...base, monthly_value_growth: "500" });
   assert.deepEqual([growing.valueGrowthYield, growing.targetTotalReturn], [2, 8], "value growth (500 x 12 / 300000 = 2%) stays outside the rental yield");
   assert.equal(registry.mapDatabaseProperty({ ...base, construction_status: "upcoming" }).constructionStatus, "upcoming");
+  assert.deepEqual([listing.investmentTier, listing.minInvestmentEur], ["standard", 500], "properties without a tier keep the standard minimum");
+  for (const [tier, minimum] of [["premium", 20000], ["super_premium", 50000], ["gold", 500]]) {
+    const tiered = registry.mapDatabaseProperty({ ...base, investment_tier: tier });
+    assert.deepEqual([tiered.investmentTier, tiered.minInvestmentEur], [tier === "gold" ? "standard" : tier, minimum], tier);
+  }
   for (const patch of [{ status: "draft" }, { status: "available" }, { share_price: null }, { monthly_rent: null }, { monthly_rent: "0" }, { construction_status: "upcoming" }]) {
     assert.equal(registry.mapDatabaseProperty({ ...base, ...patch }).investmentOpen, false, JSON.stringify(patch));
   }
@@ -341,6 +346,9 @@ test("admin-added properties become investable listings only with an active stat
   assert.deepEqual([upcoming.constructionStatus, upcoming.investmentOpen], ["upcoming", false], "the admin's Upcoming status closes a catalogue listing");
   saleStatus = { data: [{ property_slug: "sal-rei", construction_status: "under_construction" }], error: null };
   assert.equal((await registry.findProperty("sal-rei")).investmentOpen, true);
+  saleStatus = { data: [{ property_slug: "sal-rei", construction_status: "completed", investment_tier: "premium" }], error: null };
+  const premium = await registry.findProperty("sal-rei");
+  assert.deepEqual([premium.investmentTier, premium.minInvestmentEur, premium.investmentOpen], ["premium", 20000, true], "the admin's tier sets a catalogue listing's minimum");
   saleStatus = { data: null, error: { message: "unavailable" } };
   assert.equal((await registry.findProperty("sal-rei")).investmentOpen, false, "an unreadable sale status fails closed");
   assert.equal((await registry.findProperty("lisbon-loft-1")).title, "Lisbon Loft");

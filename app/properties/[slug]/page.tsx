@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { publicMetadata } from "../../lib/seo";
 import { countLabel, formatPropertyPercent, localizedStatus, propertyUiCopy } from "../property-ui-copy";
 import { createTranslator } from "../../lib/translate";
-import { formatMinimumInvestment, MINIMUM_INVESTMENT_EUR, minimumInvestmentShares } from "../../lib/investment-policy";
+import { formatMinimumInvestment, minimumInvestmentShares } from "../../lib/investment-policy";
 import { formatPropertyMoney, getPropertyProjection, getPropertyCurrency, getPropertyReturnBreakdown, getPropertyShareSupply } from "../../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../../lib/target-return-copy";
 import { valueGrowthCopy } from "../../lib/value-growth-copy";
@@ -24,6 +24,7 @@ import type { InvestmentCalculatorCopy } from "./InvestmentCalculator";
 import PropertyGallery from "./PropertyGallery";
 import PropertyLocation from "./PropertyLocation";
 import PropertyConstructionBadge from "../../components/PropertyConstructionBadge";
+import PropertyTierBadge from "../../components/PropertyTierBadge";
 import PortalPropertyGallery from "./PortalPropertyGallery";
 import ClientPortalSidebar from "@/app/components/ClientPortalSidebar";
 import Link from "next/link";
@@ -384,7 +385,8 @@ export default async function PropertyDetailPage({ params }: PageProps) {
       : 0;
   const openForInvestment = isPropertyOpenForInvestment(baseProperty);
   // null disables share selection in the calculator for listings closed to new investment.
-  const minInvestment = openForInvestment ? MINIMUM_INVESTMENT_EUR : null;
+  const tierMinimum = baseProperty.minInvestmentEur;
+  const minInvestment = openForInvestment ? tierMinimum : null;
   const sharePrice =
     "sharePrice" in property &&
     typeof property.sharePrice === "number" &&
@@ -469,8 +471,9 @@ export default async function PropertyDetailPage({ params }: PageProps) {
     <PropertyLocation property={baseProperty} title={property.title} address={property.address || property.city || copy.locationMissing} heading={copy.location} locale={locale} />
   );
   const constructionStatus = (externalProperty ?? baseProperty).constructionStatus;
-  const constructionBadge = constructionStatus ? (
-    <div className="mt-3"><PropertyConstructionBadge status={constructionStatus} locale={locale} /></div>
+  const investmentTier = baseProperty.investmentTier;
+  const constructionBadge = constructionStatus || (investmentTier && investmentTier !== "standard") ? (
+    <div className="mt-3 flex flex-wrap gap-2"><PropertyConstructionBadge status={constructionStatus} locale={locale} /><PropertyTierBadge tier={investmentTier} locale={locale} /></div>
   ) : null;
   if (!isAuthenticated) {
     return (
@@ -514,7 +517,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
               <p className="text-sm font-bold uppercase tracking-wide text-[#7dd3fc]">{labels.reservation}</p>
               <h2 className="mt-3 text-3xl font-bold">{availableShares?.toLocaleString(localeHtmlLang[locale]) || "0"} {copy.available}</h2>
               <p className="mt-4 leading-7 text-white/70">{labels.reserveText}</p>
-              {hasTargetReturn && <p className="mt-4 font-bold">{copy.calculator.minimum}: {formatMinimumInvestment(locale)}{minInvestment !== null && <> / {minimumInvestmentShares(sharePrice, minInvestment)} {t("Shares")}</>}</p>}
+              {hasTargetReturn && <p className="mt-4 font-bold">{copy.calculator.minimum}: {formatMinimumInvestment(locale, tierMinimum)}{minInvestment !== null && <> / {minimumInvestmentShares(sharePrice, minInvestment)} {t("Shares")}</>}</p>}
               <Link href={`/join?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className="mt-7 block rounded-lg bg-brand px-5 py-4 text-center font-bold text-white hover:bg-white hover:text-ink">{t("Create client account")}</Link>
               <Link href={`/sign-in?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className="mt-3 block rounded-lg border border-white/30 px-5 py-4 text-center font-bold text-white hover:bg-white/10">{labels.reserveLogin}</Link>
             </aside>
@@ -524,7 +527,7 @@ export default async function PropertyDetailPage({ params }: PageProps) {
         </section>
         {/* Phones: the reservation box sits ~2,600px down, so keep a way to reach it on screen. The right side stays free for the chat button. */}
         {openForInvestment && <div className="fixed inset-x-0 bottom-0 z-[75] flex items-center gap-3 border-t border-line bg-white/95 py-3 pl-4 pr-20 shadow-[0_-8px_24px_rgba(20,33,61,0.08)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
-          <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.minimum}</span><strong className="block truncate text-sm text-ink">{formatMinimumInvestment(locale)}</strong></p>
+          <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.minimum}</span><strong className="block truncate text-sm text-ink">{formatMinimumInvestment(locale, tierMinimum)}</strong></p>
           <a href="#reserve" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{stickyReserveCopy[locale]}</a>
         </div>}
       </main>

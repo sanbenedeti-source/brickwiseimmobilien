@@ -36,6 +36,7 @@ function harness({ authorized = true, configured = true, translationFailure = fa
       return {error:null};
     } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => undefined },
+    "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -120,6 +121,7 @@ function shareHarness({ role = "admin", authError = null, configured = true, lis
     "@/app/lib/content-translations": { contentLocales, readRequiredTranslation },
     "@/app/lib/admin-audit": { writeAdminMutation() { throw new Error("Share settings cannot use a generic table write"); } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => listing },
+    "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -240,6 +242,7 @@ function saleHarness({ authorized = true, current = { price: "600000", share_pri
     "@/app/lib/content-translations": { contentLocales, readRequiredTranslation },
     "@/app/lib/admin-audit": { writeAdminMutation: async (_client, event, ops) => { writes.push(...ops.map((op) => ({ ...op, action: event.action }))); return { error: null }; } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => listing },
+    "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -264,7 +267,7 @@ test("an upcoming property is opened for purchase with its pricing and gets its 
   const app = saleHarness();
   await assert.rejects(app.run(saleForm()), saleResult("sale-saved"));
   assert.deepEqual(app.writes, [{ action: "property.sale_settings", table: "properties", operation: "update", match: { slug: "munich-loft" },
-    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, monthly_value_growth: null, construction_status: "completed", status: "active" } }]);
+    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, monthly_value_growth: null, construction_status: "completed", status: "active", investment_tier: "standard" } }]);
   assert.deepEqual(app.calls.map((call) => [call.args.p_total_shares, call.args.p_expected_version, call.args.p_actor]), [[2400, -1, adminId]]);
 });
 
@@ -273,6 +276,15 @@ test("a property can be set back to upcoming, and rent changes keep sold shares 
   await assert.rejects(app.run(saleForm({ construction_status: "upcoming", monthly_rent: "2700" })), saleResult("sale-saved"));
   assert.equal(app.writes[0].data.construction_status, "upcoming");
   assert.equal(app.calls.length, 0);
+});
+
+test("the investment tier sets the property's minimum and is saved with the sales settings", async () => {
+  for (const tier of ["premium", "super_premium", "standard"]) {
+    const app = saleHarness({ current: { price: "600000", share_price: "250" }, settings: { blocked_shares: 40, availability_version: 4 } });
+    await assert.rejects(app.run(saleForm({ investment_tier: tier })), saleResult("sale-saved"));
+    assert.equal(app.writes[0].data.investment_tier, tier);
+    assert.equal(app.calls.length, 0, "changing the tier never touches sold shares");
+  }
 });
 
 test("price and share price are locked once shares are sold", async () => {
@@ -284,7 +296,7 @@ test("price and share price are locked once shares are sold", async () => {
 });
 
 test("invalid sales settings, catalogue listings and non-admins never write", async () => {
-  for (const invalid of [{ construction_status: "sold" }, { status: "archived" }, { share_price: "700000" }, { price: "" }, { monthly_rent: "-5" }]) {
+  for (const invalid of [{ construction_status: "sold" }, { status: "archived" }, { share_price: "700000" }, { price: "" }, { monthly_rent: "-5" }, { investment_tier: "gold" }]) {
     const app = saleHarness();
     await assert.rejects(app.run(saleForm(invalid)), saleResult("sale-invalid"));
     assert.equal(app.writes.length + app.calls.length, 0, JSON.stringify(invalid));
@@ -305,14 +317,20 @@ test("a catalogue listing on the website is marked Upcoming or reopened through 
   assert.equal(app.writes.length, 1);
   assert.deepEqual([app.writes[0].action, app.writes[0].table, app.writes[0].operation, app.writes[0].data.property_slug, app.writes[0].data.construction_status, app.writes[0].data.updated_by],
     ["property.sale_status", "property_sale_status", "upsert", "munich-loft", "upcoming", adminId]);
+  assert.equal(app.writes[0].data.investment_tier, "standard");
+  const premium = saleHarness({ listing: { slug: "munich-loft", listed: true } });
+  data.set("investment_tier", "super_premium");
+  await assert.rejects(premium.runCatalogue(data), saleResult("sale-saved"));
+  assert.equal(premium.writes[0].data.investment_tier, "super_premium");
 });
 
 test("hidden or unknown listings, invalid statuses and non-admins cannot change a catalogue sale status", async () => {
-  for (const [options, status] of [[{ listing: { slug: "munich-loft", listed: false } }, "completed"], [{}, "completed"], [{ listing: { slug: "munich-loft" } }, "sold"]]) {
+  for (const [options, status, tier] of [[{ listing: { slug: "munich-loft", listed: false } }, "completed"], [{}, "completed"], [{ listing: { slug: "munich-loft" } }, "sold"], [{ listing: { slug: "munich-loft" } }, "completed", "gold"]]) {
     const app = saleHarness(options);
     const data = new FormData();
     data.set("property_slug", "munich-loft");
     data.set("construction_status", status);
+    if (tier) data.set("investment_tier", tier);
     await assert.rejects(app.runCatalogue(data), saleResult("sale-invalid"));
     assert.equal(app.writes.length, 0);
   }
