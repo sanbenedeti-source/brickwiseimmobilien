@@ -20,9 +20,10 @@ export type SignInCopy = {
   signIn: string;
   noAccount: string;
   join: string;
+  accountCreated: string;
 };
 
-export default function SignInForm({ copy, initialEmail = "", registered = false, invalidLink = false, next = "" }: { copy: SignInCopy; initialEmail?: string; registered?: boolean; invalidLink?: boolean; next?: string }) {
+export default function SignInForm({ copy, initialEmail = "", registered = false, created = false, invalidLink = false, next = "" }: { copy: SignInCopy; initialEmail?: string; registered?: boolean; created?: boolean; invalidLink?: boolean; next?: string }) {
   const t = createTranslator(useLocale());
   const [showPassword, setShowPassword] = useState(false);
   const initialState: SignInState = { error: "" };
@@ -36,7 +37,11 @@ export default function SignInForm({ copy, initialEmail = "", registered = false
 
           <p className="mt-3 text-center text-muted">{copy.intro}</p>
 
+          {/* Registration normally signs the client in directly. These notices appear only when
+              Supabase still requires an activation link, or the account was created but the
+              automatic sign-in did not complete. */}
           {(registered || invalidLink) && <ConfirmationNotice initialEmail={initialEmail} invalidLink={invalidLink} />}
+          {created && !registered && !invalidLink && <p role="status" className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">{copy.accountCreated}</p>}
 
           <form action={formAction} className="mt-10 space-y-5">
             {next && <input type="hidden" name="next" value={next} />}

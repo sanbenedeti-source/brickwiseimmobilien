@@ -15,6 +15,9 @@ export type JoinCopy = {
   nameError:string; emailError:string; passwordError:string; termsError:string;
 };
 
+// Same-site destinations the registration route may send a newly signed-in account to.
+const signedInDestination=/^\/(?:dashboard|admin|properties\/[a-z0-9-]{1,120})$/;
+
 export default function JoinForm({copy,next=""}:{copy:JoinCopy;next?:string}) {
   const t = createTranslator(useLocale());
   const [step,setStep]=useState(1), [email,setEmail]=useState(""), [password,setPassword]=useState(""), [fullName,setFullName]=useState(""), [referralCode,setReferralCode]=useState("");
@@ -38,15 +41,22 @@ export default function JoinForm({copy,next=""}:{copy:JoinCopy;next?:string}) {
     if(step<3)return advance();
     if(!accepted)return setMessage(copy.termsError);
     setLoading(true);setMessage("");setTechnicalDetails("");
+    let navigating=false;
     try{
       const response=await fetch("/interface/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({full_name:fullName.trim(),email:normalizedEmail,password,referral_code:referralCode.trim(),next})});
-      const data=await response.json().catch(()=>({})) as {error?:string;technicalDetails?:string;alreadyRegistered?:boolean};
+      const data=await response.json().catch(()=>({})) as {error?:string;technicalDetails?:string;alreadyRegistered?:boolean;signedIn?:boolean;redirectTo?:string;confirmationRequired?:boolean};
       if(!response.ok){setMessage(data.error||copy.registrationError);setTechnicalDetails(data.technicalDetails||"");return;}
       if(data.alreadyRegistered){setMessage(copy.alreadyRegistered);return;}
       trackConversion("CompleteRegistration");
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Registration sets auth cookies through a route handler; reload the session-dependent root shell.
-      window.location.assign(`/sign-in?registered=1&email=${encodeURIComponent(normalizedEmail)}${next?`&next=${encodeURIComponent(next)}`:""}`);
-    }catch{setMessage(copy.connectionError)}finally{setLoading(false)}
+      // Signed in by the registration: continue straight into the client area. Otherwise the
+      // sign-in page explains the next step (activation still required by Supabase, or sign in).
+      const destination=data.signedIn?(typeof data.redirectTo==="string"&&signedInDestination.test(data.redirectTo)?data.redirectTo:"/dashboard")
+        :`/sign-in?${data.confirmationRequired?"registered":"created"}=1&email=${encodeURIComponent(normalizedEmail)}${next?`&next=${encodeURIComponent(next)}`:""}`;
+      navigating=true;
+      // A full load, not client navigation: registration set the auth cookies through a route
+      // handler, so the session-dependent root shell must be rendered again.
+      window.location.assign(destination);
+    }catch{setMessage(copy.connectionError)}finally{if(!navigating)setLoading(false)}
   }
 
   return <main className="min-h-screen bg-canvas px-5 pb-20 pt-28 text-ink sm:pt-32">

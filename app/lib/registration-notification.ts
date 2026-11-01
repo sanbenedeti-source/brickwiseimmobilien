@@ -11,7 +11,7 @@ export async function notifyAdminOfRegistration(user: Registration) {
     subject: "Brickwise – New registration",
     text: ["A new user registered on Brickwise.", "", `Name: ${user.name}`,
       `Email: ${user.email}`, `Date (UTC): ${user.createdAt}`, `ID: ${user.id}`, "",
-      "This notice confirms that the account was created; the email address may not be confirmed yet."].join("\n"),
+      "This notice confirms that the account was created. Registration does not require email confirmation, so the email address has not been verified."].join("\n"),
   });
 
   for (let attempt = 0; attempt < 3; attempt++) {
