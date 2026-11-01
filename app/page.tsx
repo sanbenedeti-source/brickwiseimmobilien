@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { targetReturnCopy, rentalYieldLabel } from "./lib/target-return-copy";
 import PropertyConstructionBadge from "./components/PropertyConstructionBadge";
 import PropertyTierBadge from "./components/PropertyTierBadge";
+import InvestmentTierCards from "./components/InvestmentTierCards";
+import { tierCopy } from "./lib/tier-copy";
 import { cookies } from "next/headers";
 import { formatPropertyPercent } from "./properties/property-ui-copy";
 import Link from "next/link";
@@ -342,6 +344,17 @@ export default async function Home() {
           {/* The same target disclaimer applies to every card, so it is shown once under the grid. */}
           {featured.some((property) => property.targetTotalReturn !== undefined || getPropertyReturnBreakdown(property)) && <p className="mx-auto mt-6 max-w-4xl text-center text-xs leading-5 text-muted">{featured.some((property) => getPropertyReturnBreakdown(property)) ? returnText.modelNote : returnText.configuredTargetNote}{featured.some((property) => property.costsStated === false) && ` ${returnText.costsMissingNote}`}</p>}
           <div className="mt-8 text-center"><Link href="/properties" className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 font-semibold text-white transition hover:bg-brand-strong">{text.viewProperties}<ArrowRight className="ml-2" size={18} /></Link></div>
+        </div>
+      </section>
+
+      <section id="investment-levels" className="scroll-mt-24 px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
+        <div className="mx-auto max-w-[1320px]">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold text-brand">{tierCopy[locale].kicker}</p>
+            <h2 className="mt-2 text-3xl font-semibold md:text-5xl">{tierCopy[locale].title}</h2>
+            <p className="mt-4 text-lg leading-8 text-muted">{tierCopy[locale].intro}</p>
+          </div>
+          <div className="mt-10"><InvestmentTierCards locale={locale} /></div>
         </div>
       </section>
 

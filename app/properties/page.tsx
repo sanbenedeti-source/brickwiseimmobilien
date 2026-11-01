@@ -1,5 +1,7 @@
 import Image from "next/image";
-import { formatMinimumInvestment, type InvestmentTier } from "../lib/investment-policy";
+import { formatMinimumInvestment, INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "../lib/investment-policy";
+import { tierCopy } from "../lib/tier-copy";
+import { tierCardStyles, tierIcons } from "../components/InvestmentTierCards";
 import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
@@ -130,6 +132,7 @@ const propertiesCopy: Record<string, PropertiesCopy> = {
 type PageProps = {
   searchParams?: Promise<{
     city?: string;
+    tier?: string;
   }>;
 };
 
@@ -180,6 +183,19 @@ export default async function ProjektePage({ searchParams }: PageProps) {
     listed.map((property) => localizeProperty(property, translations)),
     params?.city
   );
+  // Properties are listed in one section per investment level; ?tier= shows a single level.
+  const tiers = tierCopy[locale];
+  const selectedTier = params?.tier && (INVESTMENT_TIERS as readonly string[]).includes(params.tier) ? params.tier as InvestmentTier : null;
+  const tierSections = (selectedTier ? [selectedTier] : INVESTMENT_TIERS).map((tier) => ({
+    tier, properties: visibleProperties.filter((property) => toInvestmentTier(property.investmentTier) === tier),
+  }));
+  const tierHref = (tier: InvestmentTier | null) => {
+    const query = new URLSearchParams();
+    if (params?.city) query.set("city", params.city);
+    if (tier) query.set("tier", tier);
+    const search = query.toString();
+    return `/properties${search ? `?${search}` : ""}`;
+  };
 
   return (
     <main className="min-h-screen bg-canvas text-ink">
@@ -209,8 +225,36 @@ export default async function ProjektePage({ searchParams }: PageProps) {
           </div>
         )}
 
+        <nav aria-label={tiers.kicker} className="mb-10 flex flex-wrap gap-3">
+          {[null, ...INVESTMENT_TIERS].map((tier) => {
+            const active = tier === selectedTier;
+            return <Link key={tier ?? "all"} href={tierHref(tier)} aria-current={active ? "page" : undefined}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-sm font-bold transition ${active ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}`}>
+              {tier ? <>{tiers.names[tier]}<span className={active ? "text-white/70" : "text-muted"}>· {formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</span></> : tiers.all}
+            </Link>;
+          })}
+        </nav>
+
+        {visibleProperties.length > 0 && tierSections.map(({ tier, properties }) => {
+          const Icon = tierIcons[tier];
+          const dark = tier === "super_premium";
+          return <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-title`} className="mb-14 scroll-mt-28 last:mb-0">
+            <div className={`mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border p-6 md:p-7 ${tierCardStyles[tier]}`}>
+              <div className="flex items-start gap-4">
+                <Icon size={30} aria-hidden="true" className={`mt-1 shrink-0 ${dark ? "text-[#f1d48a]" : tier === "premium" ? "text-[#7a5a1e]" : "text-brand"}`} />
+                <div>
+                  <h2 id={`tier-${tier}-title`} className="text-2xl font-bold md:text-3xl">{tiers.names[tier]}</h2>
+                  <p className={`mt-1 max-w-2xl leading-7 ${dark ? "text-white/80" : "text-slate-600"}`}>{tiers.descriptions[tier]}</p>
+                </div>
+              </div>
+              <div className="text-left md:text-right">
+                <p className={`text-sm ${dark ? "text-white/70" : "text-slate-500"}`}>{tiers.minimum}</p>
+                <p className={`text-2xl font-bold md:text-3xl ${dark ? "text-[#f1d48a]" : "text-brand"}`}>{formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</p>
+              </div>
+            </div>
+            {properties.length === 0 ? <p className="rounded-[24px] border border-dashed border-line bg-white p-6 text-center text-lg text-slate-500 md:p-8">{tiers.empty}</p> :
         <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-          {visibleProperties.map((property) => {
+          {properties.map((property) => {
             const projection = getPropertyProjection(property);
             const supply = getPropertyShareSupply(property, shareSettings.get(property.slug));
             const fundedPercent = supply.blocked / supply.total * 100;
@@ -290,7 +334,9 @@ export default async function ProjektePage({ searchParams }: PageProps) {
             </Link>
             );
           })}
-        </div>
+        </div>}
+          </section>;
+        })}
         {/* The target disclaimer applies to every card, so it is shown once under the grid. */}
         {visibleProperties.some((property) => property.targetTotalReturn !== undefined || getPropertyReturnBreakdown(property)) && <p className="mt-8 max-w-4xl text-sm leading-6 text-muted">{visibleProperties.some((property) => getPropertyReturnBreakdown(property)) ? returnText.modelNote : returnText.configuredTargetNote}{visibleProperties.some((property) => "costsStated" in property && property.costsStated === false) && ` ${returnText.costsMissingNote}`}</p>}
       </section>
