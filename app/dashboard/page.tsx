@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { isAdminUser } from "@/app/lib/admin";
 import ClientPortalSidebar, { type ClientPortalActiveItem } from "@/app/components/ClientPortalSidebar";
+import OnboardingBanner from "@/app/components/OnboardingBanner";
+import { portalNavCopy } from "@/app/lib/portal-nav-copy";
 import { isPropertyOpenForInvestment } from "@/app/lib/external-properties";
 import { getAllProperties } from "@/app/lib/property-registry";
 import { localeHtmlLang, type Locale } from "@/app/lib/i18n";
@@ -18,7 +20,6 @@ import DailyIncome from "./DailyIncome";
 import WalletOverview from "./WalletOverview";
 import { dailyIncomeCopy } from "./daily-income-copy";
 import type { IncomePurchase } from "./daily-income-model";
-import { profitCopy } from "./profit-copy";
 import { getPropertyProjection, getPropertyShareSupply, getPropertyTargetReturn } from "../lib/property-financials";
 import { formatRecordedMoney } from "./recorded-money";
 import Link from "next/link";
@@ -302,7 +303,9 @@ export default async function DashboardPage({
   const [translations, catalog] = await Promise.all([getPropertyTranslations(locale), getAllProperties()]);
   const copy = copies[locale];
   const params = await searchParams;
-  const section = ["marketplace", "assets", "account", "income", "wallet", "orders", "statement", "documents"].includes(params.section || "") ? params.section : "income";
+  // Properties is the home of the panel; the former Income page is now part of Portfolio.
+  const requestedSection = params.section === "income" ? "assets" : params.section;
+  const section = ["marketplace", "assets", "account", "wallet", "orders", "statement", "documents"].includes(requestedSection || "") ? requestedSection : "marketplace";
   const supabase = await createClient();
   const user = await getCurrentUser();
 
@@ -326,7 +329,7 @@ export default async function DashboardPage({
 
   const incomePurchases: IncomePurchase[] = [];
   let incomeHistoryAvailable = !holdingsError;
-  if ((section === "income" || section === "wallet") && incomeHistoryAvailable) {
+  if ((section === "assets" || section === "wallet") && incomeHistoryAvailable) {
     // Read every purchase: additional shares begin earning only on their own date.
     for (let offset = 0; ; offset += 500) {
       const { data, error } = await supabase.from("wallet_transactions")
@@ -415,13 +418,13 @@ export default async function DashboardPage({
   const profile = readProfileFields(user.user_metadata);
   const text = portalCopy[locale];
   const propertyTitles = Object.fromEntries(catalog.map((property) => [property.slug, localizeProperty(property, translations).title]));
-  const { data: kycLatest } = section === "income" || section === "account" || section === "wallet" || section === "documents"
+  const { data: kycLatest } = section === "assets" || section === "account" || section === "wallet" || section === "documents"
     ? await supabase.from("client_kyc_submissions").select("id,status,created_at,review_note").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle()
     : { data: null };
   const { data: withdrawalRows } = section === "wallet"
     ? await supabase.from("withdrawal_requests").select("id,amount,iban,status,review_note,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50)
     : { data: null };
-  const [{ data: payoutData }, { data: profitData }] = section === "income" ? await Promise.all([
+  const [{ data: payoutData }, { data: profitData }] = section === "assets" ? await Promise.all([
     supabase.from("distribution_payouts").select("amount,shares,property_distributions(property_slug,period_start,period_end,created_at)").eq("user_id", user.id).limit(200),
     supabase.from("wallet_transactions").select("id,amount,shares,property_slug,metadata,created_at").eq("user_id", user.id).eq("reference_type", "profit_payout").order("created_at", { ascending: false }).limit(200),
   ]) : [{ data: null }, { data: null }];
@@ -452,16 +455,14 @@ export default async function DashboardPage({
     ? (await supabase.from("client_agreement_acceptances").select("id,status,accepted_at,signed_pdf_sha256").eq("user_id", user.id).order("accepted_at", { ascending: false }).limit(1).maybeSingle()).data
     : null;
   let onboarding: OnboardingStep[] = [];
-  if (section === "income") {
-    const [{ data: authData }, { data: acceptanceRow }, { count: verifiedDeposits }] = await Promise.all([
-      supabase.auth.getUser(),
+  if (section === "assets") {
+    const [{ data: acceptanceRow }, { count: verifiedDeposits }] = await Promise.all([
       supabase.from("client_agreement_acceptances").select("status").eq("user_id", user.id).eq("version", agreementVersion).maybeSingle(),
       supabase.from("deposit_submissions").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "verified"),
     ]);
     const stepAction = "shrink-0 text-xs font-semibold text-brand hover:underline";
     const openProfile = <PortalActionButton action="profile" className={stepAction}>{text.start}</PortalActionButton>;
     onboarding = [
-      { key: "email", label: text.stepEmail, status: authData.user?.email_confirmed_at ? "done" : "todo" },
       { key: "profile", label: text.stepProfile, status: profile.first_name.trim() && profile.last_name.trim() ? "done" : "todo", action: openProfile },
       { key: "agreement", label: text.stepAgreement, status: acceptanceRow?.status === "pending" || acceptanceRow?.status === "approved" ? "done" : "todo", action: openProfile },
       { key: "identity", label: text.stepIdentity, status: kycLatest?.status === "approved" ? "done" : kycLatest?.status === "pending" ? "review" : "todo", action: <Link href="/dashboard/account#identity" className={stepAction}>{text.start}</Link> },
@@ -472,13 +473,15 @@ export default async function DashboardPage({
   const paymentText = getAdminText(locale);
   const paymentReference = `BW-GL-${user.id.slice(0, 8).toUpperCase()}`;
   const incomeAsOf = await getIncomeSnapshotTime();
-  const sectionTitle = section === "assets" ? copy.ownedShares : section === "account" ? copy.account : section === "income" ? copy.income : section === "wallet" ? copy.walletBalance : section === "orders" ? copy.requests : section === "statement" ? text.statementTitle : section === "documents" ? text.documentsTitle : copy.propertiesTitle;
-  const sectionDescription = section === "marketplace" ? copy.propertiesText : section === "orders" ? copy.requestsText : section === "wallet" ? copy.walletIntro : section === "income" ? dailyIncomeCopy[locale].intro : section === "assets" ? profitCopy[locale].summary : section === "statement" ? text.statementIntro : section === "documents" ? text.documentsIntro : copy.activeAccount;
+  const nav = portalNavCopy[locale];
+  const sectionTitle = section === "assets" ? nav.portfolio : section === "account" ? copy.account : section === "income" ? copy.income : section === "wallet" ? copy.walletBalance : section === "orders" ? copy.requests : section === "statement" ? text.statementTitle : section === "documents" ? text.documentsTitle : copy.propertiesTitle;
+  const sectionDescription = section === "marketplace" ? copy.propertiesText : section === "orders" ? copy.requestsText : section === "wallet" ? copy.walletIntro : section === "assets" ? dailyIncomeCopy[locale].intro : section === "statement" ? text.statementIntro : section === "documents" ? text.documentsIntro : copy.activeAccount;
 
   return (
     <main className="investor-shell min-h-screen bg-canvas text-ink">
       <ClientPortalSidebar active={section as ClientPortalActiveItem} email={user.email} fullName={fullName} locale={locale} />
       <div className="pt-16 lg:ml-[282px] lg:pt-0">
+        <OnboardingBanner locale={locale} />
         <header className="border-b border-line bg-white px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1440px] flex-wrap items-end justify-between gap-4">
             <div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-wider text-brand">{copy.panel}</p><h1 className="mt-1 text-[28px] font-bold leading-tight">{sectionTitle}</h1><p className="mt-1.5 text-sm leading-6 text-muted">{sectionDescription}</p></div>
@@ -499,11 +502,11 @@ export default async function DashboardPage({
             </div>
           </section>}
 
-          {section === "assets" && <IncomeExperience positions={incomePositions} locale={locale} walletBalance={baseWalletBalance} walletCurrency={walletCurrency} />}
           {section === "wallet" && <WalletOverview baseBalance={baseWalletBalance} positions={dailyPositions} purchases={incomePurchases} historyAvailable={overviewHistoryAvailable} asOf={incomeAsOf} locale={locale} />}
-          {section === "income" && <OnboardingChecklist steps={onboarding} text={text} />}
-          {section === "income" && <DailyIncome positions={dailyPositions} purchases={incomePurchases} locale={locale} asOf={incomeAsOf} historyAvailable={incomeHistoryAvailable} walletBalance={baseWalletBalance} />}
-          {section === "income" && <PortalCard className="mt-6" title={text.distributionsTitle} description={text.distributionsIntro}
+          {section === "assets" && onboarding.some((step) => step.status !== "done") && <OnboardingChecklist steps={onboarding} text={text} />}
+          {section === "assets" && <DailyIncome positions={dailyPositions} purchases={incomePurchases} locale={locale} asOf={incomeAsOf} historyAvailable={incomeHistoryAvailable} walletBalance={baseWalletBalance} />}
+          {section === "assets" && <div className="mt-6"><IncomeExperience positions={incomePositions} locale={locale} walletBalance={baseWalletBalance} walletCurrency={walletCurrency} /></div>}
+          {section === "assets" && <PortalCard className="mt-6" title={text.distributionsTitle} description={text.distributionsIntro}
             action={earnings.length > 0 ? <p className="text-right text-sm text-muted">{text.totalReceived}<span className="block text-lg font-semibold tabular-nums text-ink">{formatRecordedMoney(distributedTotal, "EUR", localeHtmlLang[locale])}</span></p> : undefined}>
             {!earnings.length ? <EmptyState text={text.noDistributions} /> : <div className="overflow-x-auto"><table className={`${tableClass} min-w-[640px]`}>
               <thead><tr><th scope="col" className={headCellClass}>{text.date}</th><th scope="col" className={headCellClass}>{text.property}</th><th scope="col" className={headCellClass}>{text.period}</th><th scope="col" className={`${headCellClass} text-right`}>{text.sharesCount}</th><th scope="col" className={`${headCellClass} text-right`}>{text.received}</th></tr></thead>
@@ -546,6 +549,11 @@ export default async function DashboardPage({
           </section>}
 
           {section === "wallet" && <div className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              <PortalActionButton action="deposit" className={primaryButton}>{nav.deposit}</PortalActionButton>
+              <a href="#withdraw" className={secondaryButton}>{nav.withdraw}</a>
+              <Link href="/dashboard/statement" className={secondaryButton}>{nav.statement}</Link>
+            </div>
             <PortalCard title={copy.depositTitle} description={copy.depositHowTo} action={<PortalActionButton action="deposit" className={primaryButton}>{copy.deposit}</PortalActionButton>}>
               <div className="flex flex-wrap items-end gap-x-6 gap-y-2 px-5 py-4">
                 <div><p className="text-xs font-medium text-muted">{paymentText("Payment reference")}</p><p className="mt-0.5 font-mono text-xl font-semibold tracking-wider text-ink">{paymentReference}</p></div>
@@ -653,6 +661,13 @@ export default async function DashboardPage({
                   : kycLatest?.status === "pending" ? <p className="text-sm leading-6 text-muted">{text.kycPending} {text.submittedOn} {formatDate(kycLatest.created_at, locale)}.</p>
                   : <>{kycLatest?.status === "rejected" && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950"><p>{text.kycRejected}</p>{kycLatest.review_note && <p className="mt-1 text-xs"><strong>{text.reviewNote}:</strong> {kycLatest.review_note}</p>}</div>}<KycForm locale={locale} /></>}
               </div>
+            </PortalCard>
+            <PortalCard title={nav.moreTitle}>
+              <ul className="divide-y divide-line">
+                {([["/dashboard/documents", nav.documents], ["/dashboard/statement", nav.statement], ["/insights", nav.learn], ["/risk", nav.risk], ["/verify-agent", nav.verifyAgent], ["/about", nav.about]] as const).map(([href, label]) => <li key={href}>
+                  <Link href={href} className="flex items-center justify-between gap-3 px-5 py-3.5 text-sm font-semibold text-ink hover:bg-canvas hover:text-brand">{label}<ArrowRight size={15} aria-hidden="true" className="text-muted" /></Link>
+                </li>)}
+              </ul>
             </PortalCard>
             <PortalCard title={copy.securityTitle}>
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5"><p className="flex max-w-md items-start gap-3 text-sm leading-6 text-muted"><KeyRound size={18} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />{copy.securityText}</p><Link href="/update-password" className={secondaryButton}>{copy.changePassword}</Link></div>

@@ -3,27 +3,18 @@ import { useLocale } from "./LocaleProvider";
 import { createTranslator } from "../lib/translate";
 
 import {
-  ArrowDownToLine,
-  ArrowRight,
-  TriangleAlert,
-  BadgeDollarSign,
-  BookOpen,
+  Bitcoin,
   Building2,
-  CircleCheck,
-  BadgeCheck,
+  ChevronRight,
   CircleHelp,
   ClipboardList,
-  FileCheck2,
-  FolderOpen,
   House,
   Landmark,
-  Layers,
   LogOut,
   Menu,
-  ReceiptText,
+  PieChart,
   UserRound,
   WalletCards,
-  Bitcoin,
   X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -34,20 +25,15 @@ import { readProfileFields, profilePatch, type ProfileFields } from "../lib/prof
 import Modal from "./Modal";
 import BrandLogo from "./BrandLogo";
 import LanguageSwitcher from "./LanguageSwitcher";
-import ClientAgreement, { type ClientAgreementData } from "./ClientAgreement";
+import ClientAgreement from "./ClientAgreement";
 import { agreementCopy } from "../lib/agreement-copy";
+import { portalNavCopy } from "../lib/portal-nav-copy";
 import type { Locale } from "@/app/lib/i18n";
 import { openDepositEvent, openProfileEvent } from "./portal-events";
 
 export type ClientPortalActiveItem = "marketplace" | "assets" | "account" | "income" | "wallet" | "orders" | "statement" | "documents" | "property" | "funding" | "contact" | "learn" | "about" | "risk" | "none";
 
-const sidebarCopy = {
-  en: { deposit: "Deposit", profile: "Complete profile", marketplace: "Properties", assets: "Assets", account: "Account", income: "Income", wallet: "Wallet", orders: "Orders", withdraw: "Withdraw", statement: "Statement", documents: "Documents", learn: "Learn", risk: "Risk warnings", about: "About us", settings: "Settings", logout: "Logout", language: "Language", investing: "Investing", money: "Money", accountGroup: "Account", help: "Help", verifyAgent: "Verify an agent", required: "Action required", profileHint: "Complete your profile and sign the cooperation agreement to invest.", profileAction: "Complete now" },
-  de: { deposit: "Einzahlen", profile: "Profil vervollständigen", marketplace: "Immobilien", assets: "Vermögenswerte", account: "Konto", income: "Erträge", wallet: "Wallet", orders: "Aufträge", withdraw: "Auszahlen", statement: "Kontoauszug", documents: "Dokumente", learn: "Lernen", risk: "Risikohinweise", about: "Über uns", settings: "Einstellungen", logout: "Abmelden", language: "Sprache", investing: "Investieren", money: "Geld", accountGroup: "Konto", help: "Hilfe", verifyAgent: "Agenten verifizieren", required: "Aktion erforderlich", profileHint: "Vervollständigen Sie Ihr Profil und unterschreiben Sie den Kooperationsvertrag, um zu investieren.", profileAction: "Jetzt vervollständigen" },
-  fr: { deposit: "Dépôt", profile: "Compléter le profil", marketplace: "Biens", assets: "Actifs", account: "Compte", income: "Revenus", wallet: "Portefeuille", orders: "Ordres", withdraw: "Retirer", statement: "Relevé", documents: "Documents", learn: "Apprendre", risk: "Avertissements", about: "À propos", settings: "Paramètres", logout: "Déconnexion", language: "Langue", investing: "Investir", money: "Argent", accountGroup: "Compte", help: "Aide", verifyAgent: "Vérifier un agent", required: "Action requise", profileHint: "Complétez votre profil et signez le contrat de coopération pour investir.", profileAction: "Compléter maintenant" },
-  es: { deposit: "Depositar", profile: "Completar perfil", marketplace: "Propiedades", assets: "Activos", account: "Cuenta", income: "Ingresos", wallet: "Cartera", orders: "Órdenes", withdraw: "Retirar", statement: "Extracto", documents: "Documentos", learn: "Aprender", risk: "Advertencias", about: "Sobre nosotros", settings: "Configuración", logout: "Cerrar sesión", language: "Idioma", investing: "Invertir", money: "Dinero", accountGroup: "Cuenta", help: "Ayuda", verifyAgent: "Verificar un agente", required: "Acción necesaria", profileHint: "Completa tu perfil y firma el contrato de cooperación para invertir.", profileAction: "Completar ahora" },
-  it: { deposit: "Deposita", profile: "Completa il profilo", marketplace: "Immobili", assets: "Asset", account: "Account", income: "Reddito", wallet: "Wallet", orders: "Ordini", withdraw: "Preleva", statement: "Estratto conto", documents: "Documenti", learn: "Impara", risk: "Avvertenze sui rischi", about: "Chi siamo", settings: "Impostazioni", logout: "Esci", language: "Lingua", investing: "Investire", money: "Denaro", accountGroup: "Account", help: "Aiuto", verifyAgent: "Verifica un agente", required: "Azione richiesta", profileHint: "Completa il profilo e firma il contratto di cooperazione per investire.", profileAction: "Completa ora" },
-} satisfies Record<Locale, Record<string, string>>;
+const sidebarCopy = portalNavCopy;
 
 const countries = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
@@ -104,14 +90,6 @@ export default function ClientPortalSidebar({
   }, [mobileOpen]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
-  const [profileComplete, setProfileComplete] = useState(false);
-  const [completionKnown, setCompletionKnown] = useState(false);
-  const completionRequest = useRef(0);
-  const updateCompletion = useCallback((complete: boolean) => {
-    completionRequest.current += 1;
-    setProfileComplete(complete);
-    setCompletionKnown(true);
-  }, []);
   useEffect(() => {
     const openProfile = () => { setMobileOpen(false); setProfileOpen(true); };
     const openDeposit = () => { setMobileOpen(false); setDepositOpen(true); };
@@ -119,71 +97,20 @@ export default function ClientPortalSidebar({
     window.addEventListener(openDepositEvent, openDeposit);
     return () => { window.removeEventListener(openProfileEvent, openProfile); window.removeEventListener(openDepositEvent, openDeposit); };
   }, []);
-  useEffect(() => {
-    let controller: AbortController;
-    async function loadCompletion() {
-      controller?.abort();
-      controller = new AbortController();
-      const signal = controller.signal;
-      const request = ++completionRequest.current;
-      try {
-        const [auth, response] = await Promise.all([
-          createClient().auth.getUser(),
-          fetch(`/api/client-agreements?lang=${locale}`, { cache: "no-store", signal }),
-        ]);
-        if (auth.error || !auth.data.user || !response.ok) throw new Error("Profile unavailable");
-        const agreement: ClientAgreementData = await response.json();
-        const accepted = Boolean(agreement.acceptance?.id && (agreement.acceptance.status === "pending" || agreement.acceptance.status === "approved"));
-        if (!signal.aborted && request === completionRequest.current) {
-          setProfileComplete(accepted && validProfileNames(readProfileFields(auth.data.user.user_metadata)));
-          setCompletionKnown(true);
-        }
-      } catch {
-        if (!signal.aborted && request === completionRequest.current) { setProfileComplete(false); setCompletionKnown(true); }
-      }
-    }
-    void loadCompletion();
-    const updated = () => { void loadCompletion(); };
-    window.addEventListener("brickwise:agreement-updated", updated);
-    window.addEventListener("brickwise:profile-updated", updated);
-    return () => {
-      controller?.abort();
-      window.removeEventListener("brickwise:agreement-updated", updated);
-      window.removeEventListener("brickwise:profile-updated", updated);
-    };
-  }, [locale]);
   const pathname = usePathname();
   const copy = sidebarCopy[locale];
   const t = createTranslator(locale);
-  const currentActive: ClientPortalActiveItem = pathname === "/funding"
-    ? "funding"
-    : pathname.startsWith("/risk")
-      ? "risk"
-    : pathname.startsWith("/contact")
-      ? "contact"
-      : pathname.startsWith("/insights")
-        ? "learn"
-        : pathname.startsWith("/about") || pathname.startsWith("/real-estate-investing")
-          ? "about"
-          : pathname === "/properties" || pathname.startsWith("/properties/")
-            ? "property"
-            : pathname === "/dashboard/marketplace"
-              ? "marketplace"
-              : pathname === "/dashboard/assets"
-                ? "assets"
-                : pathname === "/dashboard/account"
-                  ? "account"
-                  : pathname === "/dashboard/income"
-                    ? "income"
-                    : pathname === "/dashboard/wallet"
-                      ? "wallet"
-                      : pathname === "/dashboard/orders"
-                        ? "orders"
-                      : pathname === "/dashboard/statement"
-                        ? "statement"
-                      : pathname === "/dashboard/documents"
-                        ? "documents"
-              : active;
+  // Five destinations like a simple investment app; older pages light up the destination that contains them.
+  const section = pathname === "/funding" ? "wallet"
+    : pathname === "/properties" || pathname.startsWith("/properties/") ? "marketplace"
+    : pathname.startsWith("/contact") || pathname.startsWith("/risk") || pathname.startsWith("/insights") || pathname.startsWith("/about") ? "help"
+    : pathname.startsWith("/dashboard/") ? pathname.split("/")[2]
+    : active;
+  const current = section === "income" || section === "assets" ? "portfolio"
+    : section === "statement" ? "wallet"
+    : section === "documents" ? "account"
+    : section === "property" ? "marketplace"
+    : section;
   const initials = fullName
     .split(/\s+/)
     .filter(Boolean)
@@ -220,45 +147,23 @@ export default function ClientPortalSidebar({
           <button type="button" onClick={() => setMobileOpen(false)} className="flex h-11 w-11 items-center justify-center text-muted lg:hidden" aria-label={t("Close menu")}><X size={20} /></button>
         </div>
 
-        <div className="mt-5 flex shrink-0 items-center gap-3 rounded-xl border border-line bg-canvas px-3 py-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-white">{initials}</span>
-          <div className="min-w-0"><p className="truncate text-sm font-semibold text-ink">{fullName}</p><p className="truncate text-xs text-muted">{email}</p></div>
-        </div>
-
-        {completionKnown && !profileComplete && <div className="mt-3 shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] text-amber-950">
-          <p className="font-semibold">{copy.required}</p>
-          <p className="mt-0.5 leading-5">{copy.profileHint}</p>
-          <button type="button" onClick={() => setProfileOpen(true)} className="mt-1.5 inline-flex items-center gap-1 font-semibold text-brand hover:underline">{copy.profileAction}<ArrowRight size={14} aria-hidden="true" /></button>
-        </div>}
-
-        <nav className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 text-sm text-ink-soft">
-          <SidebarLink href="/dashboard/income" icon={House} label={copy.income} active={currentActive === "income"} />
-          <SidebarGroup label={copy.investing}>
-            <SidebarLink href="/dashboard/marketplace" icon={Building2} label={copy.marketplace} active={currentActive === "marketplace" || currentActive === "property"} />
-            <SidebarLink href="/dashboard/assets" icon={Layers} label={copy.assets} active={currentActive === "assets"} />
-            <SidebarLink href="/dashboard/orders" icon={ClipboardList} label={copy.orders} active={currentActive === "orders"} />
-          </SidebarGroup>
-          <SidebarGroup label={copy.money}>
-            <SidebarLink href="/dashboard/wallet" icon={WalletCards} label={copy.wallet} active={currentActive === "wallet"} />
-            <SidebarLink href="/dashboard/statement" icon={ReceiptText} label={copy.statement} active={currentActive === "statement"} />
-            <SidebarButton icon={BadgeDollarSign} label={copy.deposit} active={currentActive === "funding"} onClick={() => setDepositOpen(true)} />
-            <SidebarLink href="/dashboard/wallet#withdraw" icon={ArrowDownToLine} label={copy.withdraw} />
-          </SidebarGroup>
-          <SidebarGroup label={copy.accountGroup}>
-            <SidebarButton icon={profileComplete ? CircleCheck : FileCheck2} label={profileComplete ? agreementCopy(locale).profileComplete : copy.profile} onClick={() => setProfileOpen(true)} tone={profileComplete ? "success" : completionKnown ? "warning" : undefined} />
-            <SidebarLink href="/dashboard/account" icon={UserRound} label={copy.account} active={currentActive === "account"} />
-            <SidebarLink href="/dashboard/documents" icon={FolderOpen} label={copy.documents} active={currentActive === "documents"} />
-          </SidebarGroup>
-          <SidebarGroup label={copy.help}>
-            <SidebarLink href="/insights" icon={BookOpen} label={copy.learn} active={currentActive === "learn"} />
-            <SidebarLink href="/risk" icon={TriangleAlert} label={copy.risk} active={currentActive === "risk"} />
-            <SidebarLink href="/verify-agent" icon={BadgeCheck} label={copy.verifyAgent} />
-            <SidebarLink href="/about" icon={CircleHelp} label={copy.about} active={currentActive === "about"} />
-          </SidebarGroup>
+        <nav className="mt-6 grid gap-1 text-[15px] text-ink-soft" aria-label={t("Open client menu")}>
+          <SidebarLink href="/dashboard/marketplace" icon={Building2} label={copy.marketplace} active={current === "marketplace"} />
+          <SidebarLink href="/dashboard/assets" icon={PieChart} label={copy.portfolio} active={current === "portfolio"} />
+          <SidebarLink href="/dashboard/wallet" icon={WalletCards} label={copy.wallet} active={current === "wallet"} />
+          <SidebarLink href="/dashboard/orders" icon={ClipboardList} label={copy.orders} active={current === "orders"} />
+          <SidebarLink href="/dashboard/account" icon={UserRound} label={copy.account} active={current === "account"} />
         </nav>
 
-        <div className="shrink-0 border-t border-line pt-3 text-sm text-ink-soft">
-          <div className="mb-1 flex items-center justify-between gap-3 px-3">
+        <Link href="/dashboard/account" className="mt-5 flex shrink-0 items-center gap-3 rounded-xl border-t border-line px-2 pt-5 hover:text-brand">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-sm font-bold text-ink">{initials}</span>
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-ink">{fullName}</span><span className="block truncate text-xs text-muted">{email}</span></span>
+          <ChevronRight size={16} aria-hidden="true" className="text-muted" />
+        </Link>
+
+        <div className="mt-auto shrink-0 border-t border-line pt-3 text-sm text-ink-soft">
+          <SidebarLink href="/contact" icon={CircleHelp} label={copy.helpSupport} active={current === "help"} />
+          <div className="my-1 flex items-center justify-between gap-3 px-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{copy.language}</span>
             <LanguageSwitcher currentLocale={locale} label={copy.language} />
           </div>
@@ -266,7 +171,7 @@ export default function ClientPortalSidebar({
         </div>
       </aside>
 
-      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onCompletionChange={updateCompletion} />}
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} onCompletionChange={() => window.dispatchEvent(new Event("brickwise:profile-updated"))} />}
       {depositOpen && <DepositModal onClose={() => setDepositOpen(false)} />}
     </>
   );
@@ -294,26 +199,15 @@ function DepositModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-const itemStyle = (active: boolean, tone?: "success" | "warning") => `relative flex min-h-9 w-full items-center gap-3 rounded-lg px-3 text-left transition-colors ${active
-  ? "bg-brand-soft font-semibold text-brand before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-brand"
-  : tone === "success" ? "text-emerald-700 hover:bg-canvas" : "hover:bg-canvas hover:text-ink"}`;
-
-function SidebarGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="mt-3"><p className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-muted">{label}</p><div className="grid gap-0.5">{children}</div></div>;
-}
+const itemStyle = (active: boolean) => `relative flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left transition-colors ${active
+  ? "bg-brand-soft font-semibold text-brand"
+  : "hover:bg-canvas hover:text-ink"}`;
 
 function SidebarLink({ href, icon: Icon, label, active = false }: { href: string; icon: typeof House; label: string; active?: boolean }) {
   const content = <><Icon size={18} aria-hidden="true" />{label}</>;
   // Logout must discard the router cache and the in-memory browser auth client.
   if (href === "/logout") return <a href={href} className={itemStyle(false)}>{content}</a>;
   return <Link href={href} className={itemStyle(active)} aria-current={active ? "page" : undefined}>{content}</Link>;
-}
-
-function SidebarButton({ icon: Icon, label, onClick, active = false, tone }: { icon: typeof House; label: string; onClick: () => void; active?: boolean; tone?: "success" | "warning" }) {
-  return <button type="button" onClick={onClick} className={itemStyle(active, tone)}>
-    <Icon size={18} aria-hidden="true" />{label}
-    {tone === "warning" && <span className="ml-auto h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />}
-  </button>;
 }
 
 function ProfileModal({ onClose, onCompletionChange }: { onClose: () => void; onCompletionChange: (complete: boolean) => void }) {
