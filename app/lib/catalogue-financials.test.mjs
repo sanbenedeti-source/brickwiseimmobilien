@@ -22,6 +22,7 @@ function load(filename) {
 const { externalProperties } = load(path.join(directory, "external-properties.ts"));
 const { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } = load(path.join(directory, "property-financials.ts"));
 const { minimumInvestmentShares, canPurchaseShares, TIER_MINIMUM_EUR, toInvestmentTier, formatMinimumInvestment } = load(path.join(directory, "investment-policy.ts"));
+const { listingStage, isNewListing, toStrategy, toOccupancy, listingBadgeCopy } = load(path.join(directory, "listing-badges.ts"));
 // [price, share price, published rental yield %, annual / monthly net rent on EUR 2000].
 // The yield is (monthly rent - stated monthly costs) x 12 / price, rounded to 0.01 %.
 const expected = {
@@ -115,4 +116,21 @@ test("each investment tier enforces its own minimum: standard EUR 2,000, premium
   assert.equal(minimumInvestmentShares(20000, TIER_MINIMUM_EUR.super_premium), 3);
   assert.equal(formatMinimumInvestment("en", TIER_MINIMUM_EUR.super_premium), "€50,000");
   assert.equal(formatMinimumInvestment("en"), "€2,000");
+});
+
+test("listing stages, new-listing ribbon and badges follow the property data", () => {
+  assert.equal(listingStage({}, 12), "available");
+  assert.equal(listingStage({}, 0), "funded", "every share sold");
+  assert.equal(listingStage({ exited: true }, 12), "exited", "a sold property is exited even with shares left");
+  const now = Date.parse("2026-11-01T12:00:00Z");
+  assert.equal(isNewListing("2026-10-20T00:00:00Z", now), true);
+  assert.equal(isNewListing("2026-09-01T00:00:00Z", now), false, "older than 30 days");
+  assert.equal(isNewListing("2027-01-01T00:00:00Z", now), false, "future dates are ignored");
+  assert.equal(isNewListing(null, now), false);
+  assert.deepEqual(["prime", "capital_growth", "high_yield", "luxury", null].map(toStrategy), ["prime", "capital_growth", "high_yield", undefined, undefined]);
+  assert.deepEqual(["rented", "ready", "empty"].map(toOccupancy), ["rented", "ready", undefined]);
+  for (const locale of ["en", "de", "fr", "es", "it"]) {
+    const copy = listingBadgeCopy[locale];
+    assert.ok(copy.strategies.high_yield && copy.occupancy.rented && copy.stages.exited && copy.emptyStage.funded, locale);
+  }
 });

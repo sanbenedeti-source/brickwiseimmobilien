@@ -5,9 +5,10 @@ import { tierCardStyles, tierIcons, tierPillStyles } from "../components/Investm
 import { getListedProperties } from "../lib/property-registry";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply, type PropertyCurrency, type PropertyReturnBreakdown } from "../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
-import { valueGrowthCopy } from "../lib/value-growth-copy";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
 import PropertyTierBadge from "../components/PropertyTierBadge";
+import { NewListingRibbon, OccupancyBadge, StrategyBadge } from "../components/PropertyListingBadges";
+import { isNewListing, LISTING_STAGES, listingBadgeCopy, listingStage, type ListingStage, type OccupancyStatus, type PropertyStrategy } from "../lib/listing-badges";
 import { getPropertyTranslations, localizeProperty } from "../lib/property-localization";
 import Link from "next/link";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
@@ -50,6 +51,9 @@ type Property = {
   minInvestment?: number;
   minInvestmentEur?: number;
   investmentTier?: InvestmentTier;
+  strategy?: PropertyStrategy;
+  occupancyStatus?: OccupancyStatus;
+  exited?: boolean;
   fundedPercent?: number;
   payoutModel?: string;
 };
@@ -133,6 +137,7 @@ type PageProps = {
   searchParams?: Promise<{
     city?: string;
     tier?: string;
+    stage?: string;
   }>;
 };
 
@@ -174,7 +179,6 @@ export default async function ProjektePage({ searchParams }: PageProps) {
   const locale = await getCurrentLocale();
   const copy = propertiesCopy[locale];
   const returnText = targetReturnCopy[locale];
-  const growthText = valueGrowthCopy[locale];
   const [params, listed, translations, shareSettings] = await Promise.all([
     searchParams, getListedProperties(), getPropertyTranslations(locale), getShareSettings(),
   ]);
@@ -183,18 +187,91 @@ export default async function ProjektePage({ searchParams }: PageProps) {
     listed.map((property) => localizeProperty(property, translations)),
     params?.city
   );
-  // Properties are listed in one section per investment level; ?tier= shows a single level.
+  // Stage tabs (Available / Funded / Exited), the level filter, and one section per level for available properties.
   const tiers = tierCopy[locale];
+  const badges = listingBadgeCopy[locale];
   const selectedTier = params?.tier && (INVESTMENT_TIERS as readonly string[]).includes(params.tier) ? params.tier as InvestmentTier : null;
+  const selectedStage: ListingStage = params?.stage && (LISTING_STAGES as readonly string[]).includes(params.stage) ? params.stage as ListingStage : "available";
+  const listings = visibleProperties.map((property) => {
+    const supply = getPropertyShareSupply(property, shareSettings.get(property.slug));
+    return { property, supply, stage: listingStage(property, supply.available) };
+  });
+  const stageCounts = Object.fromEntries(LISTING_STAGES.map((stage) => [stage, listings.filter((item) => item.stage === stage).length])) as Record<ListingStage, number>;
+  const inStage = listings.filter((item) => item.stage === selectedStage && (!selectedTier || toInvestmentTier(item.property.investmentTier) === selectedTier));
   const tierSections = (selectedTier ? [selectedTier] : INVESTMENT_TIERS).map((tier) => ({
-    tier, properties: visibleProperties.filter((property) => toInvestmentTier(property.investmentTier) === tier),
+    tier, items: inStage.filter((item) => toInvestmentTier(item.property.investmentTier) === tier),
   }));
-  const tierHref = (tier: InvestmentTier | null) => {
+  const pageHref = (changes: { tier?: InvestmentTier | null; stage?: ListingStage }) => {
     const query = new URLSearchParams();
     if (params?.city) query.set("city", params.city);
+    const stage = changes.stage ?? selectedStage;
+    const tier = changes.tier === undefined ? selectedTier : changes.tier;
+    if (stage !== "available") query.set("stage", stage);
     if (tier) query.set("tier", tier);
     const search = query.toString();
     return `/properties${search ? `?${search}` : ""}`;
+  };
+  const renderCard = ({ property, supply }: (typeof listings)[number]) => {
+    const projection = getPropertyProjection(property);
+    const fundedPercent = supply.total > 0 ? Math.min(100, supply.blocked / supply.total * 100) : 0;
+    const growth = property.valueGrowthYield ?? 0;
+    const yearly = projection.annualRate + growth;
+    const fresh = isNewListing(property.created_at);
+    // A five-year projection is shown only on a net yield; multiplying a before-costs yield would overstate it.
+    const netYield = !("costsStated" in property) || property.costsStated !== false;
+    const completed = !property.constructionStatus || property.constructionStatus === "completed";
+    return (
+      <Link key={property.id} href={`/properties/${property.slug}`}
+        className="group flex flex-col overflow-hidden rounded-[24px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:rounded-[32px]">
+        <div className="relative h-64 overflow-hidden">
+          {fresh && <NewListingRibbon locale={locale} />}
+          <Image
+            src={property.image_url || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"}
+            alt={property.title}
+            fill
+            sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 420px"
+            unoptimized={!property.image_url?.startsWith("/")}
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
+          {property.strategy && <div className={`absolute left-4 z-10 ${fresh ? "top-11" : "top-4"}`}><StrategyBadge strategy={property.strategy} locale={locale} /></div>}
+        </div>
+
+        <div className="flex flex-1 flex-col p-5 md:p-7">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700">{property.property_type || copy.property}</span>
+            {completed && property.occupancyStatus ? <OccupancyBadge status={property.occupancyStatus} locale={locale} /> : <PropertyConstructionBadge status={property.constructionStatus} locale={locale} />}
+            <PropertyTierBadge tier={property.investmentTier} locale={locale} />
+          </div>
+
+          <h2 className="text-2xl font-bold leading-tight md:text-3xl">{property.title}</h2>
+          <p className="mt-2 text-lg text-slate-500">{property.address || property.city || copy.locationMissing}</p>
+          <p className="mt-4 line-clamp-2 text-base leading-relaxed text-slate-600">{property.description || copy.descriptionMissing}</p>
+
+          <div className="mt-6 flex items-end justify-between gap-3">
+            <p className="text-2xl font-bold tabular-nums text-brand">{formatMoney(property.price, copy, getPropertyCurrency(property), locale)}</p>
+            <p className="text-sm font-semibold text-slate-500">{Math.round(fundedPercent).toLocaleString(localeHtmlLang[locale])}% {badges.funded}</p>
+          </div>
+          <div className="mt-2 h-2.5 rounded-full bg-slate-100" aria-hidden="true">
+            <div className="h-2.5 rounded-full bg-emerald-600" style={{ width: `${fundedPercent}%` }} />
+          </div>
+
+          <dl className="mt-5 grid gap-2.5 rounded-2xl bg-canvas p-4 text-sm">
+            {netYield && <MetricRow label={badges.fiveYearReturn} value={formatPercent(yearly * 5, copy, locale)} />}
+            {growth > 0 && <MetricRow label={badges.yearlyReturn} value={formatPercent(yearly, copy, locale)} />}
+            <MetricRow label={rentalYieldLabel(locale, "costsStated" in property ? property.costsStated !== false : undefined)} value={formatPercent(projection.annualRate, copy, locale)} />
+          </dl>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale, property.minInvestmentEur)} />
+            <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
+          </div>
+
+          <div className="mt-auto pt-6">
+            <div className="rounded-2xl bg-ink py-4 text-center text-lg font-bold text-white">{copy.viewRentalShare}</div>
+          </div>
+        </div>
+      </Link>
+    );
   };
 
   return (
@@ -225,12 +302,22 @@ export default async function ProjektePage({ searchParams }: PageProps) {
           </div>
         )}
 
+        <nav aria-label={badges.stages.available} className="mb-6 inline-flex max-w-full flex-wrap gap-1 rounded-full bg-white p-1.5 shadow-sm">
+          {LISTING_STAGES.map((stage) => {
+            const active = stage === selectedStage;
+            return <Link key={stage} href={pageHref({ stage })} aria-current={active ? "page" : undefined}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full px-6 text-sm font-bold transition ${active ? "bg-emerald-600 text-white shadow" : "text-ink hover:bg-canvas"}`}>
+              {badges.stages[stage]}<span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-white/20" : "bg-canvas text-muted"}`}>{stageCounts[stage]}</span>
+            </Link>;
+          })}
+        </nav>
+
         <nav aria-label={tiers.kicker} className="mb-10 flex flex-wrap gap-3">
           {[null, ...INVESTMENT_TIERS].map((tier) => {
             const active = tier === selectedTier;
             const pill = tierPillStyles[tier ?? "all"];
             const PillIcon = pill.icon;
-            return <Link key={tier ?? "all"} href={tierHref(tier)} aria-current={active ? "page" : undefined}
+            return <Link key={tier ?? "all"} href={pageHref({ tier })} aria-current={active ? "page" : undefined}
               className={`inline-flex min-h-11 items-center gap-2 rounded-full border-2 px-5 text-sm font-bold transition ${active ? `${pill.active} shadow-md` : pill.idle}`}>
               <PillIcon size={17} aria-hidden="true" />
               {tier ? <>{tiers.names[tier]}<span className="font-semibold opacity-80">· {formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</span></> : tiers.all}
@@ -238,7 +325,11 @@ export default async function ProjektePage({ searchParams }: PageProps) {
           })}
         </nav>
 
-        {visibleProperties.length > 0 && tierSections.map(({ tier, properties }) => {
+        {visibleProperties.length > 0 && selectedStage !== "available" && (inStage.length === 0
+          ? <p className="rounded-[24px] border border-dashed border-line bg-white p-6 text-center text-lg text-slate-500 md:p-8">{badges.emptyStage[selectedStage]}</p>
+          : <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">{inStage.map(renderCard)}</div>)}
+
+        {visibleProperties.length > 0 && selectedStage === "available" && tierSections.map(({ tier, items }) => {
           const Icon = tierIcons[tier];
           const dark = tier === "super_premium";
           return <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-title`} className="mb-14 scroll-mt-28 last:mb-0">
@@ -255,89 +346,9 @@ export default async function ProjektePage({ searchParams }: PageProps) {
                 <p className={`text-2xl font-bold md:text-3xl ${dark ? "text-[#f1d48a]" : "text-brand"}`}>{formatMinimumInvestment(locale, TIER_MINIMUM_EUR[tier])}</p>
               </div>
             </div>
-            {properties.length === 0 ? <p className="rounded-[24px] border border-dashed border-line bg-white p-6 text-center text-lg text-slate-500 md:p-8">{tiers.empty}</p> :
-        <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-          {properties.map((property) => {
-            const projection = getPropertyProjection(property);
-            const supply = getPropertyShareSupply(property, shareSettings.get(property.slug));
-            const fundedPercent = supply.blocked / supply.total * 100;
-            return (
-            <Link
-              key={property.id}
-              href={`/properties/${property.slug}`}
-              className="group overflow-hidden rounded-[24px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:rounded-[32px]"
-            >
-              <div className="relative h-64 overflow-hidden">
-                <Image
-                  src={property.image_url || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2"}
-                  alt={property.title}
-                  fill
-                  sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 420px"
-                  unoptimized={!property.image_url?.startsWith("/")}
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
-              </div>
-
-              <div className="p-5 md:p-7">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
-                    {property.monthlyRent ? copy.rentalShare : copy.available}
-                  </span>
-
-                  <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700">
-                    {property.property_type || copy.property}
-                  </span>
-                  <PropertyConstructionBadge status={property.constructionStatus} locale={locale} />
-                  <PropertyTierBadge tier={property.investmentTier} locale={locale} />
-                </div>
-
-                <h2 className="text-2xl font-bold leading-tight md:text-3xl">
-                  {property.title}
-                </h2>
-
-                <p className="mt-2 text-lg text-slate-500">
-                  {property.address || property.city || copy.locationMissing}
-                </p>
-
-                <p className="mt-5 line-clamp-3 text-base leading-relaxed text-slate-600">
-                  {property.description || copy.descriptionMissing}
-                </p>
-
-                <div className="mt-8 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr))]">
-                  <InfoBox label={copy.propertyValue} value={formatMoney(property.price, copy, getPropertyCurrency(property), locale)} />
-                  <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale, property.minInvestmentEur)} />
-                  <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
-                  <InfoBox label={returnText.annualPerShare} value={formatPropertyMoney(projection.annualPerShare, projection.currency, locale, 2)} />
-                  <InfoBox label={rentalYieldLabel(locale, "costsStated" in property ? property.costsStated !== false : undefined)} value={formatPercent(projection.annualRate, copy, locale)} />
-                  {property.valueGrowthYield ? <>
-                    <InfoBox label={growthText.shortGrowth} value={formatPercent(property.valueGrowthYield, copy, locale)} />
-                    <InfoBox label={growthText.shortTotal} value={formatPercent(projection.annualRate + property.valueGrowthYield, copy, locale)} />
-                  </> : null}
-                </div>
-
-                {fundedPercent > 0 && (
-                  <div className="mt-7">
-                    <div className="mb-2 flex justify-between text-sm font-bold text-slate-500">
-                      <span>{copy.funded}</span>
-                      <span>{formatPercent(fundedPercent, copy, locale)}</span>
-                    </div>
-                    <div className="h-3 rounded-full bg-slate-100">
-                      <div
-                        className="h-3 rounded-full bg-emerald-600"
-                        style={{ width: `${fundedPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-8 rounded-2xl bg-ink py-4 text-center text-lg font-bold text-white">
-                  {copy.viewRentalShare}
-                </div>
-              </div>
-            </Link>
-            );
-          })}
-        </div>}
+            {items.length === 0
+              ? <p className="rounded-[24px] border border-dashed border-line bg-white p-6 text-center text-lg text-slate-500 md:p-8">{tiers.empty}</p>
+              : <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">{items.map(renderCard)}</div>}
           </section>;
         })}
         {/* The target disclaimer applies to every card, so it is shown once under the grid. */}
@@ -354,6 +365,15 @@ export default async function ProjektePage({ searchParams }: PageProps) {
         </div>
       </section>
     </main>
+  );
+}
+
+function MetricRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <dt className="text-slate-600">{label}</dt>
+      <dd className="whitespace-nowrap font-bold tabular-nums text-ink">{value}</dd>
+    </div>
   );
 }
 

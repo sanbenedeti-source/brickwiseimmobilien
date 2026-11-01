@@ -20,6 +20,8 @@ import { getPropertyShareSupply } from "@/app/lib/property-financials";
 import PropertyConstructionBadge from "@/app/components/PropertyConstructionBadge";
 import PropertyTierBadge from "@/app/components/PropertyTierBadge";
 import { INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "@/app/lib/investment-policy";
+import { listingBadgeCopy, OCCUPANCY_STATUSES, PROPERTY_STRATEGIES } from "@/app/lib/listing-badges";
+import { OccupancyBadge, StrategyBadge } from "@/app/components/PropertyListingBadges";
 import { getCatalogueProperties, mapDatabaseProperty } from "@/app/lib/property-registry";
 import { AdminAlert, AdminCard, AdminDisclosure, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "../ui";
 
@@ -57,6 +59,11 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
     .select("*")
     .order("created_at", { ascending: false });
 
+  const { data: saleSettingRows } = await supabase
+    .from("property_sale_status")
+    .select("property_slug,strategy,occupancy_status,exited_at");
+  const saleSettings = new Map((saleSettingRows || []).map((row) => [row.property_slug as string, row as { strategy: string | null; occupancy_status: string | null; exited_at: string | null }]));
+
   const { data: shareSettings } = await supabase
     .from("property_share_settings")
     .select("property_slug,total_shares,blocked_shares,availability_version");
@@ -88,6 +95,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
   const rows = allProperties.map((property) => ({ property, saved: settingsBySlug.get(property.slug), ...getPropertyShareSupply(property, settingsBySlug.get(property.slug)) }));
   const totals = rows.reduce((sum, row) => ({ total: sum.total + row.total, blocked: sum.blocked + row.blocked, available: sum.available + row.available }), { total: 0, blocked: 0, available: 0 });
   const number = (value: number) => value.toLocaleString(localeHtmlLang[locale]);
+  const badgeText = listingBadgeCopy[locale];
   const tierName = (tier: InvestmentTier) => tier === "premium" ? "Premium" : tier === "super_premium" ? "Super Premium" : t("Standard");
 
   return (
@@ -115,12 +123,14 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
         <div className="grid gap-3">
           {listedCatalogue.map((listing) => {
             const open = isPropertyOpenForInvestment(listing);
-            return <details key={`sale-${listing.slug}-${listing.constructionStatus ?? ""}-${listing.investmentTier ?? ""}`} open={changedSlug === listing.slug} className="admin-subsection">
+            return <details key={`sale-${listing.slug}-${listing.constructionStatus ?? ""}-${listing.investmentTier ?? ""}-${listing.strategy ?? ""}-${listing.occupancyStatus ?? ""}-${listing.exited ? 1 : 0}`} open={changedSlug === listing.slug} className="admin-subsection">
               <summary>
                 <span className="inline-flex flex-wrap items-center gap-2">
                   {translations.get(listing.slug)?.title || listing.title}
                   <PropertyConstructionBadge status={listing.constructionStatus} locale={locale} />
                   <PropertyTierBadge tier={listing.investmentTier} locale={locale} />
+                  <StrategyBadge strategy={listing.strategy} locale={locale} />
+                  <OccupancyBadge status={listing.occupancyStatus} locale={locale} />
                   <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
                 </span>
               </summary>
@@ -141,6 +151,20 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                       </select>
                     </label>
                     <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
+                    <label className="admin-field">{t("Strategy badge")}
+                      <select name="strategy" defaultValue={saleSettings.get(listing.slug)?.strategy ?? ""}>
+                        <option value="">{t("None")}</option>
+                        {PROPERTY_STRATEGIES.map((value) => <option key={value} value={value}>{badgeText.strategies[value]}</option>)}
+                      </select>
+                    </label>
+                    <label className="admin-field">{t("Occupancy")}
+                      <select name="occupancy_status" defaultValue={saleSettings.get(listing.slug)?.occupancy_status ?? ""}>
+                        <option value="">{t("Not set")}</option>
+                        {OCCUPANCY_STATUSES.map((value) => <option key={value} value={value}>{badgeText.occupancy[value]}</option>)}
+                      </select>
+                    </label>
+                    <input type="hidden" name="exited_at" value={saleSettings.get(listing.slug)?.exited_at ?? ""} />
+                    <label className="admin-field admin-field-wide flex-row items-center gap-2"><input type="checkbox" name="exited" defaultChecked={Boolean(saleSettings.get(listing.slug)?.exited_at)} />{t("Sold: list under Exited and close purchases")}</label>
                     <p className="admin-help admin-field-wide">{t("The price, rent and share price of this property come from its documents and do not change here.")}</p>
                   </div>
                   <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>
@@ -151,13 +175,15 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
           {visibleProperties.map((property) => {
             const open = mapDatabaseProperty(property).investmentOpen;
             const locked = Number(settingsBySlug.get(property.slug)?.blocked_shares || 0) > 0;
-            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth, property.investment_tier].join("|");
+            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth, property.investment_tier, property.strategy, property.occupancy_status, property.exited_at].join("|");
             return <details key={`sale-${property.slug}-${values}`} open={changedSlug === property.slug} className="admin-subsection">
               <summary>
                 <span className="inline-flex flex-wrap items-center gap-2">
                   {translations.get(property.slug)?.title || property.title}
                   <PropertyConstructionBadge status={property.construction_status} locale={locale} />
                   <PropertyTierBadge tier={toInvestmentTier(property.investment_tier)} locale={locale} />
+                  <StrategyBadge strategy={mapDatabaseProperty(property).strategy} locale={locale} />
+                  <OccupancyBadge status={mapDatabaseProperty(property).occupancyStatus} locale={locale} />
                   <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
                 </span>
               </summary>
@@ -190,6 +216,20 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                       </select>
                     </label>
                     <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
+                    <label className="admin-field">{t("Strategy badge")}
+                      <select name="strategy" defaultValue={property.strategy ?? ""}>
+                        <option value="">{t("None")}</option>
+                        {PROPERTY_STRATEGIES.map((value) => <option key={value} value={value}>{badgeText.strategies[value]}</option>)}
+                      </select>
+                    </label>
+                    <label className="admin-field">{t("Occupancy")}
+                      <select name="occupancy_status" defaultValue={property.occupancy_status ?? ""}>
+                        <option value="">{t("Not set")}</option>
+                        {OCCUPANCY_STATUSES.map((value) => <option key={value} value={value}>{badgeText.occupancy[value]}</option>)}
+                      </select>
+                    </label>
+                    <input type="hidden" name="exited_at" value={property.exited_at ?? ""} />
+                    <label className="admin-field admin-field-wide flex-row items-center gap-2"><input type="checkbox" name="exited" defaultChecked={Boolean(property.exited_at)} />{t("Sold: list under Exited and close purchases")}</label>
                     {locked && <p className="admin-help admin-field-wide">{t("Price and share price are locked because shares have already been sold.")}</p>}
                   </div>
                   <div className="flex flex-wrap gap-3"><button type="submit" className="admin-btn">{t("Save sales settings")}</button><a href={`/admin/properties/${encodeURIComponent(property.slug)}/edit`} className="admin-btn admin-btn-secondary">{t("Edit details")}</a></div>

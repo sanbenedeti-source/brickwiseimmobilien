@@ -9,7 +9,20 @@ import { contentLocales, readRequiredTranslation } from "@/app/lib/content-trans
 import { writeAdminMutation } from "@/app/lib/admin-audit";
 import { getExternalPropertyBySlug } from "@/app/lib/external-properties";
 import { INVESTMENT_TIERS } from "@/app/lib/investment-policy";
+import { OCCUPANCY_STATUSES, PROPERTY_STRATEGIES } from "@/app/lib/listing-badges";
 import { parseEuroAmount } from "@/app/api/properties/import/euro-amount";
+
+/** Strategy badge, occupancy and sold date shared by both sales forms. Empty selects clear the value;
+ * a sold property keeps its first sold date. Null means the submitted values are invalid. */
+function readListingBadges(formData: FormData) {
+  const strategy = String(formData.get("strategy") || "");
+  const occupancy = String(formData.get("occupancy_status") || "");
+  const previousExit = String(formData.get("exited_at") || "");
+  if ((strategy && !(PROPERTY_STRATEGIES as readonly string[]).includes(strategy)) || (occupancy && !(OCCUPANCY_STATUSES as readonly string[]).includes(occupancy))
+    || (previousExit && !/^\d{4}-\d{2}-\d{2}$/.test(previousExit))) return null;
+  const exitedAt = formData.get("exited") === "on" ? previousExit || new Date().toISOString().slice(0, 10) : null;
+  return { strategy: strategy || null, occupancy_status: occupancy || null, exited_at: exitedAt };
+}
 
 function createSlug(title: string) {
   const baseSlug = title
@@ -124,7 +137,8 @@ export async function updatePropertySale(formData: FormData) {
   const constructionStatus = String(formData.get("construction_status") || "");
   const status = String(formData.get("status") || "");
   const investmentTier = String(formData.get("investment_tier") || "standard");
-  if (!propertySlug || getExternalPropertyBySlug(propertySlug) || price === null || price <= 0
+  const badges = readListingBadges(formData);
+  if (!propertySlug || !badges || getExternalPropertyBySlug(propertySlug) || price === null || price <= 0
     || (formData.get("monthly_rent") && (monthlyRent === null || monthlyRent < 0)) || monthlyExpenses === null || monthlyExpenses < 0
     || (formData.get("share_price") && (sharePrice === null || sharePrice <= 0 || sharePrice > price))
     || (formData.get("monthly_value_growth") && (monthlyValueGrowth === null || monthlyValueGrowth < 0))
@@ -146,8 +160,8 @@ export async function updatePropertySale(formData: FormData) {
   const pricingChanged = Number(current.price) !== price || (current.share_price === null ? null : Number(current.share_price)) !== sharePrice;
   if (pricingChanged && Number(settings?.blocked_shares || 0) > 0) redirect(resultPath("sale-locked"));
 
-  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_settings", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, status, price, currency: "EUR", monthly_rent: monthlyRent, share_price: sharePrice, investment_tier: investmentTier } }, [
-    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, construction_status: constructionStatus, status, investment_tier: investmentTier }, match: { slug: propertySlug } },
+  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_settings", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, status, price, currency: "EUR", monthly_rent: monthlyRent, share_price: sharePrice, investment_tier: investmentTier, ...badges } }, [
+    { table: "properties", operation: "update", data: { price, monthly_rent: monthlyRent, monthly_expenses: monthlyExpenses, share_price: sharePrice, monthly_value_growth: monthlyValueGrowth, construction_status: constructionStatus, status, investment_tier: investmentTier, ...badges! }, match: { slug: propertySlug } },
   ]);
   if (error) redirect(resultPath("sale-error"));
 
@@ -184,15 +198,16 @@ export async function updateCatalogueSaleStatus(formData: FormData) {
   const investmentTier = String(formData.get("investment_tier") || "standard");
   const resultPath = (status: string) => `/admin/properties?status=${status}&property=${encodeURIComponent(propertySlug)}#sales-status`;
   const listing = getExternalPropertyBySlug(propertySlug);
-  if (!listing || listing.listed === false || !["completed", "under_construction", "upcoming"].includes(constructionStatus)
+  const badges = readListingBadges(formData);
+  if (!listing || !badges || listing.listed === false || !["completed", "under_construction", "upcoming"].includes(constructionStatus)
     || !(INVESTMENT_TIERS as readonly string[]).includes(investmentTier)) redirect(resultPath("sale-invalid"));
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !url) redirect(resultPath("sale-error"));
   const admin = createServiceClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_status", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, investment_tier: investmentTier } }, [
-    { table: "property_sale_status", operation: "upsert", data: { property_slug: propertySlug, construction_status: constructionStatus, investment_tier: investmentTier, updated_at: new Date().toISOString(), updated_by: user!.id } },
+  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.sale_status", targetType: "property", targetId: propertySlug, details: { construction_status: constructionStatus, investment_tier: investmentTier, ...badges } }, [
+    { table: "property_sale_status", operation: "upsert", data: { property_slug: propertySlug, construction_status: constructionStatus, investment_tier: investmentTier, ...badges!, updated_at: new Date().toISOString(), updated_by: user!.id } },
   ]);
   if (error) redirect(resultPath("sale-error"));
 

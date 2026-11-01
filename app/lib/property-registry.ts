@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "./investment-policy";
+import { toOccupancy, toStrategy, type OccupancyStatus, type PropertyStrategy } from "./listing-badges";
 import { externalProperties, getExternalPropertyBySlug, hiddenManualPropertyIds, hiddenManualPropertySlugs, isPropertyOpenForInvestment, type ListingProperty } from "./external-properties";
 
 /** A row of the properties table (admin panel or import API). */
@@ -10,7 +11,7 @@ export type DatabasePropertyRow = {
   image_url: string | null; status: string | null; created_at: string | null;
   monthly_rent?: number | string | null; monthly_expenses?: number | string | null; share_price?: number | string | null;
   image_urls?: string[] | null; construction_status?: string | null; monthly_value_growth?: number | string | null;
-  investment_tier?: string | null;
+  investment_tier?: string | null; strategy?: string | null; occupancy_status?: string | null; exited_at?: string | null;
 };
 
 const number = (value: unknown) => { const parsed = Number(value); return value === null || value === undefined || value === "" || !Number.isFinite(parsed) ? null : parsed; };
@@ -25,7 +26,8 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
   const monthlyValueGrowth = number(row.monthly_value_growth) ?? 0;
   const investmentTier = toInvestmentTier(row.investment_tier);
   const constructionStatus = row.construction_status === "under_construction" || row.construction_status === "upcoming" ? row.construction_status : "completed";
-  const investable = row.status === "active" && constructionStatus !== "upcoming" && monthlyRent > 0 && sharePrice !== null && sharePrice > 0 && price > 0;
+  const exited = Boolean(row.exited_at);
+  const investable = !exited && row.status === "active" && constructionStatus !== "upcoming" && monthlyRent > 0 && sharePrice !== null && sharePrice > 0 && price > 0;
   const annualRent = monthlyRent * 12;
   const rentalYield = price > 0 ? Math.round((monthlyRent - monthlyExpenses) * 12 / price * 10000) / 100 : 0;
   const images = (row.image_urls || []).filter((url) => typeof url === "string" && url.trim());
@@ -41,7 +43,7 @@ export function mapDatabaseProperty(row: DatabasePropertyRow): ListingProperty {
     monthlyRent, monthlyExpenses, annualRent, annualYield: price > 0 ? annualRent / price * 100 : 0,
     targetTotalReturn: rentalYield, appreciationYield: 0,
     valueGrowthYield: price > 0 && monthlyValueGrowth > 0 ? Math.round(monthlyValueGrowth * 12 / price * 10000) / 100 : undefined, sharePrice: sharePrice ?? 1000, currency: "EUR",
-    minInvestmentEur: TIER_MINIMUM_EUR[investmentTier], investmentTier, fundedPercent: 0,
+    minInvestmentEur: TIER_MINIMUM_EUR[investmentTier], investmentTier, strategy: toStrategy(row.strategy), occupancyStatus: toOccupancy(row.occupancy_status), exited, fundedPercent: 0,
     payoutModel: "Projected rental yield = (monthly rent - stated monthly costs) x 12 / property value. No appreciation or other non-cash benefit is included.",
   };
 }
@@ -64,7 +66,7 @@ export const getDatabaseProperties = cache(async (): Promise<ListingProperty[]> 
 const constructionStatuses = ["completed", "under_construction", "upcoming"] as const;
 type ConstructionStatus = (typeof constructionStatuses)[number];
 
-type CatalogueSaleSettings = { constructionStatus: ConstructionStatus; investmentTier: InvestmentTier };
+type CatalogueSaleSettings = { constructionStatus: ConstructionStatus; investmentTier: InvestmentTier; strategy?: PropertyStrategy; occupancyStatus?: OccupancyStatus; exited: boolean };
 
 /** Construction status and tier the admin set for catalogue listings (by slug). Null when they cannot be read. */
 const getCatalogueSaleStatus = cache(async (): Promise<Map<string, CatalogueSaleSettings> | null> => {
@@ -72,11 +74,12 @@ const getCatalogueSaleStatus = cache(async (): Promise<Map<string, CatalogueSale
   if (!url || !key) return new Map();
   try {
     const client = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-    const { data, error } = await client.from("property_sale_status").select("property_slug,construction_status,investment_tier").abortSignal(AbortSignal.timeout(3000));
+    const { data, error } = await client.from("property_sale_status").select("property_slug,construction_status,investment_tier,strategy,occupancy_status,exited_at").abortSignal(AbortSignal.timeout(3000));
     if (error) return null;
-    return new Map(((data || []) as { property_slug: string; construction_status: string; investment_tier?: string | null }[])
+    return new Map(((data || []) as { property_slug: string; construction_status: string; investment_tier?: string | null; strategy?: string | null; occupancy_status?: string | null; exited_at?: string | null }[])
       .filter((row) => (constructionStatuses as readonly string[]).includes(row.construction_status))
-      .map((row) => [row.property_slug, { constructionStatus: row.construction_status as ConstructionStatus, investmentTier: toInvestmentTier(row.investment_tier) }]));
+      .map((row) => [row.property_slug, { constructionStatus: row.construction_status as ConstructionStatus, investmentTier: toInvestmentTier(row.investment_tier),
+        strategy: toStrategy(row.strategy), occupancyStatus: toOccupancy(row.occupancy_status), exited: Boolean(row.exited_at) }]));
   } catch { return null; }
 });
 
@@ -88,8 +91,10 @@ export const getCatalogueProperties = cache(async (): Promise<ListingProperty[]>
     const saved = statuses?.get(property.slug);
     const constructionStatus = saved?.constructionStatus ?? property.constructionStatus;
     const investmentTier = saved?.investmentTier ?? toInvestmentTier(property.investmentTier);
+    const exited = saved?.exited ?? Boolean(property.exited);
     return { ...property, constructionStatus, investmentTier, minInvestmentEur: TIER_MINIMUM_EUR[investmentTier],
-      investmentOpen: statuses !== null && constructionStatus !== "upcoming" && isPropertyOpenForInvestment(property) };
+      strategy: saved ? saved.strategy : property.strategy, occupancyStatus: saved ? saved.occupancyStatus : property.occupancyStatus, exited,
+      investmentOpen: statuses !== null && !exited && constructionStatus !== "upcoming" && isPropertyOpenForInvestment(property) };
   });
 });
 

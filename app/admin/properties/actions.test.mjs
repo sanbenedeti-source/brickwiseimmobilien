@@ -37,6 +37,7 @@ function harness({ authorized = true, configured = true, translationFailure = fa
     } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => undefined },
     "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
+    "@/app/lib/listing-badges": { PROPERTY_STRATEGIES: ["prime", "capital_growth", "high_yield"], OCCUPANCY_STATUSES: ["rented", "ready"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -122,6 +123,7 @@ function shareHarness({ role = "admin", authError = null, configured = true, lis
     "@/app/lib/admin-audit": { writeAdminMutation() { throw new Error("Share settings cannot use a generic table write"); } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => listing },
     "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
+    "@/app/lib/listing-badges": { PROPERTY_STRATEGIES: ["prime", "capital_growth", "high_yield"], OCCUPANCY_STATUSES: ["rented", "ready"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -243,6 +245,7 @@ function saleHarness({ authorized = true, current = { price: "600000", share_pri
     "@/app/lib/admin-audit": { writeAdminMutation: async (_client, event, ops) => { writes.push(...ops.map((op) => ({ ...op, action: event.action }))); return { error: null }; } },
     "@/app/lib/external-properties": { getExternalPropertyBySlug: () => listing },
     "@/app/lib/investment-policy": { INVESTMENT_TIERS: ["standard", "premium", "super_premium"] },
+    "@/app/lib/listing-badges": { PROPERTY_STRATEGIES: ["prime", "capital_growth", "high_yield"], OCCUPANCY_STATUSES: ["rented", "ready"] },
     "@/app/api/properties/import/euro-amount": { parseEuroAmount },
   };
   const loadedModule = { exports: {} };
@@ -267,7 +270,7 @@ test("an upcoming property is opened for purchase with its pricing and gets its 
   const app = saleHarness();
   await assert.rejects(app.run(saleForm()), saleResult("sale-saved"));
   assert.deepEqual(app.writes, [{ action: "property.sale_settings", table: "properties", operation: "update", match: { slug: "munich-loft" },
-    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, monthly_value_growth: null, construction_status: "completed", status: "active", investment_tier: "standard" } }]);
+    data: { price: 600000, monthly_rent: 2500, monthly_expenses: 300, share_price: 250, monthly_value_growth: null, construction_status: "completed", status: "active", investment_tier: "standard", strategy: null, occupancy_status: null, exited_at: null } }]);
   assert.deepEqual(app.calls.map((call) => [call.args.p_total_shares, call.args.p_expected_version, call.args.p_actor]), [[2400, -1, adminId]]);
 });
 
@@ -287,6 +290,23 @@ test("the investment tier sets the property's minimum and is saved with the sale
   }
 });
 
+test("strategy, occupancy and sold status are saved with the sales settings; a sold property keeps its first sold date", async () => {
+  const app = saleHarness({ current: { price: "600000", share_price: "250" }, settings: { blocked_shares: 40, availability_version: 4 } });
+  await assert.rejects(app.run(saleForm({ strategy: "high_yield", occupancy_status: "rented", exited: "on", exited_at: "2026-05-01" })), saleResult("sale-saved"));
+  assert.deepEqual([app.writes[0].data.strategy, app.writes[0].data.occupancy_status, app.writes[0].data.exited_at], ["high_yield", "rented", "2026-05-01"]);
+  const firstSale = saleHarness({ current: { price: "600000", share_price: "250" } });
+  await assert.rejects(firstSale.run(saleForm({ exited: "on" })), saleResult("sale-saved"));
+  assert.match(firstSale.writes[0].data.exited_at, /^\d{4}-\d{2}-\d{2}$/);
+  const reopened = saleHarness({ current: { price: "600000", share_price: "250" } });
+  await assert.rejects(reopened.run(saleForm({ exited_at: "2026-05-01" })), saleResult("sale-saved"));
+  assert.equal(reopened.writes[0].data.exited_at, null, "unticking Sold clears the sold date");
+  const catalogue = saleHarness({ listing: { slug: "munich-loft", listed: true } });
+  const data = new FormData();
+  for (const [key, value] of Object.entries({ property_slug: "munich-loft", construction_status: "completed", strategy: "prime", occupancy_status: "ready" })) data.set(key, value);
+  await assert.rejects(catalogue.runCatalogue(data), saleResult("sale-saved"));
+  assert.deepEqual([catalogue.writes[0].data.strategy, catalogue.writes[0].data.occupancy_status, catalogue.writes[0].data.exited_at], ["prime", "ready", null]);
+});
+
 test("price and share price are locked once shares are sold", async () => {
   for (const change of [{ share_price: "300" }, { price: "650000" }]) {
     const app = saleHarness({ current: { price: "600000", share_price: "250" }, settings: { blocked_shares: 40, availability_version: 4 } });
@@ -296,7 +316,7 @@ test("price and share price are locked once shares are sold", async () => {
 });
 
 test("invalid sales settings, catalogue listings and non-admins never write", async () => {
-  for (const invalid of [{ construction_status: "sold" }, { status: "archived" }, { share_price: "700000" }, { price: "" }, { monthly_rent: "-5" }, { investment_tier: "gold" }]) {
+  for (const invalid of [{ construction_status: "sold" }, { status: "archived" }, { share_price: "700000" }, { price: "" }, { monthly_rent: "-5" }, { investment_tier: "gold" }, { strategy: "luxury" }, { occupancy_status: "empty" }, { exited: "on", exited_at: "May 2026" }]) {
     const app = saleHarness();
     await assert.rejects(app.run(saleForm(invalid)), saleResult("sale-invalid"));
     assert.equal(app.writes.length + app.calls.length, 0, JSON.stringify(invalid));

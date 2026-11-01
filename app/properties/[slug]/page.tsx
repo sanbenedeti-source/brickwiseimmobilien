@@ -25,6 +25,7 @@ import PropertyGallery from "./PropertyGallery";
 import PropertyLocation from "./PropertyLocation";
 import PropertyConstructionBadge from "../../components/PropertyConstructionBadge";
 import PropertyTierBadge from "../../components/PropertyTierBadge";
+import { OccupancyBadge, StrategyBadge } from "../../components/PropertyListingBadges";
 import PortalPropertyGallery from "./PortalPropertyGallery";
 import ClientPortalSidebar from "@/app/components/ClientPortalSidebar";
 import Link from "next/link";
@@ -472,8 +473,14 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   );
   const constructionStatus = (externalProperty ?? baseProperty).constructionStatus;
   const investmentTier = baseProperty.investmentTier;
-  const constructionBadge = constructionStatus || (investmentTier && investmentTier !== "standard") ? (
-    <div className="mt-3 flex flex-wrap gap-2"><PropertyConstructionBadge status={constructionStatus} locale={locale} /><PropertyTierBadge tier={investmentTier} locale={locale} /></div>
+  const { strategy, occupancyStatus } = baseProperty;
+  const showOccupancy = Boolean(occupancyStatus) && (!constructionStatus || constructionStatus === "completed");
+  const constructionBadge = constructionStatus || strategy || showOccupancy || (investmentTier && investmentTier !== "standard") ? (
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      {showOccupancy ? <OccupancyBadge status={occupancyStatus} locale={locale} /> : <PropertyConstructionBadge status={constructionStatus} locale={locale} />}
+      <PropertyTierBadge tier={investmentTier} locale={locale} />
+      <StrategyBadge strategy={strategy} locale={locale} className="py-1.5 text-sm" />
+    </div>
   ) : null;
   if (!isAuthenticated) {
     return (

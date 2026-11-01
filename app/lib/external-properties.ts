@@ -1,4 +1,5 @@
 import { MINIMUM_INVESTMENT_EUR, type InvestmentTier } from "./investment-policy";
+import type { OccupancyStatus, PropertyStrategy } from "./listing-badges";
 import type { PropertyReturnBreakdown } from "./property-financials";
 export type PropertyMapLocation = ({
   latitude: number;
@@ -55,6 +56,10 @@ export type ListingProperty = {
   minInvestmentEur: number;
   /** Standard when not set; the tier decides minInvestmentEur. */
   investmentTier?: InvestmentTier;
+  strategy?: PropertyStrategy;
+  occupancyStatus?: OccupancyStatus;
+  /** Sold: listed under Exited and closed for purchase. */
+  exited?: boolean;
   fundedPercent: number;
   payoutModel: string;
 };

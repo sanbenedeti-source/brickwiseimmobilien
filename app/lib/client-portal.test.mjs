@@ -311,6 +311,7 @@ test("admin-added properties become investable listings only with an active stat
     "@supabase/supabase-js": { createClient: () => ({ from: (table) => table === "property_sale_status"
       ? { select: () => ({ abortSignal: async () => saleStatus }) }
       : { select: () => ({ in: () => ({ order: () => ({ abortSignal: async () => ({ data: rows, error: null }) }) }) }) } }) },
+    "./listing-badges": { toStrategy: (value) => ["prime", "capital_growth", "high_yield"].includes(value) ? value : undefined, toOccupancy: (value) => ["rented", "ready"].includes(value) ? value : undefined },
     "./investment-policy": { TIER_MINIMUM_EUR: { standard: 500, premium: 20000, super_premium: 50000 }, toInvestmentTier: (value) => ["standard", "premium", "super_premium"].includes(value) ? value : "standard" },
     "./external-properties": { externalProperties: [{ slug: "sal-rei", status: "active", investmentOpen: true, constructionStatus: "completed" }], getExternalPropertyBySlug: (slug) => slug === "sal-rei" ? { slug } : undefined,
       hiddenManualPropertyIds: ["hidden-id"], hiddenManualPropertySlugs: [], isPropertyOpenForInvestment: (property) => property.investmentOpen ?? property.status === "active" },
@@ -328,6 +329,11 @@ test("admin-added properties become investable listings only with an active stat
   assert.deepEqual([growing.valueGrowthYield, growing.targetTotalReturn], [2, 8], "value growth (500 x 12 / 300000 = 2%) stays outside the rental yield");
   assert.equal(registry.mapDatabaseProperty({ ...base, construction_status: "upcoming" }).constructionStatus, "upcoming");
   assert.deepEqual([listing.investmentTier, listing.minInvestmentEur], ["standard", 500], "properties without a tier keep the standard minimum");
+  assert.deepEqual([listing.strategy, listing.occupancyStatus, listing.exited], [undefined, undefined, false]);
+  const badged = registry.mapDatabaseProperty({ ...base, strategy: "capital_growth", occupancy_status: "rented", exited_at: null });
+  assert.deepEqual([badged.strategy, badged.occupancyStatus, badged.investmentOpen], ["capital_growth", "rented", true]);
+  const sold = registry.mapDatabaseProperty({ ...base, exited_at: "2026-10-01", strategy: "luxury" });
+  assert.deepEqual([sold.exited, sold.investmentOpen, sold.strategy], [true, false, undefined], "a sold property is closed for purchase and unknown badges are ignored");
   for (const [tier, minimum] of [["premium", 20000], ["super_premium", 50000], ["gold", 500]]) {
     const tiered = registry.mapDatabaseProperty({ ...base, investment_tier: tier });
     assert.deepEqual([tiered.investmentTier, tiered.minInvestmentEur], [tier === "gold" ? "standard" : tier, minimum], tier);
@@ -349,6 +355,9 @@ test("admin-added properties become investable listings only with an active stat
   saleStatus = { data: [{ property_slug: "sal-rei", construction_status: "completed", investment_tier: "premium" }], error: null };
   const premium = await registry.findProperty("sal-rei");
   assert.deepEqual([premium.investmentTier, premium.minInvestmentEur, premium.investmentOpen], ["premium", 20000, true], "the admin's tier sets a catalogue listing's minimum");
+  saleStatus = { data: [{ property_slug: "sal-rei", construction_status: "completed", strategy: "high_yield", occupancy_status: "rented", exited_at: "2026-10-01" }], error: null };
+  const exited = await registry.findProperty("sal-rei");
+  assert.deepEqual([exited.strategy, exited.occupancyStatus, exited.exited, exited.investmentOpen], ["high_yield", "rented", true, false], "a sold catalogue listing is closed for purchase");
   saleStatus = { data: null, error: { message: "unavailable" } };
   assert.equal((await registry.findProperty("sal-rei")).investmentOpen, false, "an unreadable sale status fails closed");
   assert.equal((await registry.findProperty("lisbon-loft-1")).title, "Lisbon Loft");
