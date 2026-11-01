@@ -263,3 +263,66 @@ export async function updateShareSettings(formData: FormData) {
   revalidatePath("/admin/profits");
   redirect(resultPath("shares-saved"));
 }
+
+/** Gallery entries are https URLs or files hosted by the site itself (/properties/...). */
+function isPropertyImage(value: string) {
+  if (/^\/(?!\/)[\w\-./]+$/.test(value)) return !value.includes("..");
+  try { return new URL(value).protocol === "https:"; } catch { return false; }
+}
+
+/** Details of an admin-added property: texts in every language, address, size and photos. Price, rent,
+ * shares, tier and publication stay under Sales status; the slug never changes so holdings keep their link. */
+export async function updatePropertyDetails(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !(await hasAdminSession(supabase, user))) redirect("/admin");
+
+  const propertySlug = String(formData.get("property_slug") || "").trim();
+  const resultPath = (status: string) => `/admin/properties/${encodeURIComponent(propertySlug)}/edit?status=${status}`;
+  if (!propertySlug || getExternalPropertyBySlug(propertySlug)) redirect("/admin/properties");
+
+  let translations;
+  try {
+    translations = contentLocales.map((locale) => readRequiredTranslation(formData, locale));
+  } catch {
+    redirect(resultPath("invalid"));
+  }
+  const english = translations.find((item) => item.locale === "en")!;
+  const city = String(formData.get("city") || "").trim();
+  const address = String(formData.get("address") || "").trim();
+  const count = (name: string) => formData.get(name) === null || formData.get(name) === "" ? null : Number(formData.get(name));
+  const area = count("area"), rooms = count("rooms"), bedrooms = count("bedrooms"), bathrooms = count("bathrooms");
+  const coverImage = String(formData.get("image_url") || "").trim();
+  const imageUrls = String(formData.get("image_urls") || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const validCount = (value: number | null, whole = false) => value === null || (Number.isFinite(value) && value >= 0 && value <= 100000 && (!whole || Number.isInteger(value)));
+  if (!city || !address || city.length > 120 || address.length > 300
+    || !validCount(area) || !validCount(rooms) || !validCount(bedrooms, true) || !validCount(bathrooms, true)
+    || (coverImage && !isPropertyImage(coverImage)) || imageUrls.length > 12 || imageUrls.some((url) => !isPropertyImage(url))) {
+    redirect(resultPath("invalid"));
+  }
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!serviceKey || !url) redirect(resultPath("error"));
+  const admin = createServiceClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: current, error: readError } = await admin.from("properties").select("slug").eq("slug", propertySlug).maybeSingle();
+  if (readError) redirect(resultPath("error"));
+  if (!current) redirect("/admin/properties");
+
+  const { error } = await writeAdminMutation(admin, { actor: user!, action: "property.update", targetType: "property", targetId: propertySlug, details: { title: english.title, city, images: imageUrls.length } }, [
+    { table: "properties", operation: "update", match: { slug: propertySlug }, data: {
+      title: english.title, description: english.description, property_type: english.property_type, city, address,
+      area, rooms, bedrooms, bathrooms, image_url: coverImage || imageUrls[0] || "", image_urls: imageUrls,
+    } },
+    ...translations.map((translation) => ({ table: "property_translations", operation: "upsert" as const, data: { property_slug: propertySlug, ...translation } })),
+  ]);
+  if (error) redirect(resultPath("error"));
+
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${propertySlug}/edit`);
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/");
+  redirect(resultPath("saved"));
+}

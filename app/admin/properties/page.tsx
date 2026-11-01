@@ -192,7 +192,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                     <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
                     {locked && <p className="admin-help admin-field-wide">{t("Price and share price are locked because shares have already been sold.")}</p>}
                   </div>
-                  <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>
+                  <div className="flex flex-wrap gap-3"><button type="submit" className="admin-btn">{t("Save sales settings")}</button><a href={`/admin/properties/${encodeURIComponent(property.slug)}/edit`} className="admin-btn admin-btn-secondary">{t("Edit details")}</a></div>
                 </form>
               </div>
             </details>;

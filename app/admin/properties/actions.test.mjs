@@ -252,7 +252,7 @@ function saleHarness({ authorized = true, current = { price: "600000", share_pri
     { env: { NEXT_PUBLIC_SUPABASE_URL: "https://test.invalid", SUPABASE_SERVICE_ROLE_KEY: "test-only" } },
     { error() {} },
   );
-  return { run: loadedModule.exports.updatePropertySale, runCatalogue: loadedModule.exports.updateCatalogueSaleStatus, writes, calls };
+  return { run: loadedModule.exports.updatePropertySale, runCatalogue: loadedModule.exports.updateCatalogueSaleStatus, runDetails: loadedModule.exports.updatePropertyDetails, writes, calls };
 }
 
 function saleForm(overrides = {}) {
@@ -337,4 +337,44 @@ test("hidden or unknown listings, invalid statuses and non-admins cannot change 
   const outsider = saleHarness({ authorized: false, listing: { slug: "munich-loft" } });
   await assert.rejects(outsider.runCatalogue(new FormData()), (error) => error.location === "/admin");
   assert.equal(outsider.writes.length, 0);
+});
+
+function detailsForm(overrides = {}) {
+  const data = new FormData();
+  data.set("property_slug", "munich-loft");
+  for (const locale of contentLocales) { data.set(`title_${locale}`, `Loft ${locale}`); data.set(`description_${locale}`, `Description ${locale}`); }
+  for (const [key, value] of Object.entries({ address: "Leopoldstr. 1", city: "Munich", area: "120", rooms: "4", bedrooms: "3", bathrooms: "2", image_url: "",
+    image_urls: "/properties/munich-loft/01.webp\nhttps://images.example/02.jpg", ...overrides })) data.set(key, value);
+  return data;
+}
+const detailsResult = (status) => (error) => error.location === `/admin/properties/munich-loft/edit?status=${status}`;
+
+test("property details and all five translations are saved in one audited write without touching pricing", async () => {
+  const app = saleHarness({ current: { slug: "munich-loft" } });
+  await assert.rejects(app.runDetails(detailsForm()), detailsResult("saved"));
+  assert.deepEqual(app.writes.map((write) => [write.action, write.table, write.operation]), [
+    ["property.update", "properties", "update"], ...contentLocales.map(() => ["property.update", "property_translations", "upsert"]),
+  ]);
+  const base = app.writes[0];
+  assert.deepEqual(base.match, { slug: "munich-loft" });
+  assert.deepEqual(base.data, { title: "Loft en", description: "Description en", property_type: null, city: "Munich", address: "Leopoldstr. 1",
+    area: 120, rooms: 4, bedrooms: 3, bathrooms: 2, image_url: "/properties/munich-loft/01.webp", image_urls: ["/properties/munich-loft/01.webp", "https://images.example/02.jpg"] });
+  for (const key of ["price", "share_price", "monthly_rent", "status", "investment_tier", "slug"]) assert.equal(key in base.data, false, key);
+  assert.deepEqual(app.writes.slice(1).map((write) => [write.data.property_slug, write.data.locale]), contentLocales.map((locale) => ["munich-loft", locale]));
+  assert.equal(app.calls.length, 0);
+});
+
+test("missing translations, unsafe image addresses and invalid counts never write property details", async () => {
+  const thirteen = Array.from({ length: 13 }, (_, index) => `/properties/a/${index}.webp`).join("\n");
+  for (const invalid of [{ description_de: "" }, { city: "" }, { address: "" }, { image_urls: thirteen }, { image_urls: "javascript:alert(1)" },
+    { image_urls: "//evil.example/a.jpg" }, { image_urls: "/properties/../secret" }, { image_url: "http://insecure.example/a.jpg" }, { bedrooms: "2.5" }, { area: "-1" }]) {
+    const app = saleHarness({ current: { slug: "munich-loft" } });
+    await assert.rejects(app.runDetails(detailsForm(invalid)), detailsResult("invalid"), JSON.stringify(invalid));
+    assert.equal(app.writes.length, 0, JSON.stringify(invalid));
+  }
+  for (const [options, location] of [[{ listing: { slug: "munich-loft" } }, "/admin/properties"], [{ current: null }, "/admin/properties"], [{ authorized: false }, "/admin"]]) {
+    const app = saleHarness(options);
+    await assert.rejects(app.runDetails(detailsForm()), (error) => error.location === location);
+    assert.equal(app.writes.length, 0);
+  }
 });
