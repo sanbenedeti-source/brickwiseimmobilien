@@ -12,3 +12,4 @@ project-backups
 *.log
 *.tsbuildinfo
 /output
+/.claude
