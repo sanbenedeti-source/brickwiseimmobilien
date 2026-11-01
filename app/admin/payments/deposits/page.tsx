@@ -33,8 +33,7 @@ export default async function DepositsPage() {
    <AdminStat label={d("rejected")} value={count("rejected")}/>
    <AdminStat label={d("credited")} value={euro(credited)}/>
   </section>
-  {!gatewayConfig ? <AdminAlert tone="warning">{t("Automatic crypto payments are not active. Set COINGATE_API_TOKEN in Vercel to enable them.")}</AdminAlert>
-   : gatewayConfig.sandbox && <AdminAlert tone="warning">{t("CoinGate sandbox mode is on: test payments credit real client wallets. Use a test client account and switch to live before launch.")}</AdminAlert>}
+  {gatewayConfig?.sandbox && <AdminAlert tone="warning">{t("CoinGate sandbox mode is on: test payments credit real client wallets. Use a test client account and switch to live before launch.")}</AdminAlert>}
   {(gatewayConfig || gateway.deposits.length > 0) && <AdminCard title={t("Automatic crypto payments")} description={t("Paid through CoinGate and credited automatically. Rows under review need a manual decision: credit the wallet with Wallet credit, or refund the payment in CoinGate.")} flush>
    {gateway.error ? <AdminAlert tone="danger">{d("loadError")}</AdminAlert> : !gateway.deposits.length ? <AdminEmpty>{t("No automatic crypto payments yet.")}</AdminEmpty> : <table className="admin-table admin-table-stack">
     <thead><tr><th scope="col">{t("Date")}</th><th scope="col">{t("Customer")}</th><th scope="col">{t("CoinGate order")}</th><th scope="col">{t("Paid with")}</th><th scope="col" className="admin-num">{t("Amount")}</th><th scope="col">{t("Status")}</th></tr></thead>

@@ -11,3 +11,4 @@ project-backups
 .mcp.json
 *.log
 *.tsbuildinfo
+/output
