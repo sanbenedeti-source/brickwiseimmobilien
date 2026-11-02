@@ -8,7 +8,9 @@ import { getAdminText } from "@/app/lib/admin-copy";
 import { getCurrentLocale } from "@/app/lib/server-locale";
 import { localeHtmlLang } from "@/app/lib/i18n";
 import { getPropertyTranslations } from "@/app/lib/property-localization";
-import { getPropertyShareSupply } from "@/app/lib/property-financials";
+import { formatPropertyMoney, getPropertyProjection, getPropertyShareSupply } from "@/app/lib/property-financials";
+import { updateProfitSettings } from "../../profits/actions";
+import DistributionForm from "../../distributions/DistributionForm";
 import { hiddenManualPropertySlugs, isPropertyOpenForInvestment } from "@/app/lib/external-properties";
 import { getCatalogueProperties, mapDatabaseProperty } from "@/app/lib/property-registry";
 import PropertyConstructionBadge from "@/app/components/PropertyConstructionBadge";
@@ -32,6 +34,12 @@ const shareMessages: Record<string, string> = {
   "shares-error": "Share availability could not be saved. Reload the page and try again.",
 };
 
+const earningsMessages: Record<string, string> = {
+  "earnings-saved": "Earnings status saved successfully",
+  "earnings-invalid": "Choose a listed property and a valid activation date.",
+  "earnings-error": "Earnings status could not be saved. Please try again.",
+};
+
 /** Everything about one property in one place: sales settings, shares, investors and income. */
 export default async function AdminPropertyPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ status?: string }> }) {
   const [{ slug }, { status }] = await Promise.all([params, searchParams]);
@@ -47,7 +55,7 @@ export default async function AdminPropertyPage({ params, searchParams }: { para
   const [catalogue, translations, { data: row }, { data: setting }, { data: saleRow }, { data: holdingRows }, { data: distributionRows }, directory] = await Promise.all([
     getCatalogueProperties(), getPropertyTranslations(locale),
     supabase.from("properties").select("*").eq("slug", slug).maybeSingle(),
-    supabase.from("property_share_settings").select("property_slug,total_shares,blocked_shares,availability_version").eq("property_slug", slug).maybeSingle(),
+    supabase.from("property_share_settings").select("property_slug,total_shares,blocked_shares,availability_version,profit_active,profit_start_date").eq("property_slug", slug).maybeSingle(),
     supabase.from("property_sale_status").select("strategy,occupancy_status,exited_at").eq("property_slug", slug).maybeSingle(),
     // Holdings are owner-only under RLS, so the verified admin reads them with the service role.
     service.from("property_holdings").select("user_id,shares,invested_amount,first_purchased_at").eq("property_slug", slug).order("shares", { ascending: false }),
@@ -67,6 +75,9 @@ export default async function AdminPropertyPage({ params, searchParams }: { para
   const number = (value: number) => value.toLocaleString(lang);
   const saleMessage = status ? saleMessages[status] : undefined;
   const shareMessage = status ? shareMessages[status] : undefined;
+  const earningsMessage = status ? earningsMessages[status] : undefined;
+  const projection = getPropertyProjection(model);
+  const percent = (value: number) => (value / 100).toLocaleString(lang, { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return <main className="admin-workspace">
     <AdminPageHeader back={{ href: "/admin/properties", label: t("Manage properties") }} eyebrow={t("Property")} title={title}
@@ -120,8 +131,38 @@ export default async function AdminPropertyPage({ params, searchParams }: { para
       </table>}
     </AdminCard>
 
-    <AdminCard id="income" title={t("Rental distributions")} description={t("Net rent recorded for this property and split across its holders.")} flush
-      actions={<Link href="/admin/distributions" className="admin-btn admin-btn-secondary admin-btn-sm">{t("Record distribution")}</Link>}>
+    <AdminCard id="income" title={t("Income")} description={t("Earnings accrual, rental distributions and their history for this property. To pay one client only, open the client under Investors and use Pay property profit.")}
+      actions={<Link href="/admin/distributions" className="admin-btn admin-btn-secondary admin-btn-sm">{t("All distributions")}</Link>}>
+      {earningsMessage && <AdminAlert tone={status === "earnings-saved" ? "success" : "warning"}>{t(earningsMessage)}</AdminAlert>}
+      <div className="grid gap-3">
+        <details className="admin-subsection" open={status?.startsWith("earnings-")}>
+          <summary>{t("Earnings accrual")} · {percent(projection.annualRate)}</summary>
+          <div>
+            <p className="admin-help">{t("Status and activation date control earnings accrual. The published annual target remains visible while accrual is paused.")}</p>
+            <p className="admin-help">{t("Monthly target / share")}: <strong>{formatPropertyMoney(projection.monthlyPerShare, "EUR", locale, 2)}</strong> · {t("Monthly target / property")}: <strong>{formatPropertyMoney(projection.propertyMonthly, "EUR", locale, 2)}</strong></p>
+            <form action={updateProfitSettings} className="admin-form">
+              <input type="hidden" name="property_slug" value={slug} />
+              <input type="hidden" name="return_to" value={`/admin/properties/${encodeURIComponent(slug)}`} />
+              <div className="admin-form-grid">
+                <label className="admin-check"><input name="profit_active" type="checkbox" defaultChecked={setting?.profit_active ?? true} /><span>{t("Earnings accrual active")}</span></label>
+                <label className="admin-field">{t("Activation date")}<input name="profit_start_date" type="date" defaultValue={setting?.profit_start_date || ""} /></label>
+              </div>
+              <div><button className="admin-btn">{t("Save")}</button></div>
+            </form>
+          </div>
+        </details>
+        {setting && <details className="admin-subsection">
+          <summary>{t("Record distribution")}</summary>
+          <div><DistributionForm properties={[{ slug, title }]} today={new Date().toISOString().slice(0, 10)} labels={{
+            property: t("Property"), start: t("Period start"), end: t("Period end"), amount: t("Net amount for all shares (EUR)"), note: t("Note (optional)"),
+            confirm: t("This credits client wallets immediately and cannot be undone."), submit: t("Record distribution"),
+            saved: t("Distribution recorded."), error: t("The distribution could not be recorded. Check the property, period and amount; a period can only be distributed once."),
+          }} /></div>
+        </details>}
+      </div>
+    </AdminCard>
+
+    <AdminCard title={t("Rental distributions")} flush>
       {!(distributionRows || []).length ? <AdminEmpty>{t("No distributions recorded yet.")}</AdminEmpty> : <table className="admin-table admin-table-stack">
         <thead><tr><th scope="col">{t("Period")}</th><th scope="col" className="admin-num">{t("Net amount")}</th><th scope="col" className="admin-num">{t("Distributed")}</th><th scope="col" className="admin-num">{t("Holders")}</th><th scope="col">{t("Date")}</th></tr></thead>
         <tbody>{(distributionRows || []).map((item) => <tr key={item.id}>

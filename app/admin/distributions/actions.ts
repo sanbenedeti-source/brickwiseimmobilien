@@ -23,6 +23,7 @@ export async function recordDistribution(_previous: DistributionState, form: For
     const { error: rpcError } = await client.rpc("record_property_distribution", { p_property_slug: slug, p_period_start: start, p_period_end: end, p_net_amount: amount, p_note: note || null });
     if (rpcError) return { result: "error" };
     revalidatePath("/admin/distributions");
+    revalidatePath("/admin/properties", "layout");
     revalidatePath("/admin/audit");
     revalidatePath("/dashboard", "layout");
     return { result: "saved" };

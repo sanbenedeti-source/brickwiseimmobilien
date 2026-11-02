@@ -72,3 +72,10 @@ test("unauthorized requests and invalid properties or dates never mutate earning
     assert.equal(app.writes.length, 0);
   }
 });
+
+test("the property page gets the admin back to its income section; any other return path is ignored", async () => {
+  const page = `/admin/properties/${encodeURIComponent(property.slug)}`;
+  await assert.rejects(harness().run(form({ return_to: page })), (error) => error.location === `${page}?status=earnings-saved#income`);
+  await assert.rejects(harness().run(form({ return_to: page, profit_start_date: "2026-02-30" })), (error) => error.location === `${page}?status=earnings-invalid#income`);
+  await assert.rejects(harness().run(form({ return_to: "https://evil.example/" })), (error) => error.location?.startsWith("/admin/profits?status=saved"));
+});

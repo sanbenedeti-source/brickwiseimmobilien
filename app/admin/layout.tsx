@@ -43,9 +43,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const portfolio: AdminSectionTab[] = [
     { href: "/admin/properties", label: t("Properties") },
     { href: "/admin/sale-requests", label: t("Sale requests"), badge: attention.pendingSales },
-    { href: "/admin/distributions", label: t("Distributions") },
-    { href: "/admin/profits", label: t("Profit Management") },
     { href: "/admin/property-updates", label: t("Property updates") },
+    // Earnings accrual and distributions are managed on each property page; these keep the overall lists.
+    { href: "/admin/distributions", label: t("Distributions") },
   ];
   const settings: AdminSectionTab[] = [
     { href: "/admin/payments", label: t("Payment methods") },

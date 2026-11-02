@@ -11,8 +11,8 @@ export default function DistributionForm({ properties, labels, today }: { proper
   return <form action={action} className="admin-form">
     <div className="admin-form-grid">
       <label className="admin-field admin-field-wide">{labels.property}
-        <select name="property_slug" required defaultValue="">
-          <option value="" disabled>—</option>
+        <select name="property_slug" required defaultValue={properties.length === 1 ? properties[0].slug : ""}>
+          {properties.length !== 1 && <option value="" disabled>—</option>}
           {properties.map((property) => <option key={property.slug} value={property.slug}>{property.title}</option>)}
         </select>
       </label>
