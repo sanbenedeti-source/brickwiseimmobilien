@@ -5,7 +5,8 @@ import { useSyncExternalStore } from "react";
 import { ArrowDownToLine, ArrowLeftRight, BadgeCheck, Banknote, Building2, Coins, FileCheck2, IdCard, Inbox, KeyRound, Landmark, LayoutDashboard, Megaphone, Percent, ReceiptText, ScrollText, UsersRound } from "lucide-react";
 
 const icons = { overview: LayoutDashboard, requests: Inbox, customers: UsersRound, agreements: FileCheck2, kyc: IdCard, deposits: Banknote, withdrawals: ArrowDownToLine, paymentRequests: ReceiptText, sales: ArrowLeftRight, properties: Building2, profits: Percent, distributions: Coins, updates: Megaphone, methods: Landmark, agents: BadgeCheck, audit: ScrollText, security: KeyRound };
-export type AdminNavigationItem = { href: string; label: string; icon: keyof typeof icons; badge?: number };
+/** match lists every page path that belongs to the item, so a section stays highlighted on its sub-pages. */
+export type AdminNavigationItem = { href: string; label: string; icon: keyof typeof icons; badge?: number; match?: string[] };
 export type AdminNavigationGroup = { label?: string; items: AdminNavigationItem[] };
 
 function subscribe(callback: () => void) {
@@ -24,7 +25,8 @@ export default function AdminNavigation({ groups, label }: { groups: AdminNaviga
     if (section) return pathname === path && hash === `#${section}`;
     return pathname === path || (path !== "/admin" && pathname.startsWith(`${path}/`));
   };
-  const active = items.filter((item) => matches(item.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href
+  const specificity = (item: AdminNavigationItem) => Math.max(-1, ...(item.match ?? [item.href]).filter(matches).map((href) => href.length));
+  const active = items.map((item) => ({ href: item.href, length: specificity(item) })).filter((item) => item.length >= 0).sort((a, b) => b.length - a.length)[0]?.href
     ?? (pathname === "/admin" ? "/admin" : undefined);
   return <nav className="admin-navigation" aria-label={label}>{groups.map((group, index) => <div key={group.label ?? index} className="admin-nav-group">
     {group.label && <p className="admin-nav-caption">{group.label}</p>}

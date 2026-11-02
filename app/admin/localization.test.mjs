@@ -84,7 +84,7 @@ for (const locale of ["en", "de", "fr", "es", "it"]) {
     assert.doesNotMatch(cryptoForm + overview, /method=stripe_link|method=manual|value="stripe_link"|value="manual"|Stripe link|Crypto USDC/);
     const audit = await renderPage("app/admin/audit/page.tsx");
     const layout = renderToStaticMarkup(await app.load("app/admin/layout.tsx").default({ children: createElement("p", null, "child") }));
-    for (const [html, english] of [[properties, "Manage properties"], [profits, "Property returns"], [payments, "Manage payment requests"], [overview, "Client requests"], [overview, "Deposits to verify"], [audit, "Admin audit logs"], [layout, "Client requests"]]) {
+    for (const [html, english] of [[properties, "Manage properties"], [profits, "Property returns"], [payments, "Manage payment requests"], [overview, "Client requests"], [overview, "Deposits to verify"], [audit, "Admin audit logs"], [layout, "Clients"], [layout, "Money"], [layout, "Properties"]]) {
       assert.ok(html.includes(t(english)), `${locale}: ${english}`);
       if (locale !== "en") assert.ok(!html.includes(`>${english}<`), `${locale}: untranslated ${english}`);
     }

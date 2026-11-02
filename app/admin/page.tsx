@@ -5,21 +5,14 @@ import { getPropertyTranslations } from "@/app/lib/property-localization";
 import { getExternalPropertyBySlug } from "@/app/lib/external-properties";
 import { getPropertyMapLinks } from "@/app/lib/property-location";
 import Link from "next/link";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "../../lib/supabase/server";
 import { updateRequestStatus } from "./action";
-import {
-  buildCustomerId,
-  getKnownCustomersFromRequests,
-  mergeCustomers,
-  type CustomerRecord,
-} from "../lib/customer-store";
+import { getKnownCustomersFromRequests, mergeCustomers } from "../lib/customer-store";
+import { getRegisteredAuthCustomers } from "./customer-list";
 import { isAdminUser } from "../lib/admin";
 import { hasAdminSession } from "../lib/admin-session";
 import { redirect } from "next/navigation";
-import WalletCreditForm from "./payments/WalletCreditForm";
 import AdminSignInForm from "./AdminSignInForm";
-import { agreementCopy } from "@/app/lib/agreement-copy";
 import { AdminCard, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "./ui";
 import { getAdminAttention } from "./attention";
 
@@ -88,58 +81,6 @@ function getCustomerName(request: AdminRequestItem) {
   return request.name || request.full_name || "Unknown customer";
 }
 
-async function getRegisteredAuthCustomers() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!serviceRoleKey || !supabaseUrl) {
-    return {
-      customers: [] as CustomerRecord[],
-      enabled: false,
-    };
-  }
-
-  const adminSupabase = createSupabaseClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-
-  const { data, error } = await adminSupabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 200,
-  });
-
-  if (error) {
-    console.error("Auth users error:", error.message);
-    return {
-      customers: [] as CustomerRecord[],
-      enabled: true,
-    };
-  }
-
-  return {
-    customers: data.users
-      .filter((authUser) => Boolean(authUser.email) && !isAdminUser(authUser))
-      .map((authUser) => ({
-        id: authUser.id || buildCustomerId(authUser.email || ""),
-        fullName:
-          String(authUser.user_metadata?.full_name || "").trim() ||
-          authUser.email?.split("@")[0] ||
-          "Unknown customer",
-        email: authUser.email || "",
-        phone: authUser.phone || undefined,
-        source: "Registration" as const,
-        status: authUser.email_confirmed_at
-          ? ("Active" as const)
-          : ("New" as const),
-        createdAt: authUser.created_at || new Date().toISOString(),
-      })),
-    enabled: true,
-  };
-}
-
 export default async function AdminPage() {
   const locale = await getCurrentLocale();
   const t = getAdminText(locale);
@@ -205,7 +146,7 @@ export default async function AdminPage() {
         <AdminStat label={t("New requests")} value={attention.newRequests} hint={`${t("All requests")}: ${requestsCount || 0}`} href="#requests" linkLabel={t("View list")} attention={attention.newRequests > 0} />
         <AdminStat label={t("Deposits to verify")} value={attention.pendingDeposits} href="/admin/payments/deposits" linkLabel={t("Open queue")} attention={attention.pendingDeposits > 0} />
         <AdminStat label={t("Agreements to review")} value={attention.pendingAgreements} href="/admin/agreements" linkLabel={t("Open queue")} attention={attention.pendingAgreements > 0} />
-        <AdminStat label={t("Registered customers")} value={customers.length} hint={authCustomers.enabled ? undefined : t("Auth list requires service role key")} href="#customers" linkLabel={t("View list")} />
+        <AdminStat label={t("Registered customers")} value={customers.length} hint={authCustomers.enabled ? undefined : t("Auth list requires service role key")} href="/admin/customers" linkLabel={t("View list")} />
       </section>
 
       <AdminCard id="requests" title={t("Client requests")} description={t("Purchase requests and enquiries, newest first.")} flush>
@@ -250,33 +191,6 @@ export default async function AdminPage() {
           </table>}
       </AdminCard>
 
-      <AdminCard id="customers" title={t("Customers")} description={t("Overview of customers captured through registration, contact, or rental participation requests.")} flush>
-        {customers.length === 0 ? <AdminEmpty>{t("No customers yet. Once a customer sends a request, they will appear here.")}</AdminEmpty>
-          : <table className="admin-table admin-table-stack">
-            <thead><tr><th scope="col">{t("Customer")}</th><th scope="col">{t("Source")}</th><th scope="col">{t("Status")}</th><th scope="col">{t("Registered")}</th><th scope="col">{t("Actions")}</th></tr></thead>
-            <tbody>{customers.map((customer) => <tr key={customer.id}>
-              <td data-label={t("Customer")}>
-                <p className="admin-cell-main">{customer.fullName === "Unknown customer" ? t("Unknown customer") : customer.fullName}</p>
-                <p className="admin-cell-sub">{customer.email}{customer.phone ? ` · ${customer.phone}` : ""}</p>
-              </td>
-              <td data-label={t("Source")}>{t(customer.source)}</td>
-              <td data-label={t("Status")}><StatusBadge status={customer.status} label={t(customer.status)} /></td>
-              <td data-label={t("Registered")} className="whitespace-nowrap">{formatDate(customer.createdAt, locale)}</td>
-              <td data-label={t("Actions")}>
-                <div className="admin-actions">
-                  <a href={`mailto:${customer.email}`} className="admin-btn admin-btn-secondary admin-btn-sm">{t("Send email")}</a>
-                  {customer.phone && <a href={`tel:${customer.phone.replace(/\s+/g, "")}`} className="admin-btn admin-btn-secondary admin-btn-sm">{t("Call")}</a>}
-                  {customer.source === "Registration" && <Link href={`/admin/customers/${encodeURIComponent(customer.id)}`} className="admin-btn admin-btn-sm">{t("View profile")}</Link>}
-                  {customer.source === "Registration" && <Link href={`/admin/agreements?customer=${encodeURIComponent(customer.id)}&status=all`} className="admin-btn admin-btn-secondary admin-btn-sm">{agreementCopy(locale).queue}</Link>}
-                </div>
-                {customer.source === "Registration" && <details className="admin-popover mt-2">
-                  <summary className="admin-link text-[12.5px]">{t("Credit wallet")}</summary>
-                  <div><WalletCreditForm userId={customer.id} operationId={crypto.randomUUID()} locale={locale} /></div>
-                </details>}
-              </td>
-            </tr>)}</tbody>
-          </table>}
-      </AdminCard>
     </main>
   );
 }

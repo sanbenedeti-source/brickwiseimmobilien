@@ -154,6 +154,9 @@
 .admin-segmented a {padding: 7px 14px; border-radius: 7px; color: var(--admin-muted); font-size: 13px; font-weight: 600;}
 .admin-segmented a span {margin-left: 4px; font-size: 11.5px; font-weight: 500; opacity: .8;}
 .admin-segmented a[aria-current] {background: #fff; color: var(--admin-text); box-shadow: 0 1px 3px #14213d1f;}
+.admin-section-tabs {max-width: 1360px; padding: 24px 28px 0;}
+.admin-section-tabs .admin-segmented {max-width: 100%;}
+.admin-segmented a .admin-tab-badge {display: inline-flex; min-width: 18px; height: 18px; align-items: center; justify-content: center; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: #e0484d; color: #fff; font-size: 11px; font-weight: 700; opacity: 1;}
 .admin-subsection-danger {border-color: #f3c4c4; background: #fff;}
 .admin-subsection-danger > summary {color: #a12a2a;}
 .admin-btn:disabled {opacity: .55; cursor: not-allowed;}
@@ -207,7 +210,7 @@
 .admin-skip:focus {top: 8px;}
 
 @media(max-width: 1180px) {.admin-stats {grid-template-columns: repeat(2, minmax(0, 1fr));}}
-@media(max-width: 980px) {.admin-sidebar {display: none;} .admin-main {margin-left: 0;} .admin-mobile-menu {display: block;} .admin-topbar {padding: 0 16px;} .admin-mfa {display: none;} .admin-workspace {padding: 20px 16px 40px;} .admin-skip {left: 10px;}}
+@media(max-width: 980px) {.admin-sidebar {display: none;} .admin-main {margin-left: 0;} .admin-mobile-menu {display: block;} .admin-topbar {padding: 0 16px;} .admin-mfa {display: none;} .admin-workspace {padding: 20px 16px 40px;} .admin-section-tabs {padding: 16px 16px 0;} .admin-skip {left: 10px;}}
 @media(max-width: 980px) {.admin-form-grid-4, .admin-facts {grid-template-columns: repeat(2, minmax(0, 1fr));}}
 @media(max-width: 720px) {.admin-list-head {display: none;} .admin-list-row > summary, .admin-list-compact .admin-list-row > summary {grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "primary amount" "secondary status" "date meta"; gap: 6px 12px; padding: 12px 16px;} .admin-list-primary {grid-area: primary;} .admin-list-amount {grid-area: amount;} .admin-list-secondary {grid-area: secondary;} .admin-list-status {grid-area: status; justify-self: end;} .admin-list-date {grid-area: date; color: var(--admin-muted); font-size: 12px;} .admin-list-meta {grid-area: meta; justify-self: end; text-align: right; color: var(--admin-muted); font-size: 12px;} .admin-list-row .admin-disclosure-icon {display: none;} .admin-list-detail {padding: 14px 16px 18px;} .admin-form-grid, .admin-form-grid-4, .admin-facts {grid-template-columns: 1fr;} .admin-share-form {flex-wrap: wrap;} .admin-table-stack {min-width: 0;} .admin-table-stack thead {display: none;} .admin-table-stack tr {display: block; padding: 10px 16px; border-top: 1px solid var(--admin-border-soft);} .admin-table-stack td {display: block; padding: 5px 0; border: 0; text-align: left; white-space: normal;} .admin-table-stack td[data-label]::before {content: attr(data-label); display: block; margin-bottom: 2px; color: var(--admin-muted); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;}}
 @media(max-width: 580px) {.admin-stats {grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;} .admin-stat {padding: 12px 14px;} .admin-stat-value {font-size: 22px;} .admin-website {font-size: 0; gap: 0; padding: 0 10px;} .admin-env {display: none;} .admin-hero {padding: 20px;} .admin-crypto-fields {grid-template-columns: 1fr;} .admin-card-header {padding: 14px 16px;} .admin-card-body {padding: 16px;}}

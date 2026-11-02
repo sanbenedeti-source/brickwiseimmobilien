@@ -8,6 +8,7 @@ import { isAdminUser } from "@/app/lib/admin";
 import { ADMIN_MFA_REQUIRED, getAdminMfaStatus } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import AdminNavigation, { type AdminNavigationGroup } from "./AdminNavigation";
+import AdminSectionTabs, { type AdminSectionTab } from "./AdminSectionTabs";
 import { getAdminAttention } from "./attention";
 import { agreementCopy } from "@/app/lib/agreement-copy";
 import "./admin.css";
@@ -28,31 +29,39 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const attention = await getAdminAttention(supabase);
   const fullName = String(user.user_metadata?.full_name || user.email?.split("@")[0] || t("Administrator"));
   const initials = fullName.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "AD";
-  const groups: AdminNavigationGroup[] = [
-    { items: [{ href: "/admin", icon: "overview", label: t("Overview") }] },
-    { label: t("Operations"), items: [
-      { href: "/admin#requests", icon: "requests", label: t("Client requests"), badge: attention.newRequests },
-      { href: "/admin#customers", icon: "customers", label: t("Customers") },
-      { href: "/admin/agreements", icon: "agreements", label: agreementCopy(locale).queue, badge: attention.pendingAgreements },
-      { href: "/admin/kyc", icon: "kyc", label: t("Identity verification"), badge: attention.pendingKyc },
-      { href: "/admin/payments/deposits", icon: "deposits", label: t("Deposits"), badge: attention.pendingDeposits },
-      { href: "/admin/payments/withdrawals", icon: "withdrawals", label: t("Withdrawals"), badge: attention.pendingWithdrawals },
-      { href: "/admin/payments/requests", icon: "paymentRequests", label: t("Payment requests"), badge: attention.pendingPayments },
-      { href: "/admin/sale-requests", icon: "sales", label: t("Sale requests"), badge: attention.pendingSales },
-    ] },
-    { label: t("Portfolio"), items: [
-      { href: "/admin/properties", icon: "properties", label: t("Properties") },
-      { href: "/admin/profits", icon: "profits", label: t("Profit Management") },
-      { href: "/admin/distributions", icon: "distributions", label: t("Distributions") },
-      { href: "/admin/property-updates", icon: "updates", label: t("Property updates") },
-    ] },
-    { label: t("Settings"), items: [
-      { href: "/admin/payments", icon: "methods", label: t("Payment methods") },
-      { href: "/admin/agents", icon: "agents", label: t("Agents") },
-      { href: "/admin/audit", icon: "audit", label: t("Audit logs") },
-      { href: "/admin/security", icon: "security", label: t("Security") },
-    ] },
+  // Five sections; the pages of each section appear as tabs at the top of the content.
+  const clients: AdminSectionTab[] = [
+    { href: "/admin/customers", label: t("Clients") },
+    { href: "/admin/kyc", label: t("Identity verification"), badge: attention.pendingKyc },
+    { href: "/admin/agreements", label: agreementCopy(locale).queue, badge: attention.pendingAgreements },
   ];
+  const money: AdminSectionTab[] = [
+    { href: "/admin/payments/deposits", label: t("Deposits"), badge: attention.pendingDeposits },
+    { href: "/admin/payments/withdrawals", label: t("Withdrawals"), badge: attention.pendingWithdrawals },
+    { href: "/admin/payments/requests", label: t("Payment requests"), badge: attention.pendingPayments },
+  ];
+  const portfolio: AdminSectionTab[] = [
+    { href: "/admin/properties", label: t("Properties") },
+    { href: "/admin/sale-requests", label: t("Sale requests"), badge: attention.pendingSales },
+    { href: "/admin/distributions", label: t("Distributions") },
+    { href: "/admin/profits", label: t("Profit Management") },
+    { href: "/admin/property-updates", label: t("Property updates") },
+  ];
+  const settings: AdminSectionTab[] = [
+    { href: "/admin/payments", label: t("Payment methods") },
+    { href: "/admin/agents", label: t("Agents") },
+    { href: "/admin/audit", label: t("Audit logs") },
+    { href: "/admin/security", label: t("Security") },
+  ];
+  const total = (tabs: AdminSectionTab[]) => tabs.reduce((sum, tab) => sum + (tab.badge || 0), 0);
+  const hrefs = (tabs: AdminSectionTab[]) => tabs.map((tab) => tab.href);
+  const groups: AdminNavigationGroup[] = [{ items: [
+    { href: "/admin", icon: "overview", label: t("Overview"), badge: attention.newRequests },
+    { href: "/admin/customers", icon: "customers", label: t("Clients"), badge: total(clients), match: hrefs(clients) },
+    { href: "/admin/payments/deposits", icon: "deposits", label: t("Money"), badge: total(money), match: hrefs(money) },
+    { href: "/admin/properties", icon: "properties", label: t("Properties"), badge: total(portfolio), match: hrefs(portfolio) },
+    { href: "/admin/payments", icon: "methods", label: t("Settings"), match: hrefs(settings) },
+  ] }];
   return <div className="admin-shell">
     <a href="#admin-content" className="admin-skip">{t("Skip to content")}</a>
     <aside className="admin-sidebar">
@@ -75,7 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <div className="admin-topbar-actions"><LanguageSwitcher currentLocale={locale} label={t("Language")} /><Link href="/" className="admin-website">{t("View website")}<ArrowUpRight size={15} /></Link></div>
       </header>
-      <div id="admin-content" tabIndex={-1}>{children}</div>
+      <div id="admin-content" tabIndex={-1}><AdminSectionTabs sections={[clients, money, portfolio, settings]} label={t("Main navigation")} />{children}</div>
     </div>
   </div>;
 }
