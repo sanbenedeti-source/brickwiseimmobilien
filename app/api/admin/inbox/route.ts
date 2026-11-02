@@ -35,11 +35,11 @@ export async function GET() {
   const person = (id: string | null | undefined) => (id ? directory.get(id) : undefined);
   const items: AdminInboxItem[] = [
     ...(deposits.data || []).map((row) => ({ kind: "deposit" as const, id: row.id, name: row.customer_name || person(row.user_id)?.name || "", email: row.customer_email || person(row.user_id)?.email || "",
-      amount: Number(row.requested_eur), shares: null, createdAt: row.created_at, href: row.user_id ? `/admin/customers/${row.user_id}#deposits` : "/admin/payments/deposits" })),
+      amount: Number(row.requested_eur), shares: null, createdAt: row.created_at, href: `/admin/wallet#deposit-${row.id}` })),
     ...(gateway.data || []).map((row) => ({ kind: "deposit" as const, id: row.id, name: person(row.user_id)?.name || "", email: person(row.user_id)?.email || "",
       amount: Number(row.amount_eur), shares: null, createdAt: row.created_at, href: "/admin/payments/deposits" })),
     ...(withdrawals.data || []).map((row) => ({ kind: "withdrawal" as const, id: row.id, name: person(row.user_id)?.name || "", email: person(row.user_id)?.email || "",
-      amount: Number(row.amount), shares: null, createdAt: row.created_at, href: "/admin/payments/withdrawals" })),
+      amount: Number(row.amount), shares: null, createdAt: row.created_at, href: `/admin/wallet#withdrawal-${row.id}` })),
     ...(kyc.data || []).map((row) => ({ kind: "kyc" as const, id: row.id, name: person(row.user_id)?.name || "", email: person(row.user_id)?.email || "",
       amount: null, shares: null, createdAt: row.created_at, href: "/admin/kyc" })),
     ...(agreements.data || []).map((row) => ({ kind: "agreement" as const, id: row.id, name: person(row.user_id)?.name || "", email: person(row.user_id)?.email || "",

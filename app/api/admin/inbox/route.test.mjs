@@ -43,15 +43,15 @@ test("only a confirmed admin session can read the inbox", async () => {
   assert.deepEqual(h.tables, []);
 });
 
-test("inbox lists newest first, opens deposits on the client page and counts like the sidebar", async () => {
+test("inbox lists newest first, opens payments on the wallet page and counts like the sidebar", async () => {
   const response = await harness(true).GET();
   assert.equal(response.status, 200);
   assert.deepEqual(response.body.items.map((item) => item.kind), ["withdrawal", "deposit", "kyc"]);
   const [withdrawal, deposit] = response.body.items;
   assert.equal(withdrawal.name, "Ben Kraus");
-  assert.equal(withdrawal.href, "/admin/payments/withdrawals");
+  assert.equal(withdrawal.href, "/admin/wallet#withdrawal-w1");
   assert.equal(deposit.amount, 2500);
-  assert.equal(deposit.href, "/admin/customers/c1#deposits");
+  assert.equal(deposit.href, "/admin/wallet#deposit-d1");
   // Payment requests wait on the client, so they are not counted.
   assert.equal(response.body.total, 6);
 });

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowLeftRight, Banknote, Bell, FileCheck2, IdCard, Inbox } from "lucide-react";
 import type { AdminInboxItem } from "@/app/api/admin/inbox/route";
 
-type Labels = { title: string; empty: string; open: string; error: string; kinds: Record<AdminInboxItem["kind"], string> };
+type Labels = { title: string; empty: string; open: string; error: string; all: string; kinds: Record<AdminInboxItem["kind"], string> };
 const icons = { deposit: Banknote, withdrawal: ArrowDownToLine, kyc: IdCard, agreement: FileCheck2, sale: ArrowLeftRight, request: Inbox };
 const REFRESH_MS = 30_000;
 
@@ -80,7 +80,10 @@ export default function AdminInbox({ labels, lang }: { labels: Labels; lang: str
             </Link>
           </li>;
         })}</ul>}
-      {items.length > 0 && <p className="border-t border-[#dfe5ec] px-4 py-2 text-xs text-[#5b6678]">{labels.open}</p>}
+      <div className="flex items-center justify-between gap-3 border-t border-[#dfe5ec] px-4 py-2 text-xs">
+        <span className="text-[#5b6678]">{items.length > 0 ? labels.open : ""}</span>
+        <Link href="/admin/wallet" onClick={() => setOpen(false)} className="shrink-0 font-semibold text-[#1667a8] hover:underline">{labels.all}</Link>
+      </div>
     </div>}
   </div>;
 }

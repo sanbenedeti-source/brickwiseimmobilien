@@ -2,9 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
-import { ArrowDownToLine, ArrowLeftRight, BadgeCheck, Banknote, Building2, Coins, FileCheck2, IdCard, Inbox, KeyRound, Landmark, LayoutDashboard, Megaphone, Percent, ReceiptText, ScrollText, UsersRound } from "lucide-react";
+import { ArrowDownToLine, ArrowLeftRight, BadgeCheck, Banknote, Building2, Coins, FileCheck2, IdCard, Inbox, KeyRound, Landmark, LayoutDashboard, Megaphone, Percent, ReceiptText, ScrollText, UsersRound, Wallet } from "lucide-react";
 
-const icons = { overview: LayoutDashboard, requests: Inbox, customers: UsersRound, agreements: FileCheck2, kyc: IdCard, deposits: Banknote, withdrawals: ArrowDownToLine, paymentRequests: ReceiptText, sales: ArrowLeftRight, properties: Building2, profits: Percent, distributions: Coins, updates: Megaphone, methods: Landmark, agents: BadgeCheck, audit: ScrollText, security: KeyRound };
+const icons = { overview: LayoutDashboard, wallet: Wallet, requests: Inbox, customers: UsersRound, agreements: FileCheck2, kyc: IdCard, deposits: Banknote, withdrawals: ArrowDownToLine, paymentRequests: ReceiptText, sales: ArrowLeftRight, properties: Building2, profits: Percent, distributions: Coins, updates: Megaphone, methods: Landmark, agents: BadgeCheck, audit: ScrollText, security: KeyRound };
 /** match lists every page path that belongs to the item, so a section stays highlighted on its sub-pages. */
 export type AdminNavigationItem = { href: string; label: string; icon: keyof typeof icons; badge?: number; match?: string[] };
 export type AdminNavigationGroup = { label?: string; items: AdminNavigationItem[] };

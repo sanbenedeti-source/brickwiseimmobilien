@@ -33,7 +33,7 @@ export async function requestWithdrawal(_previous: WithdrawState, form: FormData
     after(() => sendAdminEmail({ subject: `Brickwise – New withdrawal request: EUR ${amount}`, idempotencyKey: `withdrawal/${key}`, lines: [
       "A client asked to withdraw money. Pay it by bank transfer, then confirm it with the bank reference.", "",
       `Client: ${String(user.user_metadata?.full_name || "").trim() || "-"} <${user.email || "-"}>`, `Amount (EUR): ${amount}`, `Account holder: ${holder}`, "",
-      "Review: https://www.brickwise-immo.de/admin/payments/withdrawals",
+      "Review: https://www.brickwise-immo.de/admin/wallet",
     ] }).catch((notifyError) => console.error("Withdrawal notice failed:", notifyError instanceof Error ? notifyError.message : notifyError)));
     return { result: "saved" };
   } catch { return { result: "error" }; }

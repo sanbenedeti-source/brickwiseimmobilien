@@ -59,6 +59,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const hrefs = (tabs: AdminSectionTab[]) => tabs.map((tab) => tab.href);
   const groups: AdminNavigationGroup[] = [{ items: [
     { href: "/admin", icon: "overview", label: t("Overview"), badge: attention.newRequests },
+    // Payments clients start (deposits and withdrawals) are confirmed on one page.
+    { href: "/admin/wallet", icon: "wallet", label: t("Wallet notifications"), badge: attention.pendingDeposits + attention.pendingWithdrawals },
     { href: "/admin/customers", icon: "customers", label: t("Clients"), badge: total(clients), match: hrefs(clients) },
     { href: "/admin/payments/deposits", icon: "deposits", label: t("Money"), badge: total(money), match: hrefs(money) },
     { href: "/admin/properties", icon: "properties", label: t("Properties"), badge: total(portfolio), match: hrefs(portfolio) },
@@ -86,7 +88,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <div className="admin-topbar-actions"><AdminInbox lang={localeHtmlLang[locale]} labels={{
           title: t("Client activity"), empty: t("Nothing is waiting for you."), open: t("Open an item to confirm or reject it."), error: t("Client activity could not be loaded."),
-          kinds: { deposit: t("New deposit"), withdrawal: t("Withdrawal request"), kyc: t("Identity verification"), agreement: t("Agreement to review"), sale: t("Share sale request"), request: t("New client request") },
+          all: t("All wallet notifications"), kinds: { deposit: t("New deposit"), withdrawal: t("Withdrawal request"), kyc: t("Identity verification"), agreement: t("Agreement to review"), sale: t("Share sale request"), request: t("New client request") },
         }} /><LanguageSwitcher currentLocale={locale} label={t("Language")} /><Link href="/" className="admin-website">{t("View website")}<ArrowUpRight size={15} /></Link></div>
       </header>
       <div id="admin-content" tabIndex={-1}><AdminSectionTabs sections={[clients, money, portfolio, settings]} label={t("Main navigation")} />{children}</div>

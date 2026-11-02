@@ -27,7 +27,7 @@ export async function submitDeposit(_state: DepositState, form: FormData): Promi
   "A client reported a deposit. Check that the money has arrived, then confirm it to credit the wallet.", "",
   `Client: ${String(user.user_metadata?.full_name || "").trim() || "-"} <${user.email || "-"}>`,
   `Amount (EUR): ${amount}`, `Method: ${String(destination?.label || destination?.kind || "-")}`, `Reference: ${reference || "-"}`, "",
-  "Review: https://www.brickwise-immo.de/admin/payments/deposits",
+  "Review: https://www.brickwise-immo.de/admin/wallet",
  ] }).catch((notifyError) => console.error("Deposit notice failed:", notifyError instanceof Error ? notifyError.message : notifyError)));
  return {result:"saved"};
 }
@@ -52,6 +52,6 @@ export async function reviewDeposit(_state: DepositState, form: FormData): Promi
  });
  if (error) return {result:"error"};
  for (const path of ["/funding","/dashboard","/dashboard/wallet","/admin/payments/deposits","/admin/payments/requests"]) revalidatePath(path);
- revalidatePath("/admin/customers","layout");
+ revalidatePath("/admin/customers","layout"); revalidatePath("/admin/wallet");
  return {result:"saved"};
 }
