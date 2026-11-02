@@ -128,7 +128,7 @@ export async function updatePropertySale(formData: FormData) {
   if (authError || !(await hasAdminSession(supabase, user))) redirect("/admin");
 
   const propertySlug = String(formData.get("property_slug") || "").trim();
-  const resultPath = (status: string) => `/admin/properties?status=${status}&property=${encodeURIComponent(propertySlug)}#sales-status`;
+  const resultPath = (status: string) => `/admin/properties/${encodeURIComponent(propertySlug)}?status=${status}#sales`;
   const price = parseEuroAmount(formData.get("price"));
   const monthlyRent = formData.get("monthly_rent") ? parseEuroAmount(formData.get("monthly_rent")) : null;
   const monthlyExpenses = formData.get("monthly_expenses") ? parseEuroAmount(formData.get("monthly_expenses")) : 0;
@@ -181,6 +181,7 @@ export async function updatePropertySale(formData: FormData) {
   revalidatePath("/admin/properties");
   revalidatePath("/properties");
   revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath(`/admin/properties/${propertySlug}`);
   revalidatePath("/dashboard", "layout");
   revalidatePath("/");
   redirect(resultPath("sale-saved"));
@@ -196,7 +197,7 @@ export async function updateCatalogueSaleStatus(formData: FormData) {
   const propertySlug = String(formData.get("property_slug") || "").trim();
   const constructionStatus = String(formData.get("construction_status") || "");
   const investmentTier = String(formData.get("investment_tier") || "standard");
-  const resultPath = (status: string) => `/admin/properties?status=${status}&property=${encodeURIComponent(propertySlug)}#sales-status`;
+  const resultPath = (status: string) => `/admin/properties/${encodeURIComponent(propertySlug)}?status=${status}#sales`;
   const listing = getExternalPropertyBySlug(propertySlug);
   const badges = readListingBadges(formData);
   if (!listing || !badges || listing.listed === false || !["completed", "under_construction", "upcoming"].includes(constructionStatus)
@@ -214,6 +215,7 @@ export async function updateCatalogueSaleStatus(formData: FormData) {
   revalidatePath("/admin/properties");
   revalidatePath("/properties");
   revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath(`/admin/properties/${propertySlug}`);
   revalidatePath("/dashboard", "layout");
   revalidatePath("/");
   redirect(resultPath("sale-saved"));
@@ -235,7 +237,7 @@ export async function updateShareSettings(formData: FormData) {
   const blockedShares = readInteger("blocked_shares", 0);
   // A missing version is never interpreted as zero: old forms must reload.
   const expectedVersion = readInteger("expected_version", -1);
-  const resultPath = (status: string) => `/admin/properties?status=${status}&property=${encodeURIComponent(propertySlug)}#share-availability`;
+  const resultPath = (status: string) => `/admin/properties/${encodeURIComponent(propertySlug)}?status=${status}#shares`;
   if (!propertySlug || totalShares === null || blockedShares === null || expectedVersion === null || totalShares > 2147483647 || blockedShares > totalShares) {
     redirect(resultPath("shares-invalid"));
   }
@@ -273,6 +275,7 @@ export async function updateShareSettings(formData: FormData) {
   revalidatePath("/admin/properties");
   revalidatePath("/properties");
   revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath(`/admin/properties/${propertySlug}`);
   revalidatePath("/dashboard");
   revalidatePath("/");
   revalidatePath("/admin/profits");
@@ -337,6 +340,7 @@ export async function updatePropertyDetails(formData: FormData) {
   revalidatePath(`/admin/properties/${propertySlug}/edit`);
   revalidatePath("/properties");
   revalidatePath(`/properties/${propertySlug}`);
+  revalidatePath(`/admin/properties/${propertySlug}`);
   revalidatePath("/dashboard", "layout");
   revalidatePath("/");
   redirect(resultPath("saved"));

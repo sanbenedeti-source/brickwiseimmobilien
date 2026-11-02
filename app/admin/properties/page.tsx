@@ -1,11 +1,13 @@
 import { getAdminText } from "@/app/lib/admin-copy";
 import { getCurrentLocale } from "@/app/lib/server-locale";
-import { localeHtmlLang, type Locale } from "@/app/lib/i18n";
-import { getPropertyTranslations } from "@/app/lib/property-localization";
+import { localeHtmlLang } from "@/app/lib/i18n";
 import { getPropertyMapLinks } from "@/app/lib/property-location";
+import { getPropertyTranslations } from "@/app/lib/property-localization";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { createProperty, updateCatalogueSaleStatus, updatePropertySale, updateShareSettings } from "./actions";
+import Link from "next/link";
+import { createProperty } from "./actions";
+import { formatEuro } from "./PropertyForms";
 import {
   externalProperties,
   hiddenManualPropertyIds,
@@ -19,19 +21,9 @@ import { contentLocaleLabels, contentLocales } from "@/app/lib/content-translati
 import { getPropertyShareSupply } from "@/app/lib/property-financials";
 import PropertyConstructionBadge from "@/app/components/PropertyConstructionBadge";
 import PropertyTierBadge from "@/app/components/PropertyTierBadge";
-import { INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "@/app/lib/investment-policy";
-import { listingBadgeCopy, OCCUPANCY_STATUSES, PROPERTY_STRATEGIES } from "@/app/lib/listing-badges";
-import { OccupancyBadge, StrategyBadge } from "@/app/components/PropertyListingBadges";
+import { StrategyBadge } from "@/app/components/PropertyListingBadges";
 import { getCatalogueProperties, mapDatabaseProperty } from "@/app/lib/property-registry";
 import { AdminAlert, AdminCard, AdminDisclosure, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "../ui";
-
-function formatEuro(value: number | string | null, locale: Locale) {
-  return new Intl.NumberFormat(localeHtmlLang[locale], {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
-}
 
 export default async function AdminPropertiesPage({ searchParams }: { searchParams: Promise<{ status?: string; property?: string; form?: string }> }) {
   const locale = await getCurrentLocale();
@@ -52,37 +44,16 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
   }
   if (!(await hasAdminSession(supabase, user))) redirect("/admin/security");
   const [translations, catalogue] = await Promise.all([getPropertyTranslations(locale), getCatalogueProperties()]);
-  const listedCatalogue = catalogue.filter((listing) => listing.listed !== false);
 
   const { data: properties } = await supabase
     .from("properties")
     .select("*")
     .order("created_at", { ascending: false });
 
-  const { data: saleSettingRows } = await supabase
-    .from("property_sale_status")
-    .select("property_slug,strategy,occupancy_status,exited_at");
-  const saleSettings = new Map((saleSettingRows || []).map((row) => [row.property_slug as string, row as { strategy: string | null; occupancy_status: string | null; exited_at: string | null }]));
-
   const { data: shareSettings } = await supabase
     .from("property_share_settings")
     .select("property_slug,total_shares,blocked_shares,availability_version");
   const settingsBySlug = new Map((shareSettings || []).map((item) => [item.property_slug, item]));
-  const shareStatusMessages: Record<string, string> = {
-    "shares-saved": "Share availability saved.",
-    "shares-stale": "Share availability changed while this form was open. Current values are shown below. Review them before saving again.",
-    "shares-owned": "Sold / blocked shares cannot be lower than shares already owned plus the property's opening allocation.",
-    "shares-invalid": "Check the total and sold / blocked shares, then reload the page and try again.",
-    "shares-error": "Share availability could not be saved. Reload the page and try again.",
-  };
-  const shareStatusMessage = status ? shareStatusMessages[status] : undefined;
-  const saleStatusMessages: Record<string, string> = {
-    "sale-saved": "Sales settings saved.",
-    "sale-invalid": "Check the price, rent and share price, then try again.",
-    "sale-locked": "Price and share price are locked because shares have already been sold.",
-    "sale-error": "Sales settings could not be saved. Reload the page and try again.",
-  };
-  const saleStatusMessage = status ? saleStatusMessages[status] : undefined;
   const createFailed = status === "invalid" || status === "error";
 
   const visibleProperties = (properties || []).filter(
@@ -95,8 +66,6 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
   const rows = allProperties.map((property) => ({ property, saved: settingsBySlug.get(property.slug), ...getPropertyShareSupply(property, settingsBySlug.get(property.slug)) }));
   const totals = rows.reduce((sum, row) => ({ total: sum.total + row.total, blocked: sum.blocked + row.blocked, available: sum.available + row.available }), { total: 0, blocked: 0, available: 0 });
   const number = (value: number) => value.toLocaleString(localeHtmlLang[locale]);
-  const badgeText = listingBadgeCopy[locale];
-  const tierName = (tier: InvestmentTier) => tier === "premium" ? "Premium" : tier === "super_premium" ? "Super Premium" : t("Standard");
 
   return (
     <main className="admin-workspace">
@@ -118,162 +87,29 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
         <AdminStat label={t("Available shares")} value={number(totals.available)} />
       </section>
 
-      <AdminCard id="sales-status" title={t("Sales status")} description={t("Choose when each property can be bought. Completed or Under construction with a monthly rent and a share price opens it for purchase; Upcoming keeps it visible without purchases.")}>
-        {saleStatusMessage && <AdminAlert tone={status === "sale-saved" ? "success" : "warning"}>{t(saleStatusMessage)}</AdminAlert>}
-        <div className="grid gap-3">
-          {listedCatalogue.map((listing) => {
-            const open = isPropertyOpenForInvestment(listing);
-            return <details key={`sale-${listing.slug}-${listing.constructionStatus ?? ""}-${listing.investmentTier ?? ""}-${listing.strategy ?? ""}-${listing.occupancyStatus ?? ""}-${listing.exited ? 1 : 0}`} open={changedSlug === listing.slug} className="admin-subsection">
-              <summary>
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  {translations.get(listing.slug)?.title || listing.title}
-                  <PropertyConstructionBadge status={listing.constructionStatus} locale={locale} />
-                  <PropertyTierBadge tier={listing.investmentTier} locale={locale} />
-                  <StrategyBadge strategy={listing.strategy} locale={locale} />
-                  <OccupancyBadge status={listing.occupancyStatus} locale={locale} />
-                  <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
-                </span>
-              </summary>
-              <div>
-                <form action={updateCatalogueSaleStatus} className="admin-form">
-                  <input type="hidden" name="property_slug" value={listing.slug} />
-                  <div className="admin-form-grid">
-                    <label className="admin-field">{t("Construction status")}
-                      <select name="construction_status" defaultValue={listing.constructionStatus ?? "completed"}>
-                        <option value="completed">{t("Completed")}</option>
-                        <option value="under_construction">{t("Under construction")}</option>
-                        <option value="upcoming">{t("Upcoming")}</option>
-                      </select>
-                    </label>
-                    <label className="admin-field">{t("Investment tier")}
-                      <select name="investment_tier" defaultValue={toInvestmentTier(listing.investmentTier)}>
-                        {INVESTMENT_TIERS.map((tier) => <option key={tier} value={tier}>{`${tierName(tier)} · ${t("Minimum investment")} ${formatEuro(TIER_MINIMUM_EUR[tier], locale)}`}</option>)}
-                      </select>
-                    </label>
-                    <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
-                    <label className="admin-field">{t("Strategy badge")}
-                      <select name="strategy" defaultValue={saleSettings.get(listing.slug)?.strategy ?? ""}>
-                        <option value="">{t("None")}</option>
-                        {PROPERTY_STRATEGIES.map((value) => <option key={value} value={value}>{badgeText.strategies[value]}</option>)}
-                      </select>
-                    </label>
-                    <label className="admin-field">{t("Occupancy")}
-                      <select name="occupancy_status" defaultValue={saleSettings.get(listing.slug)?.occupancy_status ?? ""}>
-                        <option value="">{t("Not set")}</option>
-                        {OCCUPANCY_STATUSES.map((value) => <option key={value} value={value}>{badgeText.occupancy[value]}</option>)}
-                      </select>
-                    </label>
-                    <input type="hidden" name="exited_at" value={saleSettings.get(listing.slug)?.exited_at ?? ""} />
-                    <label className="admin-field admin-field-wide flex-row items-center gap-2"><input type="checkbox" name="exited" defaultChecked={Boolean(saleSettings.get(listing.slug)?.exited_at)} />{t("Sold: list under Exited and close purchases")}</label>
-                    <p className="admin-help admin-field-wide">{t("The price, rent and share price of this property come from its documents and do not change here.")}</p>
-                  </div>
-                  <div><button type="submit" className="admin-btn">{t("Save sales settings")}</button></div>
-                </form>
-              </div>
-            </details>;
-          })}
-          {visibleProperties.map((property) => {
-            const open = mapDatabaseProperty(property).investmentOpen;
-            const locked = Number(settingsBySlug.get(property.slug)?.blocked_shares || 0) > 0;
-            const values = [property.status, property.construction_status, property.price, property.monthly_rent, property.monthly_expenses, property.share_price, property.monthly_value_growth, property.investment_tier, property.strategy, property.occupancy_status, property.exited_at].join("|");
-            return <details key={`sale-${property.slug}-${values}`} open={changedSlug === property.slug} className="admin-subsection">
-              <summary>
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  {translations.get(property.slug)?.title || property.title}
-                  <PropertyConstructionBadge status={property.construction_status} locale={locale} />
-                  <PropertyTierBadge tier={toInvestmentTier(property.investment_tier)} locale={locale} />
-                  <StrategyBadge strategy={mapDatabaseProperty(property).strategy} locale={locale} />
-                  <OccupancyBadge status={mapDatabaseProperty(property).occupancyStatus} locale={locale} />
-                  <StatusBadge status={open ? "active" : "pending"} label={t(open ? "Open for purchase" : "Not open for purchase")} />
-                </span>
-              </summary>
-              <div>
-                <form action={updatePropertySale} className="admin-form">
-                  <input type="hidden" name="property_slug" value={property.slug} />
-                  <div className="admin-form-grid">
-                    <label className="admin-field">{t("Construction status")}
-                      <select name="construction_status" defaultValue={property.construction_status || "completed"}>
-                        <option value="completed">{t("Completed")}</option>
-                        <option value="under_construction">{t("Under construction")}</option>
-                        <option value="upcoming">{t("Upcoming")}</option>
-                      </select>
-                    </label>
-                    <label className="admin-field">{t("Publication status")}
-                      <select name="status" defaultValue={property.status === "draft" ? "draft" : "active"}>
-                        <option value="active">{t("Active")}</option>
-                        <option value="draft">{t("Draft")}</option>
-                      </select>
-                    </label>
-                    <label className="admin-field">{t("Purchase price (EUR)")}<input name="price" required type="number" min="0.01" step="0.01" defaultValue={property.price ?? ""} readOnly={locked} /></label>
-                    <label className="admin-field">{t("Share price (EUR)")}<input name="share_price" type="number" min="0.01" step="0.01" defaultValue={property.share_price ?? ""} readOnly={locked} /></label>
-                    <label className="admin-field">{t("Monthly rent (EUR)")}<input name="monthly_rent" type="number" min="0" step="0.01" defaultValue={property.monthly_rent ?? ""} /></label>
-                    <label className="admin-field">{t("Monthly costs (EUR)")}<input name="monthly_expenses" type="number" min="0" step="0.01" defaultValue={property.monthly_expenses ?? 0} /></label>
-                    <label className="admin-field">{t("Projected value growth / month (EUR)")}<input name="monthly_value_growth" type="number" min="0" step="0.01" defaultValue={property.monthly_value_growth ?? ""} /></label>
-                    <p className="admin-help admin-field-wide">{t("Value growth is shown separately from the rental yield and is never paid out monthly.")}</p>
-                    <label className="admin-field">{t("Investment tier")}
-                      <select name="investment_tier" defaultValue={toInvestmentTier(property.investment_tier)}>
-                        {INVESTMENT_TIERS.map((tier) => <option key={tier} value={tier}>{`${tierName(tier)} · ${t("Minimum investment")} ${formatEuro(TIER_MINIMUM_EUR[tier], locale)}`}</option>)}
-                      </select>
-                    </label>
-                    <p className="admin-help admin-field-wide">{t("The tier sets the minimum investment a client must make in this property.")}</p>
-                    <label className="admin-field">{t("Strategy badge")}
-                      <select name="strategy" defaultValue={property.strategy ?? ""}>
-                        <option value="">{t("None")}</option>
-                        {PROPERTY_STRATEGIES.map((value) => <option key={value} value={value}>{badgeText.strategies[value]}</option>)}
-                      </select>
-                    </label>
-                    <label className="admin-field">{t("Occupancy")}
-                      <select name="occupancy_status" defaultValue={property.occupancy_status ?? ""}>
-                        <option value="">{t("Not set")}</option>
-                        {OCCUPANCY_STATUSES.map((value) => <option key={value} value={value}>{badgeText.occupancy[value]}</option>)}
-                      </select>
-                    </label>
-                    <input type="hidden" name="exited_at" value={property.exited_at ?? ""} />
-                    <label className="admin-field admin-field-wide flex-row items-center gap-2"><input type="checkbox" name="exited" defaultChecked={Boolean(property.exited_at)} />{t("Sold: list under Exited and close purchases")}</label>
-                    {locked && <p className="admin-help admin-field-wide">{t("Price and share price are locked because shares have already been sold.")}</p>}
-                  </div>
-                  <div className="flex flex-wrap gap-3"><button type="submit" className="admin-btn">{t("Save sales settings")}</button><a href={`/admin/properties/${encodeURIComponent(property.slug)}/edit`} className="admin-btn admin-btn-secondary">{t("Edit details")}</a></div>
-                </form>
-              </div>
-            </details>;
-          })}
-        </div>
-      </AdminCard>
-
-      <AdminCard id="share-availability" title={t("Share availability")} description={`${t("Set the total shares and how many are already sold or blocked. Available shares are calculated automatically.")} ${t("Total shares follow the property value and share price.")}`} flush>
-        {shareStatusMessage && <div className="admin-card-notice"><AdminAlert tone={status === "shares-saved" ? "success" : "warning"}>{t(shareStatusMessage)}</AdminAlert></div>}
-        {!rows.length ? <AdminEmpty>{t("No properties yet.")}</AdminEmpty>
-          : <table className="admin-table admin-table-stack admin-table-wide">
-            <thead><tr><th scope="col">{t("Property")}</th><th scope="col" className="admin-num">{t("Price")}</th><th scope="col">{t("Size")}</th><th scope="col">{t("Status")}</th><th scope="col">{t("Share availability")}</th><th scope="col"><span className="sr-only">{t("Open")}</span></th></tr></thead>
-            <tbody>{rows.map(({ property, saved, total, blocked, available }) => {
-              const expectedVersion = saved?.availability_version ?? -1;
-              const listing = catalogue.find((listing) => listing.slug === property.slug);
-              const isListing = Boolean(listing);
-              const map = getPropertyMapLinks(property, locale);
-              const title = translations.get(property.slug)?.title || property.title;
-              return <tr key={`shares-${property.slug}-${expectedVersion}`} className={changedSlug === property.slug ? "admin-row-highlight" : undefined}>
-                <td data-label={t("Property")}>
-                  <p className="admin-cell-main">{title}</p>
-                  {(listing?.constructionStatus ?? property.construction_status) && <div className="mt-1"><PropertyConstructionBadge status={listing?.constructionStatus ?? property.construction_status} locale={locale} /></div>}
-                  <p className="admin-cell-sub">{property.address || property.city}{map && <> · <a href={map.mapUrl} target="_blank" rel="noopener noreferrer" className="admin-link">{t("Open map")}</a></>}</p>
-                </td>
-                <td data-label={t("Price")} className="admin-num">{formatEuro(property.price, locale)}</td>
-                <td data-label={t("Size")} className="whitespace-nowrap">{number(Number(property.area || 0))} m² · {number(Number(property.rooms || 0))} {t("rooms")}</td>
-                <td data-label={t("Status")}><StatusBadge status={property.status} label={t(property.status === "active" ? "Active" : property.status === "draft" ? "Draft" : property.status || "Unknown")} /></td>
-                <td data-label={t("Share availability")}>
-                  <form action={updateShareSettings} className="admin-share-form">
-                    <input type="hidden" name="property_slug" value={property.slug} />
-                    <input type="hidden" name="expected_version" value={expectedVersion} />
-                    <label>{t("Total shares")}<input name="total_shares" type="number" min="1" required readOnly={isListing} defaultValue={total} className="admin-input" /></label>
-                    <label>{t("Sold / blocked")}<input name="blocked_shares" type="number" min={property.blockedShares ?? 0} max={total} required defaultValue={blocked} className="admin-input" /></label>
-                    <button className="admin-btn admin-btn-sm">{t("Save shares")}</button>
-                  </form>
-                  <p className="admin-cell-sub mt-1">{t("Available now:")} <strong>{number(available)}</strong></p>
-                </td>
-                <td><a href={`/properties/${property.slug}`} target="_blank" rel="noopener noreferrer" className="admin-btn admin-btn-secondary admin-btn-sm">{t("Open")}</a></td>
-              </tr>;
-            })}</tbody>
-          </table>}
+      <AdminCard id="properties" title={t("Properties")} description={t("Open a property to manage its sales settings, shares, investors and income.")} flush>
+        {!rows.length ? <AdminEmpty>{t("No properties yet.")}</AdminEmpty> : <table className="admin-table admin-table-stack admin-table-wide">
+          <thead><tr><th scope="col">{t("Property")}</th><th scope="col" className="admin-num">{t("Price")}</th><th scope="col">{t("Shares")}</th><th scope="col">{t("Status")}</th><th scope="col"><span className="sr-only">{t("Manage")}</span></th></tr></thead>
+          <tbody>{rows.map(({ property, total, blocked, available }) => {
+            const listing = catalogue.find((item) => item.slug === property.slug);
+            const model = listing ?? mapDatabaseProperty(property as Parameters<typeof mapDatabaseProperty>[0]);
+            const open = isPropertyOpenForInvestment(model);
+            const draft = !listing && property.status === "draft";
+            const hidden = listing?.listed === false;
+            const map = getPropertyMapLinks(property, locale);
+            return <tr key={property.slug} className={changedSlug === property.slug ? "admin-row-highlight" : undefined}>
+              <td data-label={t("Property")}>
+                <Link href={`/admin/properties/${encodeURIComponent(property.slug)}`} className="admin-cell-main hover:underline">{translations.get(property.slug)?.title || property.title}</Link>
+                <div className="mt-1 flex flex-wrap gap-1.5"><PropertyConstructionBadge status={model.constructionStatus} locale={locale} /><PropertyTierBadge tier={model.investmentTier} locale={locale} /><StrategyBadge strategy={model.strategy} locale={locale} /></div>
+                <p className="admin-cell-sub">{property.address || property.city}{map && <> · <a href={map.mapUrl} target="_blank" rel="noopener noreferrer" className="admin-link">{t("Open map")}</a></>}</p>
+              </td>
+              <td data-label={t("Price")} className="admin-num">{formatEuro(property.price, locale)}</td>
+              <td data-label={t("Shares")} className="whitespace-nowrap">{number(blocked)} / {number(total)}<span className="admin-cell-sub block">{t("Available now:")} {number(available)}</span></td>
+              <td data-label={t("Status")}><StatusBadge status={draft || hidden ? "draft" : open ? "active" : "pending"} label={t(hidden ? "Hidden" : draft ? "Draft" : open ? "Open for purchase" : "Not open for purchase")} /></td>
+              <td><Link href={`/admin/properties/${encodeURIComponent(property.slug)}`} className="admin-btn admin-btn-sm">{t("Manage")}</Link></td>
+            </tr>;
+          })}</tbody>
+        </table>}
       </AdminCard>
 
       <AdminDisclosure id="add-property" title={t("Add new property")} description={t("Fill in the details to create a new property project. All purchase prices are in EUR.")} open={form === "add" || createFailed}>

@@ -144,7 +144,7 @@ function shareForm(overrides = {}) {
   return data;
 }
 
-const shareResult = (status) => (error) => error.location === `/admin/properties?status=${status}&property=test-property#share-availability`;
+const shareResult = (status) => (error) => error.location === `/admin/properties/test-property?status=${status}#shares`;
 
 test("share availability uses one atomic versioned write with the authenticated admin and revalidates affected views", async () => {
   const app = shareHarness();
@@ -153,7 +153,7 @@ test("share availability uses one atomic versioned write with the authenticated 
     p_actor: adminId, p_property_slug: "test-property", p_total_shares: 100,
     p_blocked_shares: 20, p_expected_version: 3, p_minimum_blocked_shares: 0,
   } }]);
-  assert.deepEqual(app.revalidated, ["/admin/properties", "/properties", "/properties/test-property", "/dashboard", "/", "/admin/profits"]);
+  assert.deepEqual(app.revalidated, ["/admin/properties", "/properties", "/properties/test-property", "/admin/properties/test-property", "/dashboard", "/", "/admin/profits"]);
 });
 
 test("share availability gets its opening allocation from the listing and ignores submitted actor or floor", async () => {
@@ -264,7 +264,7 @@ function saleForm(overrides = {}) {
   return data;
 }
 
-const saleResult = (status) => (error) => error.location === `/admin/properties?status=${status}&property=munich-loft#sales-status`;
+const saleResult = (status) => (error) => error.location === `/admin/properties/munich-loft?status=${status}#sales`;
 
 test("an upcoming property is opened for purchase with its pricing and gets its shares", async () => {
   const app = saleHarness();
