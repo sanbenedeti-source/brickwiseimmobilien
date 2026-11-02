@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import { publicMetadata } from "../../lib/seo";
 import { countLabel, formatPropertyPercent, propertyUiCopy } from "../property-ui-copy";
 import { createTranslator } from "../../lib/translate";
-import { formatMinimumInvestment, minimumInvestmentShares } from "../../lib/investment-policy";
+import { formatMinimumInvestment, isAgentLedTier, minimumInvestmentShares } from "../../lib/investment-policy";
+import { agentLedCopy } from "../../lib/agent-led-copy";
 import { formatPropertyMoney, getPropertyProjection, getPropertyCurrency, getPropertyReturnBreakdown, getPropertyShareSupply } from "../../lib/property-financials";
 import { targetReturnCopy, rentalYieldLabel } from "../../lib/target-return-copy";
 import { valueGrowthCopy } from "../../lib/value-growth-copy";
@@ -449,14 +450,28 @@ export default async function PropertyDetailPage({ params }: PageProps) {
   const lang = localeHtmlLang[locale];
   const costsStated = (externalProperty ?? baseProperty).costsStated !== false;
   const yearlyReturn = targetReturn + valueGrowth;
-  const facts: OverviewFact[] = [
-    { kind: "location", title: property.city || property.address || copy.locationMissing, text: property.address || property.city || copy.locationMissing },
+  // Premium and super premium properties are sold through an agent: value and monthly rent only, no share terms.
+  const agentLed = isAgentLedTier(investmentTier);
+  const agentText = agentLedCopy[locale];
+  const agentHref = `/contact?projekt=${encodeURIComponent(property.slug)}`;
+  const locationFact: OverviewFact = { kind: "location", title: property.city || property.address || copy.locationMissing, text: property.address || property.city || copy.locationMissing };
+  const facts: OverviewFact[] = agentLed ? [
+    locationFact,
+    ...(monthlyRent ? [{ kind: "rent" as const, title: overview.currentRent.replace("{amount}", formatPortalMoney(monthlyRent)),
+      text: showOccupancy && occupancyStatus ? badgeText.occupancy[occupancyStatus] : agentText.monthlyRent }] : []),
+  ] : [
+    locationFact,
     ...(monthlyRent ? [{ kind: "rent" as const, title: overview.currentRent.replace("{amount}", formatPortalMoney(monthlyRent)),
       text: showOccupancy && occupancyStatus ? `${badgeText.occupancy[occupancyStatus]} · ${overview.rentShared}` : overview.rentShared }] : []),
     ...(hasTargetReturn ? [{ kind: "yield" as const, title: overview.yieldLine.replace("{rate}", formatPortalPercent(targetReturn)), text: costsStated ? overview.afterCosts : overview.beforeCosts }] : []),
     ...(valueGrowth > 0 ? [{ kind: "growth" as const, title: overview.growthLine.replace("{rate}", formatPortalPercent(valueGrowth)), text: overview.growthEstimate }] : []),
   ];
-  const financials: { title: string; rows: [string, string][] }[] = [
+  const financials: { title: string; rows: [string, string][] }[] = agentLed ? [
+    { title: overview.propertyColumn, rows: [
+      [copy.calculator.propertyValue, formatPortalMoney(propertyValue)],
+      ...(monthlyRent ? [[agentText.monthlyRent, formatPortalMoney(monthlyRent)] as [string, string]] : []),
+    ] },
+  ] : [
     { title: overview.propertyColumn, rows: [
       [copy.calculator.propertyValue, formatPortalMoney(propertyValue)],
       [copy.calculator.sharePrice, formatPortalMoney(sharePrice)],
@@ -477,13 +492,17 @@ export default async function PropertyDetailPage({ params }: PageProps) {
     [targetReturnLabel, formatPortalPercent(targetReturn)],
   ] : [];
   const minimumText = `${formatMinimumInvestment(locale, tierMinimum)}${minInvestment !== null ? ` · ${minimumInvestmentShares(sharePrice, minInvestment)} ${t("Shares")}` : ""}`;
-  const investCard = (cta: ReactNode, note?: string) => ({
-    valueLabel: copy.calculator.propertyValue, value: formatPortalMoney(propertyValue), fundedPercent,
-    fundedText: `${Math.round(fundedPercent).toLocaleString(lang)}% ${badgeText.funded}`,
-    availableText: overview.available.replace("{amount}", formatPortalMoney(availableShares * sharePrice)),
-    perSqm: propertyValue && Number(property.area) > 0 ? `${formatPortalMoney(propertyValue / Number(property.area))} / m²` : undefined,
-    metrics, minimumLabel: copy.calculator.minimum, minimum: minimumText, cta, note,
-  });
+  const perSqm = propertyValue && Number(property.area) > 0 ? `${formatPortalMoney(propertyValue / Number(property.area))} / m²` : undefined;
+  const investCard = (cta: ReactNode, note?: string) => agentLed ? {
+    valueLabel: copy.calculator.propertyValue, value: formatPortalMoney(propertyValue), perSqm,
+    metrics: monthlyRent ? [[agentText.monthlyRent, formatPortalMoney(monthlyRent)] as [string, string]] : [], cta, note: agentText.note,
+  } : {
+    valueLabel: copy.calculator.propertyValue, value: formatPortalMoney(propertyValue), perSqm,
+    funding: { percent: fundedPercent, fundedText: `${Math.round(fundedPercent).toLocaleString(lang)}% ${badgeText.funded}`,
+      availableText: overview.available.replace("{amount}", formatPortalMoney(availableShares * sharePrice)) },
+    metrics, minimum: { label: copy.calculator.minimum, value: minimumText }, cta, note,
+  };
+  const agentCta = <Link href={agentHref} className="rounded-xl bg-brand px-5 py-3.5 text-center font-bold text-white transition hover:bg-brand-strong">{agentText.talkToAgent}</Link>;
   const chips = [displayRooms, displayBathrooms, displayArea].filter((value) => value && value !== "-");
   const modelNote = rentalModel ? (returnBreakdown ? `${rentalText.note} ${returnText.modelNote}` : rentalText.note) : returnBreakdown ? returnText.modelNote : returnText.configuredTargetNote;
   const notes = <div className="mt-10 grid gap-2 text-xs leading-5 text-muted">
@@ -501,20 +520,25 @@ export default async function PropertyDetailPage({ params }: PageProps) {
           <PropertyOverview locale={locale} back={{ href: "/properties", label: copy.backToProperties }}
             gallery={<PropertyGallery images={galleryImages} title={property.title} locale={locale} />}
             title={property.title} chips={chips} badges={constructionBadge} facts={facts} description={property.description || labels.infoAvailable}
-            strategy={strategy} financials={financials} stickyTop="lg:top-28"
-            card={investCard(<>
+            strategy={strategy} financials={financials} stickyTop="lg:top-28" steps={agentLed ? agentText.steps : undefined}
+            card={investCard(agentLed ? agentCta : <>
               <Link href={`/join?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className={primaryCta}>{t("Create client account")}</Link>
               <Link href={`/sign-in?next=${encodeURIComponent(`/properties/${property.slug}`)}`} className={secondaryCta}>{labels.reserveLogin}</Link>
             </>, labels.reserveText)}>
             <div className="mt-10">{locationSection}</div>
-            {hasTargetReturn && <div className="mt-10"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} /></div>}
-            {notes}
+            {hasTargetReturn && !agentLed && <div className="mt-10"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={targetReturn} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated={false} minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} /></div>}
+            {!agentLed && notes}
           </PropertyOverview>
         </section>
         {/* Phones: the investment card sits below the story, so keep a way to reach it on screen. The right side stays free for the chat button. */}
-        {openForInvestment && <div className="fixed inset-x-0 bottom-0 z-[75] flex items-center gap-3 border-t border-line bg-white/95 py-3 pl-4 pr-20 shadow-[0_-8px_24px_rgba(20,33,61,0.08)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
-          <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.minimum}</span><strong className="block truncate text-sm text-ink">{formatMinimumInvestment(locale, tierMinimum)}</strong></p>
-          <a href="#reserve" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{stickyReserveCopy[locale]}</a>
+        {(openForInvestment || agentLed) && <div className="fixed inset-x-0 bottom-0 z-[75] flex items-center gap-3 border-t border-line bg-white/95 py-3 pl-4 pr-20 shadow-[0_-8px_24px_rgba(20,33,61,0.08)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
+          {agentLed ? <>
+            <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.propertyValue}</span><strong className="block truncate text-sm text-ink">{formatPortalMoney(propertyValue)}</strong></p>
+            <Link href={agentHref} className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{agentText.talkToAgent}</Link>
+          </> : <>
+            <p className="min-w-0 flex-1 text-xs leading-5 text-muted"><span className="block truncate">{copy.calculator.minimum}</span><strong className="block truncate text-sm text-ink">{formatMinimumInvestment(locale, tierMinimum)}</strong></p>
+            <a href="#reserve" className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{stickyReserveCopy[locale]}</a>
+          </>}
         </div>}
       </main>
     );
@@ -537,14 +561,14 @@ export default async function PropertyDetailPage({ params }: PageProps) {
             <PropertyOverview locale={locale} back={{ href: "/dashboard/marketplace", label: portalNavCopy[locale].marketplace }}
               gallery={<PortalPropertyGallery images={galleryImages} title={property.title} locale={locale} />}
               title={property.title} chips={chips} badges={constructionBadge} facts={facts} description={property.description || t("Property information is available from the Brickwise agent.")}
-              strategy={strategy} financials={financials} stickyTop="lg:top-6"
-              card={investCard(<>
+              strategy={strategy} financials={financials} stickyTop="lg:top-6" steps={agentLed ? agentText.steps : undefined}
+              card={investCard(agentLed ? agentCta : <>
                 {openForInvestment && <a href="#buy-shares" className={primaryCta}>{overview.investNow}</a>}
                 <Link href={`/contact?projekt=${encodeURIComponent(property.slug)}`} className={secondaryCta}>{labels.sell}</Link>
               </>)}>
               <div className="mt-10">{locationSection}</div>
-              <div id="buy-shares" className="mt-10 scroll-mt-8"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>
-              {notes}
+              {!agentLed && <div id="buy-shares" className="mt-10 scroll-mt-8"><InvestmentCalculator rentalModel={rentalModel} annualYield={targetReturn} targetTotalReturn={hasTargetReturn ? targetReturn : undefined} availableShares={availableShares} copy={copy.calculator} fundedPercent={fundedPercent} isAuthenticated minInvestment={minInvestment} locale={locale} currency={currency} returnBreakdown={returnBreakdown} valueGrowthRate={valueGrowth} totalShares={totalShares} monthlyRent={monthlyRent} monthlyExpenses={monthlyExpenses} propertySlug={property.slug} propertyTitle={property.title} propertyValue={propertyValue} sharePrice={sharePrice} walletBalance={walletBalance} purchaseRequestId={randomUUID()} purchaseAction={createSharePurchaseRequest} /></div>}
+              {!agentLed && notes}
             </PropertyOverview>
           </section>
         </div>

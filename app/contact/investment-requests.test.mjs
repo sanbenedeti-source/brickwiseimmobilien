@@ -265,6 +265,18 @@ test("EUR wallet purchases use trusted listing prices and the atomic EUR ledger"
   }
 });
 
+test("premium and super premium shares are agreed with an agent and never bought online", async () => {
+  for (const investmentTier of ["premium", "super_premium"]) {
+    const app = harness({ listingOverrides: { [calgary]: { investmentTier } } });
+    const property = app.listings.getExternalPropertyBySlug(calgary);
+    const shares = Math.ceil(100_000 / property.sharePrice);
+    await redirected(app.purchase, walletForm(shares, calgary), "/dashboard?request=invalid#properties");
+    await redirected(app.purchase, purchaseForm(shares, "bank_transfer", calgary), "/dashboard?request=invalid#properties");
+    assert.equal(app.walletCalls.length, 0, investmentTier);
+    assert.equal(app.saved.length, 0, investmentTier);
+  }
+});
+
 test("wallet purchase requires authentication before looking up or debiting any wallet", async () => {
   for (const options of [{ user: null }, { authError: { message: "Invalid session" } }]) {
     const app = harness(options);

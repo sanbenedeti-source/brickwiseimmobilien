@@ -11,7 +11,7 @@
     "test:security:database": "node scripts/secure-property-requests.mjs check",
     "test:financial": "node --test app/lib/property-financials.test.mjs app/lib/catalogue-financials.test.mjs app/contact/investment-requests.test.mjs app/dashboard/profit-model.test.mjs app/dashboard/IncomeExperience.test.mjs \"app/properties/*/InvestmentCalculator.test.mjs\" app/api/properties/import/euro-amount.test.mjs app/admin/profits/actions.test.mjs app/lib/payment-methods.test.mjs app/admin/payments/wallet-credit.test.mjs app/admin/payments/refund-actions.test.mjs app/funding/deposit-actions.test.mjs app/funding/coingate.test.mjs",
     "audit:financial": "node scripts/audit-property-financials.mjs",
-    "test:localization": "node --test app/lib/localization.test.mjs app/components/localization.test.mjs app/properties/property-ui.test.mjs app/admin/localization.test.mjs app/admin/properties/actions.test.mjs",
+    "test:localization": "node --test app/lib/localization.test.mjs app/components/localization.test.mjs app/properties/property-ui.test.mjs app/properties/agent-led.test.mjs app/admin/localization.test.mjs app/admin/properties/actions.test.mjs",
     "audit:localization": "node scripts/audit-localization.mjs",
     "test:security:migrations": "node scripts/secure-wallet-migrations.mjs check",
     "test:security:refunds": "node scripts/migrate-wallet-refunds.mjs check",

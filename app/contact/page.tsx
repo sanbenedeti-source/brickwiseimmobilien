@@ -1,7 +1,8 @@
 import { formatPropertyPercent, localizedPayment, propertyUiCopy } from "../properties/property-ui-copy";
 import { createTranslator } from "../lib/translate";
 import SubmitButton from "../components/SubmitButton";
-import { minimumInvestmentShares } from "../lib/investment-policy";
+import { isAgentLedTier, minimumInvestmentShares } from "../lib/investment-policy";
+import { agentLedCopy } from "../lib/agent-led-copy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyTargetReturn } from "../lib/property-financials";
 import { investmentCopy } from "../lib/investment-copy";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
@@ -163,12 +164,14 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
   const t = createTranslator(locale);
   const { error: requestError, auszahlung, betrag, projekt, shares, payment } = await searchParams;
   const externalProperty = projekt ? await findProperty(projekt) ?? null : null;
-  const returnBreakdown = externalProperty ? getPropertyReturnBreakdown(externalProperty) : undefined;
-  const hasTargetReturn = externalProperty?.targetTotalReturn !== undefined || Boolean(returnBreakdown);
+  // Premium and super premium requests go to an agent: no share count, amount or yield is prefilled.
+  const agentLed = Boolean(externalProperty) && isAgentLedTier(externalProperty?.investmentTier);
+  const returnBreakdown = externalProperty && !agentLed ? getPropertyReturnBreakdown(externalProperty) : undefined;
+  const hasTargetReturn = !agentLed && (externalProperty?.targetTotalReturn !== undefined || Boolean(returnBreakdown));
   const returnCopy = targetReturnCopy[locale];
   const returnNote = returnBreakdown ? returnCopy.modelNote : returnCopy.configuredTargetNote;
   const currency = externalProperty ? getPropertyCurrency(externalProperty) : "EUR";
-  const minimumShares = externalProperty ? minimumInvestmentShares(externalProperty.sharePrice, externalProperty.minInvestmentEur) : null;
+  const minimumShares = externalProperty && !agentLed ? minimumInvestmentShares(externalProperty.sharePrice, externalProperty.minInvestmentEur) : null;
   const requestedAmount = getInvestmentAmount(betrag);
   const payoutLabel = auszahlung === "annual" ? ui.annual : ui.monthly;
   const parsedShares = Number(shares);
@@ -199,7 +202,8 @@ export default async function KontaktPage({ searchParams }: KontaktPageProps) {
   const [firstName = "", ...lastNameParts] = fullName.split(/\s+/).filter(Boolean);
   const lastName = lastNameParts.join(" ");
   const defaultMessage = property
-    ? hasTargetReturn && externalProperty
+    ? agentLed ? agentLedCopy[locale].requestMessage.replace("{title}", property.title)
+    : hasTargetReturn && externalProperty
       ? [
           `${copy.selectedProperty}: ${property.title}`,
           `${copy.requestedAmount}: ${investmentAmount ? formatMoney(investmentAmount, currency, locale) : copy.open}`,

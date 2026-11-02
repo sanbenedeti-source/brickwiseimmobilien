@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { formatMinimumInvestment, INVESTMENT_TIERS, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "../lib/investment-policy";
+import { formatMinimumInvestment, INVESTMENT_TIERS, isAgentLedTier, TIER_MINIMUM_EUR, toInvestmentTier, type InvestmentTier } from "../lib/investment-policy";
 import { tierCopy } from "../lib/tier-copy";
 import { tierCardStyles, tierIcons, tierPillStyles } from "../components/InvestmentTierCards";
 import { getListedProperties } from "../lib/property-registry";
@@ -7,6 +7,7 @@ import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPro
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
 import PropertyConstructionBadge from "../components/PropertyConstructionBadge";
 import PropertyTierBadge from "../components/PropertyTierBadge";
+import { agentLedCopy } from "../lib/agent-led-copy";
 import { NewListingRibbon, OccupancyBadge, StrategyBadge } from "../components/PropertyListingBadges";
 import { isNewListing, LISTING_STAGES, listingBadgeCopy, listingStage, type ListingStage, type OccupancyStatus, type PropertyStrategy } from "../lib/listing-badges";
 import { getPropertyTranslations, localizeProperty } from "../lib/property-localization";
@@ -220,6 +221,8 @@ export default async function ProjektePage({ searchParams }: PageProps) {
     // A five-year projection is shown only on a net yield; multiplying a before-costs yield would overstate it.
     const netYield = !("costsStated" in property) || property.costsStated !== false;
     const completed = !property.constructionStatus || property.constructionStatus === "completed";
+    // Premium and super premium cards show the value and the monthly rent only; share terms come from an agent.
+    const agentLed = isAgentLedTier(property.investmentTier);
     return (
       <Link key={property.id} href={`/properties/${property.slug}`}
         className="group flex flex-col overflow-hidden rounded-[24px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:rounded-[32px]">
@@ -249,8 +252,11 @@ export default async function ProjektePage({ searchParams }: PageProps) {
 
           <div className="mt-6 flex items-end justify-between gap-3">
             <p className="text-2xl font-bold tabular-nums text-brand">{formatMoney(property.price, copy, getPropertyCurrency(property), locale)}</p>
-            <p className="text-sm font-semibold text-slate-500">{Math.round(fundedPercent).toLocaleString(localeHtmlLang[locale])}% {badges.funded}</p>
+            {!agentLed && <p className="text-sm font-semibold text-slate-500">{Math.round(fundedPercent).toLocaleString(localeHtmlLang[locale])}% {badges.funded}</p>}
           </div>
+          {agentLed ? property.monthlyRent ? <dl className="mt-5 grid gap-2.5 rounded-2xl bg-canvas p-4 text-sm">
+            <MetricRow label={agentLedCopy[locale].monthlyRent} value={formatMoney(property.monthlyRent, copy, getPropertyCurrency(property), locale)} />
+          </dl> : null : <>
           <div className="mt-2 h-2.5 rounded-full bg-slate-100" aria-hidden="true">
             <div className="h-2.5 rounded-full bg-emerald-600" style={{ width: `${fundedPercent}%` }} />
           </div>
@@ -265,9 +271,10 @@ export default async function ProjektePage({ searchParams }: PageProps) {
             <InfoBox label={copy.accessFrom} value={formatMinimumInvestment(locale, property.minInvestmentEur)} />
             <InfoBox label={returnText.monthlyPerShare} value={formatPropertyMoney(projection.monthlyPerShare, projection.currency, locale, 2)} />
           </div>
+          </>}
 
           <div className="mt-auto pt-6">
-            <div className="rounded-2xl bg-ink py-4 text-center text-lg font-bold text-white">{copy.viewRentalShare}</div>
+            <div className="rounded-2xl bg-ink py-4 text-center text-lg font-bold text-white">{agentLed ? agentLedCopy[locale].viewProperty : copy.viewRentalShare}</div>
           </div>
         </div>
       </Link>

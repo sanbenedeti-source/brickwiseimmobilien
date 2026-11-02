@@ -15,8 +15,9 @@ const strategyLook: Record<PropertyStrategy, { icon: typeof Coins; className: st
 };
 
 /** Calm two-column property page shared by visitors and signed-in clients: story on the left,
- * a single sticky investment card on the right. The purchase calculator is passed as children. */
-export default function PropertyOverview({ locale, back, gallery, title, chips, badges, facts, description, strategy, financials, card, stickyTop, children }: {
+ * a single sticky investment card on the right. The purchase calculator is passed as children.
+ * Agent-led (premium) properties pass no funding or minimum, and their own steps. */
+export default function PropertyOverview({ locale, back, gallery, title, chips, badges, facts, description, strategy, financials, card, steps, stickyTop, children }: {
   locale: Locale;
   back: { href: string; label: string };
   gallery: ReactNode;
@@ -27,7 +28,8 @@ export default function PropertyOverview({ locale, back, gallery, title, chips, 
   description: string;
   strategy?: PropertyStrategy;
   financials: { title: string; rows: [string, string][] }[];
-  card: { valueLabel: string; value: string; fundedPercent: number; fundedText: string; availableText: string; perSqm?: string; metrics: [string, string][]; minimumLabel: string; minimum: string; cta: ReactNode; note?: string };
+  card: { valueLabel: string; value: string; funding?: { percent: number; fundedText: string; availableText: string }; perSqm?: string; metrics: [string, string][]; minimum?: { label: string; value: string }; cta: ReactNode; note?: string };
+  steps?: [string, string][];
   stickyTop: string;
   children?: ReactNode;
 }) {
@@ -63,7 +65,7 @@ export default function PropertyOverview({ locale, back, gallery, title, chips, 
           <section className="mt-10">
             <h2 className="text-xl font-bold text-ink">{copy.howTitle}</h2>
             <ol className="mt-4 grid gap-3 sm:grid-cols-3">
-              {copy.steps.map(([stepTitle, stepText], index) => <li key={stepTitle} className="rounded-2xl border border-line bg-white p-5">
+              {(steps ?? copy.steps).map(([stepTitle, stepText], index) => <li key={stepTitle} className="rounded-2xl border border-line bg-white p-5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">{index + 1}</span>
                 <p className="mt-3 font-semibold text-ink">{stepTitle}</p>
                 <p className="mt-1 text-sm leading-6 text-muted">{stepText}</p>
@@ -102,13 +104,15 @@ export default function PropertyOverview({ locale, back, gallery, title, chips, 
           <div className="rounded-3xl border border-line bg-white p-6 shadow-[0_12px_40px_rgba(20,33,61,0.08)]">
             <p className="text-center text-sm text-muted">{card.valueLabel}</p>
             <p className="mt-1 text-center text-3xl font-bold tabular-nums text-brand">{card.value}</p>
-            <div className="mt-5 h-2 rounded-full bg-slate-100" aria-hidden="true"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.max(0, card.fundedPercent))}%` }} /></div>
-            <div className="mt-2 flex justify-between gap-3 text-xs font-semibold text-slate-500"><span>{card.fundedText}</span><span>{card.availableText}</span></div>
+            {card.funding && <>
+              <div className="mt-5 h-2 rounded-full bg-slate-100" aria-hidden="true"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.max(0, card.funding.percent))}%` }} /></div>
+              <div className="mt-2 flex justify-between gap-3 text-xs font-semibold text-slate-500"><span>{card.funding.fundedText}</span><span>{card.funding.availableText}</span></div>
+            </>}
             {card.perSqm && <p className="mt-3 flex justify-end"><span className="rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-ink">{card.perSqm}</span></p>}
             {card.metrics.length > 0 && <dl className="mt-5 grid gap-3 rounded-2xl bg-canvas p-4 text-sm">
               {card.metrics.map(([label, value]) => <div key={label} className="flex items-center justify-between gap-4"><dt className="text-slate-600">{label}</dt><dd className="whitespace-nowrap font-bold tabular-nums text-ink">{value}</dd></div>)}
             </dl>}
-            <p className="mt-5 text-center text-sm text-muted">{card.minimumLabel} <strong className="text-ink">{card.minimum}</strong></p>
+            {card.minimum && <p className="mt-5 text-center text-sm text-muted">{card.minimum.label} <strong className="text-ink">{card.minimum.value}</strong></p>}
             <div className="mt-4 grid gap-2">{card.cta}</div>
           </div>
           {card.note && <p className="mt-3 px-2 text-center text-xs leading-5 text-muted">{card.note}</p>}

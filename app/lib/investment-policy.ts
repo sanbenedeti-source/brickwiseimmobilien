@@ -17,6 +17,12 @@ export function toInvestmentTier(value: unknown): InvestmentTier {
   return (INVESTMENT_TIERS as readonly unknown[]).includes(value) ? value as InvestmentTier : "standard";
 }
 
+/** Premium and super premium properties are sold through an agent: their pages show the property value and
+ * the monthly rent only, and share terms are agreed personally (the admin then records the shares). */
+export function isAgentLedTier(tier: unknown) {
+  return toInvestmentTier(tier) !== "standard";
+}
+
 export function minimumInvestmentShares(sharePrice: number, minimumAmount: number) {
   if (!Number.isFinite(sharePrice) || sharePrice <= 0 || !Number.isFinite(minimumAmount) || minimumAmount <= 0) return null;
   return Math.max(1, Math.ceil(Math.round(minimumAmount * 100) / Math.round(sharePrice * 100)));

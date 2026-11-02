@@ -1,6 +1,6 @@
 "use server";
 
-import { canPurchaseShares } from "../lib/investment-policy";
+import { canPurchaseShares, isAgentLedTier } from "../lib/investment-policy";
 import { getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 
 import { revalidatePath } from "next/cache";
@@ -60,6 +60,9 @@ export async function createSharePurchaseRequest(formData: FormData) {
     || (submittedRequestId !== null && (typeof submittedRequestId !== "string" || !purchaseRequestIdPattern.test(submittedRequestId)))) {
     redirect("/dashboard?request=invalid#properties");
   }
+
+  // Premium and super premium shares are agreed with an agent and recorded by the admin, never bought online.
+  if (isAgentLedTier(property.investmentTier)) redirect("/dashboard?request=invalid#properties");
 
   const currency = getPropertyCurrency(property);
   // The property tier sets the minimum (standard €2,000, premium €20,000, super premium €50,000).

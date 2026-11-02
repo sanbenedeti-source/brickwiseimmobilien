@@ -2,7 +2,8 @@ import { formatPropertyPercent, propertyUiCopy } from "../properties/property-ui
 import { localeHtmlLang, type Locale } from "../lib/i18n";
 import { investmentCopy } from "../lib/investment-copy";
 import { targetReturnCopy, rentalYieldLabel } from "../lib/target-return-copy";
-import { formatMinimumInvestment, minimumInvestmentShares } from "../lib/investment-policy";
+import { formatMinimumInvestment, isAgentLedTier, minimumInvestmentShares } from "../lib/investment-policy";
+import { agentLedCopy } from "../lib/agent-led-copy";
 import { formatPropertyMoney, getPropertyCurrency, getPropertyProjection, getPropertyReturnBreakdown, getPropertyShareSupply } from "../lib/property-financials";
 import { ArrowRight, BedDouble, Bath, MapPin } from "lucide-react";
 import Link from "next/link";
@@ -49,12 +50,15 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
   const money = (value: number, digits = 0) => formatPropertyMoney(value, currency, locale, digits);
   const projection = getPropertyProjection(property);
   const targetReturn = projection.annualRate;
+  // Premium and super premium: value and monthly rent only; the shares are agreed with an agent.
+  const agentLed = isAgentLedTier(property.investmentTier);
+  const agentText = agentLedCopy[locale];
 
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(20,33,61,0.08)]">
       <Link href={`/properties/${property.slug}`} className="group relative block aspect-[16/9] overflow-hidden bg-canvas">
         <div className="h-full bg-cover bg-center transition duration-500 group-hover:scale-[1.02]" style={{ backgroundImage: `url(${property.image_url})` }} />
-        <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{money(property.sharePrice)} / {text.share}</span>
+        <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{agentLed ? money(property.price) : `${money(property.sharePrice)} / ${text.share}`}</span>
         <span className="absolute right-3 top-3 rounded-md bg-ink/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{text.primary}</span>
       </Link>
 
@@ -63,6 +67,17 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
         <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted"><MapPin size={14} aria-hidden="true" className="shrink-0" />{property.address}</p>
         {(property.constructionStatus || (property.investmentTier && property.investmentTier !== "standard")) && <div className="mt-2 flex flex-wrap gap-2"><PropertyConstructionBadge status={property.constructionStatus} locale={locale} /><PropertyTierBadge tier={property.investmentTier} locale={locale} /></div>}
 
+        {agentLed ? <>
+          <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
+            <CardMetric label={agentText.propertyValue} value={money(property.price)} accent />
+            <CardMetric label={agentText.monthlyRent} value={property.monthlyRent ? money(property.monthlyRent) : "—"} />
+          </dl>
+          <p className="mt-2.5 text-xs leading-5 text-muted">{agentText.note}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+            <Link href={`/contact?projekt=${encodeURIComponent(property.slug)}`} className="inline-flex min-h-10 items-center rounded-lg bg-brand px-4 text-sm font-bold text-white hover:bg-brand-strong">{agentText.talkToAgent}</Link>
+            <Link href={`/properties/${property.slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline">{text.view}<ArrowRight size={15} aria-hidden="true" /></Link>
+          </div>
+        </> : <>
         <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line">
           <CardMetric label={hasTargetReturn ? rentalYieldLabel(locale, "costsStated" in property ? property.costsStated : undefined) : copy.targetReturn} value={formatPropertyPercent(targetReturn, locale)} accent />
           <CardMetric label={copy.perShare} value={money(property.sharePrice)} />
@@ -77,6 +92,7 @@ export default async function PropertyInvestmentCard({ locale, property, copy, s
         </div>
         <Link href={`/properties/${property.slug}`} className="mt-3 inline-flex items-center gap-1 self-start text-sm font-semibold text-brand hover:underline">{text.view}<ArrowRight size={15} aria-hidden="true" /></Link>
         <SharePurchaseForm action={createSharePurchaseRequest} purchaseRequestId={randomUUID()} propertySlug={property.slug} minimumShares={minimumShares} availableShares={availableShares} sharePrice={property.sharePrice} walletBalance={walletBalance} locale={locale} copy={copy} />
+        </>}
       </div>
     </article>
   );
