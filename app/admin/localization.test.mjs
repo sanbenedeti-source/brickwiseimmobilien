@@ -44,7 +44,7 @@ export function harness(locale, companyMethods = []) {
       if (name.endsWith("property-localization")) return { getPropertyTranslations: async () => new Map(seeds.filter((seed) => seed.locale === locale).map((seed) => [seed.property_slug, seed])) };
       if (/(?:^|\/)(?:actions?|directory-actions|sign-in-actions)$/.test(name)) return new Proxy({}, { get: () => action });
       if (name.endsWith("LanguageSwitcher")) return { __esModule: true, default: ({ label }) => createElement("span", null, label) };
-      if (name === "next/navigation") return { usePathname: () => "/admin", redirect() { throw new Error("Unexpected redirect for administrator"); } };
+      if (name === "next/navigation") return { usePathname: () => globalThis.__adminPathname || "/admin", redirect() { throw new Error("Unexpected redirect for administrator"); } };
       if (name === "next/link") return { __esModule: true, default: ({ href, children, ...props }) => createElement("a", { href, ...props }, children) };
       if (name.startsWith("@/") || name.startsWith(".")) {
         const base = name.startsWith("@/") ? path.join(root, name.slice(2)) : path.resolve(path.dirname(filename), name);
@@ -84,6 +84,15 @@ for (const locale of ["en", "de", "fr", "es", "it"]) {
     assert.doesNotMatch(cryptoForm + overview, /method=stripe_link|method=manual|value="stripe_link"|value="manual"|Stripe link|Crypto USDC/);
     const audit = await renderPage("app/admin/audit/page.tsx");
     const layout = renderToStaticMarkup(await app.load("app/admin/layout.tsx").default({ children: createElement("p", null, "child") }));
+    // Each section shows its pages as tabs; the overview has none.
+    assert.doesNotMatch(layout, /admin-section-tabs/);
+    for (const [pathname, tabs] of [["/admin/payments", ["Payment methods", "Agents", "Audit logs", "Security"]], ["/admin/payments/withdrawals", ["Deposits", "Withdrawals", "Payment requests"]], ["/admin/properties/sal-rei", ["Properties", "Sale requests", "Distributions"]]]) {
+      globalThis.__adminPathname = pathname;
+      const sectionLayout = renderToStaticMarkup(await app.load("app/admin/layout.tsx").default({ children: createElement("p", null, "child") }));
+      globalThis.__adminPathname = undefined;
+      assert.match(sectionLayout, /class="admin-section-tabs"/, `${locale}: tabs on ${pathname}`);
+      for (const tab of tabs) assert.ok(sectionLayout.includes(`>${t(tab)}`), `${locale}: ${pathname} tab ${tab}`);
+    }
     for (const [html, english] of [[properties, "Manage properties"], [profits, "Property returns"], [payments, "Manage payment requests"], [overview, "Client requests"], [overview, "Deposits to verify"], [audit, "Admin audit logs"], [layout, "Clients"], [layout, "Money"], [layout, "Properties"]]) {
       assert.ok(html.includes(t(english)), `${locale}: ${english}`);
       if (locale !== "en") assert.ok(!html.includes(`>${english}<`), `${locale}: untranslated ${english}`);

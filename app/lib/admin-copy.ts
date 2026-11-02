@@ -138,6 +138,7 @@ const translations: Record<string, readonly [string, string, string, string]> = 
   "Search": ["Suchen", "Rechercher", "Buscar", "Cerca"],
   "Clear": ["Zurücksetzen", "Effacer", "Borrar", "Cancella"],
   "No clients match your search.": ["Keine Kunden entsprechen Ihrer Suche.", "Aucun client ne correspond à votre recherche.", "Ningún cliente coincide con tu búsqueda.", "Nessun cliente corrisponde alla ricerca."],
+  "These are projected net rental yields (rent minus stated costs). They are not guaranteed monthly cash payments.": ["Dies sind prognostizierte Netto-Mietrenditen (Miete abzüglich angegebener Kosten). Es handelt sich nicht um garantierte monatliche Auszahlungen.", "Il s’agit de rendements locatifs nets projetés (loyer moins les charges indiquées). Ce ne sont pas des versements mensuels garantis.", "Son rentabilidades netas por alquiler proyectadas (alquiler menos los costes indicados). No son pagos mensuales garantizados.", "Sono rendimenti netti da affitto previsti (affitto meno i costi indicati). Non sono pagamenti mensili garantiti."],
   "Strategy badge": ["Strategie-Badge", "Badge de stratégie", "Distintivo de estrategia", "Badge di strategia"],
   "None": ["Keine", "Aucun", "Ninguno", "Nessuno"],
   "Occupancy": ["Vermietungsstatus", "Occupation", "Ocupación", "Occupazione"],
