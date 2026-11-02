@@ -9,6 +9,8 @@ import { ADMIN_MFA_REQUIRED, getAdminMfaStatus } from "@/app/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 import AdminNavigation, { type AdminNavigationGroup } from "./AdminNavigation";
 import AdminSectionTabs, { type AdminSectionTab } from "./AdminSectionTabs";
+import AdminInbox from "./AdminInbox";
+import { localeHtmlLang } from "@/app/lib/i18n";
 import { getAdminAttention } from "./attention";
 import { agreementCopy } from "@/app/lib/agreement-copy";
 import "./admin.css";
@@ -82,7 +84,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className="admin-env"><span className="admin-live-dot" aria-hidden="true" />{t("Live")}</span>
           {mfaStatus === "verified" && <span className="admin-mfa"><ShieldCheck size={15} aria-hidden="true" />{t("Two-factor authentication is active")}</span>}
         </div>
-        <div className="admin-topbar-actions"><LanguageSwitcher currentLocale={locale} label={t("Language")} /><Link href="/" className="admin-website">{t("View website")}<ArrowUpRight size={15} /></Link></div>
+        <div className="admin-topbar-actions"><AdminInbox lang={localeHtmlLang[locale]} labels={{
+          title: t("Client activity"), empty: t("Nothing is waiting for you."), open: t("Open an item to confirm or reject it."), error: t("Client activity could not be loaded."),
+          kinds: { deposit: t("New deposit"), withdrawal: t("Withdrawal request"), kyc: t("Identity verification"), agreement: t("Agreement to review"), sale: t("Share sale request"), request: t("New client request") },
+        }} /><LanguageSwitcher currentLocale={locale} label={t("Language")} /><Link href="/" className="admin-website">{t("View website")}<ArrowUpRight size={15} /></Link></div>
       </header>
       <div id="admin-content" tabIndex={-1}><AdminSectionTabs sections={[clients, money, portfolio, settings]} label={t("Main navigation")} />{children}</div>
     </div>

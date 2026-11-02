@@ -160,10 +160,12 @@ test("KYC completion re-checks the stored files and deletes anything that does n
 });
 
 function actionHarness(options = {}) {
-  const calls = [];
+  const calls = [], notices = [], emails = [];
   const user = options.user === undefined ? { id: "u1", app_metadata: {} } : options.user;
   const actions = compile("app/dashboard/portal-actions.ts", {
     "next/cache": { revalidatePath() {} },
+    "next/server": { after: (task) => notices.push(task) },
+    "../lib/admin-email": { sendAdminEmail: async (message) => { emails.push(message); } },
     "@/lib/supabase/server": { createClient: async () => ({
       auth: { getUser: async () => ({ data: { user } }) },
       rpc: async (name, args) => { calls.push([name, args]); return { error: options.rpcError || null }; },
@@ -171,7 +173,7 @@ function actionHarness(options = {}) {
     "../lib/admin": { isAdminUser: (candidate) => candidate?.app_metadata?.role === "admin" },
     "../lib/client-finance": finance,
   });
-  return { calls, actions };
+  return { calls, actions, notices, emails };
 }
 const form = (values) => { const data = new FormData(); for (const [key, value] of Object.entries(values)) data.set(key, value); return data; };
 const validWithdrawal = { amount: "250,50", account_holder: "Anna Müller", iban: "de89 3704 0044 0532 0130 00", bic: "cobadeffxxx", client_key: "33333333-3333-4333-8333-333333333333" };
@@ -180,6 +182,14 @@ test("withdrawal requests are validated before they reach the database and error
   const ok = actionHarness();
   assert.deepEqual(await ok.actions.requestWithdrawal({ result: "" }, form(validWithdrawal)), { result: "saved" });
   assert.deepEqual(ok.calls, [["request_withdrawal", { p_amount: "250.50", p_account_holder: "Anna Müller", p_iban: "DE89370400440532013000", p_bic: "COBADEFFXXX", p_client_key: validWithdrawal.client_key }]]);
+  // The admins hear about it once, after the response; the notice never carries the IBAN.
+  assert.equal(ok.notices.length, 1);
+  await ok.notices[0]();
+  assert.equal(ok.emails[0].idempotencyKey, `withdrawal/${validWithdrawal.client_key}`);
+  assert.ok(!ok.emails[0].lines.join("\n").includes("DE89"));
+  const refused = actionHarness({ rpcError: { message: "WITHDRAWAL_INSUFFICIENT_FUNDS" } });
+  await refused.actions.requestWithdrawal({ result: "" }, form(validWithdrawal));
+  assert.equal(refused.notices.length, 0);
   for (const [patch, result] of [[{ amount: "5" }, "amount"], [{ amount: "abc" }, "amount"], [{ iban: "DE89 3704 0044 0532 0130 01" }, "iban"], [{ account_holder: "A" }, "error"], [{ client_key: "x" }, "error"], [{ bic: "123" }, "error"]]) {
     const h = actionHarness();
     assert.deepEqual(await h.actions.requestWithdrawal({ result: "" }, form({ ...validWithdrawal, ...patch })), { result }, JSON.stringify(patch));

@@ -1,5 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { sendAdminEmail } from "../lib/admin-email";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "../lib/admin";
 import { hasAdminSession } from "../lib/admin-session";
@@ -19,6 +21,14 @@ export async function submitDeposit(_state: DepositState, form: FormData): Promi
  });
  if (error) return {result:"error"};
  revalidatePath("/funding"); revalidatePath("/admin/payments/deposits");
+ // Tell the team right away; the notice is sent after the response so the client never waits for it.
+ const amount = String(form.get("amount") || ""), reference = String(form.get("transfer_reference") || "").trim();
+ after(() => sendAdminEmail({ subject: `Brickwise – New deposit: EUR ${amount}`, idempotencyKey: `deposit/${String(form.get("client_key") || "")}`, lines: [
+  "A client reported a deposit. Check that the money has arrived, then confirm it to credit the wallet.", "",
+  `Client: ${String(user.user_metadata?.full_name || "").trim() || "-"} <${user.email || "-"}>`,
+  `Amount (EUR): ${amount}`, `Method: ${String(destination?.label || destination?.kind || "-")}`, `Reference: ${reference || "-"}`, "",
+  "Review: https://www.brickwise-immo.de/admin/payments/deposits",
+ ] }).catch((notifyError) => console.error("Deposit notice failed:", notifyError instanceof Error ? notifyError.message : notifyError)));
  return {result:"saved"};
 }
 export async function reviewDeposit(_state: DepositState, form: FormData): Promise<DepositState> {
@@ -42,5 +52,6 @@ export async function reviewDeposit(_state: DepositState, form: FormData): Promi
  });
  if (error) return {result:"error"};
  for (const path of ["/funding","/dashboard","/dashboard/wallet","/admin/payments/deposits","/admin/payments/requests"]) revalidatePath(path);
+ revalidatePath("/admin/customers","layout");
  return {result:"saved"};
 }

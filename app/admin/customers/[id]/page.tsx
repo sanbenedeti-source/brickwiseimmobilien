@@ -18,6 +18,9 @@ import WalletCreditForm from "../../payments/WalletCreditForm";
 import ProfitPayoutForm from "./ProfitPayoutForm";
 import { AddSharesForm, BuyBackForm, WalletAdjustForm } from "./InvestmentForms";
 import { investmentLabels } from "./investment-labels";
+import { getDeposits } from "@/app/funding/deposit-store";
+import { depositText } from "@/app/funding/deposit-copy";
+import ReviewForm from "../../payments/deposits/ReviewForm";
 
 // Read once per request, like the client income page.
 async function snapshotTime() { return Date.now(); }
@@ -40,7 +43,7 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
   const { data: { user: customer } } = await service.auth.admin.getUserById(id);
   if (!customer || isAdminUser(customer)) notFound();
 
-  const [wallet, holdings, ledger, payouts, withdrawals, kyc, agentRow, settings, translations] = await Promise.all([
+  const [wallet, holdings, ledger, payouts, withdrawals, kyc, agentRow, settings, translations, deposits] = await Promise.all([
     service.from("wallet_accounts").select("balance").eq("user_id", id).maybeSingle(),
     service.from("property_holdings").select("property_slug,shares,invested_amount,first_purchased_at").eq("user_id", id),
     service.from("wallet_transactions").select("id,type,direction,amount,property_slug,shares,reference_type,idempotency_key,created_at,currency").eq("user_id", id).order("created_at").order("id").limit(5000),
@@ -50,6 +53,7 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
     service.from("client_agents").select("agents(code,full_name)").eq("user_id", id).maybeSingle(),
     service.from("property_share_settings").select("property_slug,total_shares,blocked_shares,profit_active,profit_start_date"),
     getPropertyTranslations(locale),
+    getDeposits(id),
   ]);
   const catalog = await getAllProperties();
   const loadError = [wallet, holdings, ledger, payouts, withdrawals].some((result) => result.error);
@@ -102,6 +106,8 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
     return [{ slug: property.slug, title: titleOf(property.slug), sharePrice: property.sharePrice, available }];
   });
   const percent = (value: number) => value.toLocaleString(lang, { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  const pendingDeposits = deposits.deposits.filter((row) => row.status === "pending");
+  const d = depositText(locale);
 
   return <main className="admin-workspace">
     <AdminPageHeader back={{ href: "/admin#customers", label: t("Customers") }} eyebrow={t("Customer")} title={name}
@@ -114,6 +120,18 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
       <AdminStat label={t("Modelled income to date")} value={euro(modelled)} hint={`${euro(modelledDaily)} / ${t("day")} · ${t("estimate, not in the wallet")}`} />
       <AdminStat label={t("Earnings paid")} value={euro(received)} hint={`${t("Property profits")}: ${euro(profitsPaid)} · ${t("Withdrawn")}: ${euro(withdrawn)}`} />
     </section>
+    {pendingDeposits.length > 0 && <AdminCard id="deposits" title={`${t("Deposits to verify")} (${pendingDeposits.length})`}
+      description={t("The client reported these payments. Check that the money has arrived, then confirm to credit the wallet. The client is notified either way.")}
+      actions={<a href="/admin/payments/deposits" className="admin-btn admin-btn-secondary admin-btn-sm">{t("Deposits")}</a>}>
+      <div className="grid gap-3">{pendingDeposits.map((row) => <details key={row.id} className="admin-subsection" open>
+        <summary>{euro(Number(row.requested_eur))} · {row.destination.kind === "crypto" ? `${row.destination.crypto_asset} · ${row.destination.crypto_network}` : t("Bank transfer")} · {new Date(row.created_at).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" })}</summary>
+        <div>
+          <p className="admin-help">{t("Destination")}: <strong>{row.destination.label}</strong> · {d("reference")}: <strong className="break-all">{row.transfer_reference}</strong></p>
+          <ReviewForm deposit={row} locale={locale} />
+        </div>
+      </details>)}</div>
+    </AdminCard>}
+
     <AdminCard title={t("Customer")}>
       <dl className="admin-facts">
         <div><dt>{t("Identity verification")}</dt><dd><StatusBadge status={kycStatus || "new"} label={kycStatus === "approved" ? t("Approved") : kycStatus === "rejected" ? t("Rejected") : kycStatus === "pending" ? t("Pending") : t("Not provided")} /></dd></div>

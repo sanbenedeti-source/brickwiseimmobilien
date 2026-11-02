@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { sendAdminEmail } from "../lib/admin-email";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "../lib/admin";
 import { isValidIban, normalizeIban } from "../lib/client-finance";
@@ -28,6 +30,11 @@ export async function requestWithdrawal(_previous: WithdrawState, form: FormData
     }
     revalidatePath("/dashboard", "layout");
     revalidatePath("/admin/payments/withdrawals");
+    after(() => sendAdminEmail({ subject: `Brickwise – New withdrawal request: EUR ${amount}`, idempotencyKey: `withdrawal/${key}`, lines: [
+      "A client asked to withdraw money. Pay it by bank transfer, then confirm it with the bank reference.", "",
+      `Client: ${String(user.user_metadata?.full_name || "").trim() || "-"} <${user.email || "-"}>`, `Amount (EUR): ${amount}`, `Account holder: ${holder}`, "",
+      "Review: https://www.brickwise-immo.de/admin/payments/withdrawals",
+    ] }).catch((notifyError) => console.error("Withdrawal notice failed:", notifyError instanceof Error ? notifyError.message : notifyError)));
     return { result: "saved" };
   } catch { return { result: "error" }; }
 }
