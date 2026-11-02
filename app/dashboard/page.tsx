@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/supabase/auth";
 import { isAdminUser } from "@/app/lib/admin";
 import ClientPortalSidebar, { type ClientPortalActiveItem } from "@/app/components/ClientPortalSidebar";
 import OnboardingBanner from "@/app/components/OnboardingBanner";
+import { applyShareSales } from "./daily-income-model";
 import { portalNavCopy } from "@/app/lib/portal-nav-copy";
 import { isPropertyOpenForInvestment } from "@/app/lib/external-properties";
 import { getAllProperties } from "@/app/lib/property-registry";
@@ -342,6 +343,13 @@ export default async function DashboardPage({
         currency: p.currency, created_at: p.created_at,
       })));
       if (!data || data.length < 500) break;
+    }
+    // Shares bought back by Brickwise leave the oldest purchase lots first.
+    if (incomeHistoryAvailable) {
+      const { data: saleRows, error: saleError } = await supabase.from("wallet_transactions")
+        .select("property_slug,shares,created_at").eq("user_id", user.id).eq("reference_type", "share_buyback").limit(1000);
+      if (saleError) incomeHistoryAvailable = false;
+      else incomePurchases.splice(0, incomePurchases.length, ...applyShareSales(incomePurchases, (saleRows || []).map((row) => ({ property_slug: row.property_slug, shares: Number(row.shares), created_at: row.created_at }))));
     }
   }
 

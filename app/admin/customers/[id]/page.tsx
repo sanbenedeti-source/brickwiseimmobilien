@@ -12,10 +12,12 @@ import { getAllProperties } from "@/app/lib/property-registry";
 import { getPropertyShareSupply, getPropertyTargetReturn } from "@/app/lib/property-financials";
 import { getPropertyTranslations, localizeProperty } from "@/app/lib/property-localization";
 import { buildStatement, type LedgerRow } from "@/app/lib/client-finance";
-import { dailyIncome } from "@/app/dashboard/daily-income-model";
+import { dailyIncome, applyShareSales } from "@/app/dashboard/daily-income-model";
 import { AdminAlert, AdminCard, AdminEmpty, AdminPageHeader, AdminStat, StatusBadge } from "../../ui";
 import WalletCreditForm from "../../payments/WalletCreditForm";
 import ProfitPayoutForm from "./ProfitPayoutForm";
+import { AddSharesForm, BuyBackForm, WalletAdjustForm } from "./InvestmentForms";
+import { investmentLabels } from "./investment-labels";
 
 // Read once per request, like the client income page.
 async function snapshotTime() { return Date.now(); }
@@ -46,7 +48,7 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
     service.from("withdrawal_requests").select("amount,status").eq("user_id", id),
     service.from("client_kyc_submissions").select("status").eq("user_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     service.from("client_agents").select("agents(code,full_name)").eq("user_id", id).maybeSingle(),
-    service.from("property_share_settings").select("property_slug,total_shares,profit_active,profit_start_date"),
+    service.from("property_share_settings").select("property_slug,total_shares,blocked_shares,profit_active,profit_start_date"),
     getPropertyTranslations(locale),
   ]);
   const catalog = await getAllProperties();
@@ -59,6 +61,9 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
   const ledgerRows = ((ledger.data || []) as (LedgerRow & { currency: string })[]).map((row) => ({ ...row, amount: Number(row.amount), shares: row.shares === null ? null : Number(row.shares) }));
   const purchases = ledgerRows.filter((row) => row.type === "purchase" && row.direction === "debit" && row.property_slug)
     .map((row) => ({ property_slug: row.property_slug!, shares: Number(row.shares), amount: row.amount, currency: row.currency || "EUR", created_at: row.created_at }));
+  // Shares bought back by Brickwise leave the oldest purchase lots, so the income model matches the holding.
+  const lots = applyShareSales(purchases, ledgerRows.filter((row) => row.reference_type === "share_buyback" && row.property_slug && row.shares)
+    .map((row) => ({ property_slug: row.property_slug!, shares: Number(row.shares), created_at: row.created_at })));
   const settingBySlug = new Map((settings.data || []).map((row) => [row.property_slug, row]));
   // The same projection the client sees in their panel.
   const positions = (holdings.data || []).map((holding) => {
@@ -68,7 +73,7 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
     const model = property ? dailyIncome({
       slug: holding.property_slug, title: "", shares: Number(holding.shares), rentalRate: rate,
       paused: setting?.profit_active === false, accrualStart: setting?.profit_start_date ? Date.parse(`${setting.profit_start_date}T00:00:00Z`) : null,
-    }, purchases, now) : null;
+    }, lots, now) : null;
     const total = property ? getPropertyShareSupply(property, { total_shares: setting?.total_shares ?? undefined }).total : 0;
     return { slug: holding.property_slug, shares: Number(holding.shares), invested: Number(holding.invested_amount), rate, model, paused: setting?.profit_active === false, ownership: total > 0 ? Number(holding.shares) / total : null };
   });
@@ -88,6 +93,14 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
   const agent = Array.isArray(agentEmbed) ? agentEmbed[0] : agentEmbed;
   const name = String(customer.user_metadata?.full_name || "").trim() || customer.email?.split("@")[0] || "—";
   const kycStatus = kyc.data?.status as string | undefined;
+  const labels = investmentLabels(t);
+  // Every listed property with shares left can receive an admin allocation.
+  const shareOptions = catalog.flatMap((property) => {
+    const setting = settingBySlug.get(property.slug);
+    if (!setting) return [];
+    const { available } = getPropertyShareSupply(property, { total_shares: setting.total_shares ?? undefined, blocked_shares: setting.blocked_shares ?? undefined });
+    return [{ slug: property.slug, title: titleOf(property.slug), sharePrice: property.sharePrice, available }];
+  });
   const percent = (value: number) => value.toLocaleString(lang, { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 3 });
 
   return <main className="admin-workspace">
@@ -107,7 +120,15 @@ export default async function AdminCustomerPage({ params }: { params: Promise<{ 
         <div><dt>{t("Agent")}</dt><dd>{agent ? <>{agent.full_name} <span className="font-mono text-[12px]">{agent.code}</span></> : t("No agent")}</dd></div>
         <div className="admin-facts-wide"><dt>ID</dt><dd className="break-all text-[12px]">{customer.id}</dd></div>
       </dl>
-      <details className="admin-popover mt-4"><summary className="admin-link text-[13px]">{t("Credit wallet")}</summary><div><WalletCreditForm userId={customer.id} operationId={randomUUID()} locale={locale} /></div></details>
+    </AdminCard>
+
+    <AdminCard title={t("Manage investment")} description={t("Add shares, buy shares back or correct the wallet. Every action is one database transaction, audited and shown to the client in their statement.")}>
+      <div className="grid gap-3">
+        <details className="admin-subsection"><summary>{t("Add shares")}</summary><div><AddSharesForm userId={customer.id} requestKey={randomUUID()} properties={shareOptions} labels={labels} lang={lang} /></div></details>
+        {positions.length > 0 && <details className="admin-subsection"><summary>{t("Buy back shares")}</summary><div><BuyBackForm userId={customer.id} requestKey={randomUUID()} holdings={positions.map((row) => ({ slug: row.slug, title: titleOf(row.slug), shares: row.shares, sharePrice: catalog.find((item) => item.slug === row.slug)?.sharePrice ?? 0 }))} labels={labels} lang={lang} /></div></details>}
+        <details className="admin-subsection"><summary>{t("Credit wallet (deposit received)")}</summary><div><WalletCreditForm userId={customer.id} operationId={randomUUID()} locale={locale} /></div></details>
+        <details className="admin-subsection"><summary>{t("Wallet correction")}</summary><div><WalletAdjustForm userId={customer.id} requestKey={randomUUID()} labels={labels} /></div></details>
+      </div>
     </AdminCard>
 
     {positions.length > 0 && <AdminCard title={t("Pay property profit")} description={t("Credits the client's wallet with the profit of a property they hold, based on the property's actual income. The client is notified and sees it as property profit in their income and statement.")}>

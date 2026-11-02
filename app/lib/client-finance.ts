@@ -38,12 +38,14 @@ export type LedgerRow = {
   id: string; type: string; direction: "credit" | "debit"; amount: number; property_slug: string | null; shares: number | null;
   reference_type: string | null; idempotency_key: string; created_at: string;
 };
-export type LedgerKind = "deposit" | "walletCredit" | "purchase" | "distribution" | "profit" | "withdrawal" | "withdrawalReturned" | "refund" | "adjustment";
+export type LedgerKind = "deposit" | "walletCredit" | "purchase" | "distribution" | "profit" | "withdrawal" | "withdrawalReturned" | "refund" | "adjustment" | "shareSale" | "externalPayment";
 
 export function ledgerKind(row: Pick<LedgerRow, "type" | "reference_type" | "idempotency_key">): LedgerKind {
   if (row.type === "purchase") return "purchase";
   if (row.reference_type === "distribution") return "distribution";
   if (row.reference_type === "profit_payout") return "profit";
+  if (row.reference_type === "share_buyback") return "shareSale";
+  if (row.reference_type === "external_payment") return "externalPayment";
   if (row.reference_type === "withdrawal") return "withdrawal";
   if (row.reference_type === "withdrawal_reversal") return "withdrawalReturned";
   if (row.type === "credit") return row.idempotency_key.startsWith("deposit:") ? "deposit" : "walletCredit";

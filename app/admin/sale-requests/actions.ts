@@ -13,7 +13,8 @@ export async function updateSaleRequest(_previous: SaleReviewState, form: FormDa
     const { data: { user }, error } = await client.auth.getUser();
     if (error || !(await hasAdminSession(client, user))) return { result: "error" };
     const id = String(form.get("id") || ""), status = String(form.get("decision") || ""), note = String(form.get("note") || "").trim();
-    if (!uuid.test(id) || !["in_review", "completed", "cancelled"].includes(status) || note.length < 3 || note.length > 1000) return { result: "error" };
+    // Completing goes through the buy-back form, which moves the shares and the money.
+    if (!uuid.test(id) || !["in_review", "cancelled"].includes(status) || note.length < 3 || note.length > 1000) return { result: "error" };
     const { error: rpcError } = await client.rpc("update_share_sale_request", { p_id: id, p_status: status, p_note: note });
     if (rpcError) return { result: "error" };
     revalidatePath("/admin/sale-requests");

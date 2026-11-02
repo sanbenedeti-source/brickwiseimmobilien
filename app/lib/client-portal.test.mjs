@@ -47,6 +47,16 @@ test("ledger rows get a readable type and a running balance across the selected 
     row("f", "2026-10-13T10:00:00Z", "credit", "credit", 100, { reference_type: "admin_credit", idempotency_key: "manual-credit" }),
   ];
   assert.deepEqual(rows.map((item) => finance.ledgerKind(item)), ["deposit", "purchase", "distribution", "withdrawal", "withdrawalReturned", "walletCredit"]);
+  // Admin investment management: buy-backs and payments recorded outside the wallet have their own labels.
+  assert.deepEqual([
+    row("g", "2026-10-14T10:00:00Z", "credit", "credit", 260, { reference_type: "share_buyback", property_slug: "sal-rei", shares: 1 }),
+    row("h", "2026-10-14T10:00:00Z", "credit", "credit", 500, { reference_type: "external_payment", property_slug: "sal-rei", shares: 2 }),
+    row("i", "2026-10-14T10:00:00Z", "purchase", "debit", 500, { reference_type: "admin_purchase", property_slug: "sal-rei", shares: 2 }),
+    row("j", "2026-10-14T10:00:00Z", "adjustment", "debit", 10, { reference_type: "admin_adjustment" }),
+  ].map((item) => finance.ledgerKind(item)), ["shareSale", "externalPayment", "purchase", "adjustment"]);
+  for (const locale of ["en", "de", "fr", "es", "it"]) {
+    assert.ok(copy.portalCopy[locale].transactionType.shareSale && copy.portalCopy[locale].transactionType.externalPayment, locale);
+  }
   const now = new Date("2026-10-24T12:00:00Z");
   const all = finance.buildStatement(rows, "all", "all", now);
   assert.equal(all.opening, 0);
@@ -254,10 +264,11 @@ test("rental distributions need a verified admin, a closed past period, a positi
 
 test("sale request reviews and property updates are validated before the database is called", async () => {
   const sale = adminActionHarness("app/admin/sale-requests/actions.ts");
-  const review = { id: "55555555-5555-4555-8555-555555555555", decision: "completed", note: "Sold to an existing investor." };
+  const review = { id: "55555555-5555-4555-8555-555555555555", decision: "cancelled", note: "The client withdrew the request." };
   assert.deepEqual(await sale.actions.updateSaleRequest({ result: "" }, form(review)), { result: "saved" });
-  assert.deepEqual(sale.calls, [["update_share_sale_request", { p_id: review.id, p_status: "completed", p_note: review.note }]]);
-  for (const patch of [{ decision: "pending" }, { note: "ok" }, { id: "x" }]) {
+  assert.deepEqual(sale.calls, [["update_share_sale_request", { p_id: review.id, p_status: "cancelled", p_note: review.note }]]);
+  // Completing a sale must move shares and money, so it only happens through the buy-back form.
+  for (const patch of [{ decision: "completed" }, { decision: "pending" }, { note: "ok" }, { id: "x" }]) {
     const h = adminActionHarness("app/admin/sale-requests/actions.ts");
     assert.deepEqual(await h.actions.updateSaleRequest({ result: "" }, form({ ...review, ...patch })), { result: "error" });
     assert.equal(h.calls.length, 0);

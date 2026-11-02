@@ -13,6 +13,9 @@ import { AdminAlert, AdminCard, AdminEmpty, AdminPageHeader, AdminStat, StatusBa
 import DecisionForm from "../DecisionForm";
 import { getClientDirectory } from "../client-directory";
 import { updateSaleRequest } from "./actions";
+import { randomUUID } from "node:crypto";
+import { BuyBackForm } from "../customers/[id]/InvestmentForms";
+import { investmentLabels } from "../customers/[id]/investment-labels";
 
 type SaleRequest = { id: string; user_id: string; property_slug: string; shares: number; note: string | null; status: string; admin_note: string | null; updated_at: string | null; created_at: string };
 
@@ -26,9 +29,12 @@ export default async function AdminSaleRequestsPage({ searchParams }: { searchPa
   const showAll = (await searchParams).status === "all";
   let query = client.from("share_sale_requests").select("id,user_id,property_slug,shares,note,status,admin_note,updated_at,created_at").order("created_at", { ascending: false }).limit(200);
   if (!showAll) query = query.in("status", ["pending", "in_review"]);
-  const [{ data, error }, directory, { data: openRows }, translations, catalog] = await Promise.all([
+  const [{ data, error }, directory, { data: openRows }, translations, catalog, { data: holdingRows }] = await Promise.all([
     query, getClientDirectory(), client.from("share_sale_requests").select("shares").in("status", ["pending", "in_review"]), getPropertyTranslations(locale), getAllProperties(),
+    client.from("property_holdings").select("user_id,property_slug,shares"),
   ]);
+  const heldShares = new Map((holdingRows || []).map((row) => [`${row.user_id}:${row.property_slug}`, Number(row.shares)]));
+  const labels = investmentLabels(t);
   const rows = (data || []) as SaleRequest[];
   const titleOf = (slug: string) => { const property = catalog.find((item) => item.slug === slug); return property ? localizeProperty(property, translations).title : slug; };
   const statusLabel = (status: string) => t(status === "in_review" ? "In review" : status === "completed" ? "Completed" : status === "cancelled" ? "Cancelled" : "Pending");
@@ -67,10 +73,20 @@ export default async function AdminSaleRequestsPage({ searchParams }: { searchPa
                 <div className="admin-facts-wide"><dt>{t("Client message")}</dt><dd className="whitespace-pre-line">{row.note || "—"}</dd></div>
               </dl>
               {row.admin_note && <p className="admin-note">{row.admin_note}{row.updated_at && <span className="block text-[12px] opacity-80">{new Date(row.updated_at).toLocaleString(lang)}</span>}</p>}
+              {open && (() => {
+                const held = heldShares.get(`${row.user_id}:${row.property_slug}`) ?? 0;
+                const sharePrice = catalog.find((item) => item.slug === row.property_slug)?.sharePrice ?? 0;
+                return <div className="admin-subsection mt-4">
+                  <p className="font-semibold">{t("Complete the sale")}</p>
+                  <p className="admin-help">{t("Completing buys the shares back at the agreed price: the client's holding shrinks, their wallet is credited and the shares become available again.")}</p>
+                  {held > 0 ? <BuyBackForm userId={row.user_id} requestKey={randomUUID()} saleRequestId={row.id} maxShares={row.shares} labels={labels} lang={lang}
+                    holdings={[{ slug: row.property_slug, title: titleOf(row.property_slug), shares: held, sharePrice }]} />
+                    : <p className="admin-alert admin-alert-warning !mb-0">{t("The client no longer holds these shares.")}</p>}
+                </div>;
+              })()}
               {open && <DecisionForm action={updateSaleRequest} hidden={{ id: row.id }} noteLabel={t("Review note")} savedLabel={t("Review saved.")} errorLabel={t("The review could not be saved. Please try again.")}
                 decisions={[
                   ...(row.status === "pending" ? [{ value: "in_review", label: t("Mark in review"), tone: "neutral" as const }] : []),
-                  { value: "completed", label: t("Mark completed"), tone: "success" as const },
                   { value: "cancelled", label: t("Cancel request"), tone: "danger" as const },
                 ]} />}
             </div>

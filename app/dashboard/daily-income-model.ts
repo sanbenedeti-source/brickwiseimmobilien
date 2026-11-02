@@ -2,6 +2,25 @@ export type IncomePurchase = { property_slug: string; shares: number; amount: nu
 /** accrualStart/paused come from the admin profit settings for the property. */
 export type DailyIncomePosition = { slug: string; title: string; shares: number; rentalRate: number; accrualStart?: number | null; paused?: boolean };
 export const INCOME_DAY_MS = 86_400_000;
+export type ShareSale = { property_slug: string; shares: number; created_at: string };
+
+/** Removes shares bought back by Brickwise from the oldest purchase lots first, with the lot's
+ * amount reduced in proportion, so lots keep matching the shares the client still holds. */
+export function applyShareSales(purchases: IncomePurchase[], sales: ShareSale[]): IncomePurchase[] {
+  const lots = [...purchases].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((lot) => ({ ...lot }));
+  for (const sale of [...sales].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+    let remaining = sale.shares;
+    for (const lot of lots) {
+      if (remaining <= 0) break;
+      if (lot.property_slug !== sale.property_slug || lot.shares <= 0 || lot.created_at > sale.created_at) continue;
+      const taken = Math.min(lot.shares, remaining);
+      lot.amount = Math.round(lot.amount * (lot.shares - taken) / lot.shares * 100) / 100;
+      lot.shares -= taken;
+      remaining -= taken;
+    }
+  }
+  return lots.filter((lot) => lot.shares > 0);
+}
 
 /** Simple current-rate projection per purchase, after each completed 24 hours.
  * Never backdate additional shares to the first purchase or credit a wallet.

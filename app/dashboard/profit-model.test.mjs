@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { positionEconomics, simulatePosition } from "./profit-model.ts";
 import { formatRecordedMoney, totalRecordedMoney } from "./recorded-money.ts";
+import { applyShareSales } from "./daily-income-model.ts";
 
 const position = {
   slug: "sample", title: "Sample", city: "Toronto", imageUrl: "",
@@ -96,4 +97,23 @@ test("leap days and daylight-saving transitions are counted as elapsed 24-hour p
     assert.equal(result.days, 2);
     assert.equal(result.accrued, 190 / 365 * 2);
   }
+});
+
+test("shares bought back by Brickwise leave the oldest purchase lots, so the income model keeps matching the holding", () => {
+  const purchases = [
+    { property_slug: "sal-rei", shares: 4, amount: 1000, currency: "EUR", created_at: "2026-01-01T10:00:00Z" },
+    { property_slug: "sal-rei", shares: 2, amount: 520, currency: "EUR", created_at: "2026-03-01T10:00:00Z" },
+    { property_slug: "other", shares: 3, amount: 300, currency: "EUR", created_at: "2026-02-01T10:00:00Z" },
+  ];
+  const lots = applyShareSales(purchases, [{ property_slug: "sal-rei", shares: 5, created_at: "2026-06-01T10:00:00Z" }]);
+  assert.deepEqual(lots.map((lot) => [lot.property_slug, lot.shares, lot.amount]), [["other", 3, 300], ["sal-rei", 1, 260]],
+    "the four oldest shares go first, then one of the March lot, whose amount halves");
+  // A sale never consumes a lot bought after it.
+  assert.deepEqual(applyShareSales(purchases, [{ property_slug: "sal-rei", shares: 1, created_at: "2026-02-01T10:00:00Z" }]).find((lot) => lot.created_at.startsWith("2026-01")).shares, 3);
+  const now = Date.parse("2026-11-01T10:00:00Z");
+  const position = { slug: "sal-rei", title: "Sal Rei", shares: 1, rentalRate: 10 };
+  assert.equal(dailyIncome(position, purchases, now), null, "without the sale the lots no longer match the holding");
+  const model = dailyIncome(position, lots, now);
+  assert.ok(model && Math.abs(model.capital - 260) < 1e-9 && model.daily > 0);
+  assert.deepEqual(applyShareSales(purchases, []).length, 3, "no sales keeps every lot");
 });
